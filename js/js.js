@@ -352,11 +352,9 @@ window.addEventListener('DOMContentLoaded', () => {
             const loader = document.getElementById('halloween-loader');
             
             setTimeout(() => {
-                // 1. Ẩn hiệu ứng màn hình chờ
                 loader.classList.add('hidden');
-                // 2. Mở khóa lại thanh cuộn giúp trang web lướt bình thường
                 document.body.style.overflow = 'auto';
-            }, 2500); // Đợi 2.5 giây
+            }, 2500); 
         });
    
 
