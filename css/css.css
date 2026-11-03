@@ -453,3 +453,82 @@ font-size: 90px;
             opacity: 0;
             visibility: hidden;
         }
+
+/* Noi bat thong diep va cac phan cam nhan cua nhom */
+.key-message {
+    background-color: #dff4ef;
+    border: 2px solid #16806f;
+    padding: 20px;
+    margin: 22px 0;
+    text-align: center;
+}
+
+.key-message h3 {
+    color: #0b5148;
+    font-size: 22px;
+    margin: 8px 0;
+}
+
+.key-message p {
+    color: #263238;
+}
+
+.answer-box {
+    background-color: #f3f8f9;
+    border-left: 5px solid #16806f;
+    padding: 14px 18px;
+    margin: 14px 0;
+}
+
+.answer-box b {
+    color: #13566a;
+}
+
+.answer-box p:last-child {
+    margin-bottom: 0;
+}
+
+/* Man hinh tai trang */
+#halloween-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #123747;
+    color: white;
+    text-align: center;
+    z-index: 10000;
+    padding-top: 18%;
+}
+
+#halloween-loader.hidden {
+    display: none;
+}
+
+.loader-pumpkin {
+    font-size: 48px;
+}
+
+.loader-text {
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+.loader-bat {
+    position: absolute;
+    left: 10%;
+}
+
+.spooky-item {
+    position: fixed;
+    top: -40px;
+    z-index: 9998;
+    pointer-events: none;
+    animation: spookyFall 5s linear forwards;
+}
+
+@keyframes spookyFall {
+    from { transform: translateY(0); }
+    to { transform: translateY(110vh); }
+}
