@@ -19,7 +19,11 @@
             text-align: center;
             padding: 25px;
         }
-
+        img {
+           border: 2px solid #ccc;
+           border-radius: 10px;
+           margin: 10px;
+        }
         header h1 {
             margin: 8px 0;
             color: #79e1ce;
