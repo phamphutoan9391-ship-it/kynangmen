@@ -12,7 +12,7 @@ var LUCKY_DRAW_PRIZES = [
 var DIEM_MOI_PHIEU = 20;
 var SO_PHIEU_TOI_DA = 3;
 
-var LUCKY_DRAW_SPINS_PER_GAME = 1;
+var LUCKY_DRAW_SPINS_PER_GAME = 3;
 var LUCKY_DRAW_SPIN_DURATION = 7200;
 
 
@@ -1024,7 +1024,7 @@ function showLuckyPrize(prize) {
         var doneNote = document.createElement("p");
 
         doneNote.innerHTML =
-            "Đó là lượt quay cuối cùng của bạn. Vòng quay Halloween đã kết thúc!";
+            "hãy suy nghĩ như một con bạc đánh cược tất cả vào vận quay tay của mày!";
 
         luckyResult.appendChild(doneNote);
     }
