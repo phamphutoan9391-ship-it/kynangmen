@@ -1215,7 +1215,7 @@ function capNhatPhieuQuiz() {
             "Bạn có " + soPhieuQuiz + " phiếu. Có thể mở câu hỏi!";
     } else {
         document.getElementById("thongBaoPhieu").innerHTML =
-            "Bạn đã hết phiếu. Hãy chơi Halloween để kiếm thêm nhé!";
+        "Bạn đã hết phiếu bé ngoan. Hãy chơi Halloween để kiếm thêm nhé!";
     }
 
     document.getElementById("nutMoCauHoi").disabled =
