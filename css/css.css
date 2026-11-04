@@ -395,31 +395,31 @@
             font-family: Arial, sans-serif;
         }
 
-.loader-pumpkin 
-{
-font-size: 90px;
-            animation: flicker-light 1.5s infinite alternate, float-up-down 3s ease-in-out infinite;
-            cursor: default;
-            user-select: none;
-            margin-bottom: 20px;
-        }
+.loader-pumpkin {
+    font-size: 150px;
+    line-height: 1; 
+    display: inline-block;
+    padding: 20px; 
+    margin-bottom: 20px;
+    cursor: default;
+    user-select: none;
+    animation: flicker-light 1.5s infinite alternate, float-up-down 3s ease-in-out infinite;
+}
 
-        @keyframes flicker-light {
-            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-                text-shadow: 0 0 20px #ff6600, 0 0 40px #ff3300;
-                filter: drop-shadow(0 0 10px #ff6600);
-            }
-            20%, 24%, 55% {
-                text-shadow: none;
-                filter: grayscale(80%) opacity(0.6);
-            }
-        }
+@keyframes flicker-light {
+    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    
+        filter: drop-shadow(0 0 15px #ff6600) drop-shadow(0 0 30px #ff3300);
+    }
+    20%, 24%, 55% {
+        filter: grayscale(80%) opacity(0.4) drop-shadow(0 0 0px transparent);
+    }
+}
 
-        @keyframes float-up-down {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-15px); }
-        }
-
+@keyframes float-up-down {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); } 
+}
         .loader-text {
             color: #ff6600;
             font-size: 26px;
@@ -453,8 +453,6 @@ font-size: 90px;
             opacity: 0;
             visibility: hidden;
         }
-
-/* Noi bat thong diep va cac phan cam nhan cua nhom */
 .key-message {
     background-color: #dff4ef;
     border: 2px solid #16806f;
@@ -488,7 +486,6 @@ font-size: 90px;
     margin-bottom: 0;
 }
 
-/* Man hinh tai trang */
 #halloween-loader {
     position: fixed;
     top: 0;
