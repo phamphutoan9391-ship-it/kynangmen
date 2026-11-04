@@ -1,14 +1,12 @@
-
-
 var LUCKY_DRAW_PRIZES = [
     { name: "Ú òa!", label: "Ú òa!", type: "boo", code: "" },
+    { name: "Phiếu bé ngoan", label: "Phiếu bé ngoan\nthôi", type: "coupon", code: "con Gà lỏ chưa??" },
+    { name: "Phiếu bé ngoan", label: "Phiếu bé ngoan\nthôi", type: "coupon", code: "MÀY NGUU lắm EM!" },
+    { name: "Phiếu bé ngoan", label: "Phiếu bé ngoan\nthôi", type: "coupon", code: "mày thật sự đánh cược vận may à?" },
     { name: "Ú òa!", label: "Ú òa!", type: "boo", code: "" },
-    { name: "Phiếu bé ngoan", label: "phiếu bé ngoan\nthôi", type: "coupon", code: "con Gà lỏ chưa??" },
-    { name: "Ú òa!", label: "Ú òa!", type: "boo", code: "" },
-    { name: "Phiếu  bé ngoan", label: "phiếu bé ngoan\nthôi", type: "coupon", code: "MÀY NGUU lắm EM!" },
-    { name: "Ú òa!", label: "Ú òa!", type: "boo", code: "" },
-    { name: "Phiếu bé ngoan", label: "phiếu bé ngoan\nthôi", type: "coupon", code: "mày thật sự đánh cược vận may à?" },
-    { name: "phiếu bé ngoan", label: "phiếu bé ngoan\nthôi", type: "coupon", code: "bỏ đi mà làm người" }
+    { name: "Phiếu bé ngoan", label: "Phiếu bé ngoan\nthôi", type: "coupon", code: "bỏ đi mà làm người" },
+    { name: "Phiếu bé ngoan", label: "Phiếu bé ngoan\nthôi", type: "coupon", code: "con Gà lỏ chưa??" },
+    { name: "Phiếu bé ngoan", label: "Phiếu bé ngoan\nthôi", type: "coupon", code: "mày thật sự đánh cược vận may à?" }
 ];
 
 var DIEM_MOI_PHIEU = 20;
