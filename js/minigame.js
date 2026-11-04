@@ -1,8 +1,4 @@
-/* ==========================================
-   TEP TIN JAVASCRIPT - DIEU KHIEN TRO CHOI
-   Su dung bien, mang, if/else, for, function,
-   getElementById, innerHTML va su kien.
-   ========================================== */
+
 
 
     var LUCKY_DRAW_PRIZES = [
