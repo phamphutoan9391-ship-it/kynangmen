@@ -346,15 +346,17 @@ function createSpookyFall() {
         }, 5000);
     }, 300); 
 }
-window.addEventListener('DOMContentLoaded', createSpookyFall);
+    
+    window.addEventListener('load', function() {
+        var loader = document.getElementById('halloween-loader');
+        if (loader) {
+            loader.style.transition = "opacity 0.5s ease";
+            loader.style.opacity = "0";
+            setTimeout(function() {
+                loader.style.display = "none";
+            }, 500);
+        }
+    });
 
-window.addEventListener('DOMContentLoaded', () => {
-            const loader = document.getElementById('halloween-loader');
-            
-            setTimeout(() => {
-                loader.classList.add('hidden');
-                document.body.style.overflow = 'auto';
-            }, 2500); 
-        });
    
 
