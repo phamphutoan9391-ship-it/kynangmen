@@ -346,17 +346,20 @@ function createSpookyFall() {
         }, 5000);
     }, 300); 
 }
-    
-    window.addEventListener('load', function() {
+    function hideLoader() {
         var loader = document.getElementById('halloween-loader');
-        if (loader) {
-            loader.style.transition = "opacity 0.5s ease";
+        if (loader && loader.style.display !== "none") {
+            loader.style.transition = "opacity 0.4s ease";
             loader.style.opacity = "0";
             setTimeout(function() {
                 loader.style.display = "none";
-            }, 500);
+            }, 400);
         }
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(hideLoader, 1000); 
     });
+    setTimeout(hideLoader, 3000);
 
    
 
