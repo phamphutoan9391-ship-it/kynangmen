@@ -93,124 +93,108 @@ var viTriCauHoi = 0;
 var soCauDung = 0;
 var daTraLoi = false;
 
-
 function hienThiCauHoi() {
     var cau = danhSachCauHoi[viTriCauHoi];
     var noiDung = "";
     var i;
-
     daTraLoi = false;
 
-    document.getElementById("demCau").innerHTML =
-        "Câu " + (viTriCauHoi + 1) + " / " + danhSachCauHoi.length;
+    var demCau = document.getElementById("demCau");
+    var cauHoi = document.getElementById("cauHoi");
+    var phanHoiQuiz = document.getElementById("phanHoiQuiz");
+    var nutTiep = document.getElementById("nutTiep");
+    var nutLamLai = document.getElementById("nutLamLai");
+    var cacDapAn = document.getElementById("cacDapAn");
 
-    document.getElementById("cauHoi").innerHTML = cau.cauHoi;
+    if(demCau) demCau.innerHTML = "Câu " + (viTriCauHoi + 1) + " / " + danhSachCauHoi.length;
+    if(cauHoi) cauHoi.innerHTML = cau.cauHoi;
+    if(phanHoiQuiz) phanHoiQuiz.style.display = "none";
+    if(nutLamLai) nutLamLai.style.display = "none";
 
-    document.getElementById("phanHoiQuiz").style.display = "none";
-
-    document.getElementById("nutTiep").style.display = "inline-block";
-    document.getElementById("nutTiep").disabled = true;
-    document.getElementById("nutTiep").innerHTML = "Câu tiếp theo";
-
-    document.getElementById("nutLamLai").style.display = "none";
-
-    for (i = 0; i < cau.dapAn.length; i++) {
-        noiDung = noiDung +
-            '<button class="option" id="dapAn' + i +
-            '" onclick="chonDapAn(' + i + ')">';
-
-        noiDung = noiDung +
-            String.fromCharCode(65 + i) + ". " + cau.dapAn[i];
-
-        noiDung = noiDung + "</button>";
+    if(nutTiep) {
+        nutTiep.style.display = "inline-block";
+        nutTiep.disabled = true;
+        nutTiep.innerHTML = "Câu tiếp theo";
     }
 
-    document.getElementById("cacDapAn").innerHTML = noiDung;
+    for (i = 0; i < cau.dapAn.length; i++) {
+        noiDung += '<button class="option" id="dapAn' + i + '" onclick="chonDapAn(' + i + ')">' +
+                   String.fromCharCode(65 + i) + ". " + cau.dapAn[i] + '</button>';
+    }
+    if(cacDapAn) cacDapAn.innerHTML = noiDung;
 }
-
 
 function chonDapAn(viTriDapAn) {
     var cau = danhSachCauHoi[viTriCauHoi];
-    var i;
-    var nut;
+    var i, nut;
 
-    if (daTraLoi === true) {
-        return;
-    }
-
+    if (daTraLoi === true) return;
     daTraLoi = true;
 
     if (viTriDapAn === cau.dapAnDung) {
-        soCauDung = soCauDung + 1;
+        soCauDung++;
     }
 
     for (i = 0; i < cau.dapAn.length; i++) {
         nut = document.getElementById("dapAn" + i);
-
-        nut.disabled = true;
-
-        if (i === cau.dapAnDung) {
-            nut.className = "option dung";
-        } else if (i === viTriDapAn) {
-            nut.className = "option sai";
+        if (nut) {
+            nut.disabled = true;
+            if (i === cau.dapAnDung) {
+                nut.className = "option dung";
+            } else if (i === viTriDapAn) {
+                nut.className = "option sai";
+            }
         }
     }
 
-    if (viTriDapAn === cau.dapAnDung) {
-        document.getElementById("phanHoiQuiz").innerHTML =
-            "Chính xác! " + cau.giaiThich;
-    } else {
-        document.getElementById("phanHoiQuiz").innerHTML =
-            "Chưa đúng. " + cau.giaiThich;
+    var phanHoiQuiz = document.getElementById("phanHoiQuiz");
+    if (phanHoiQuiz) {
+        if (viTriDapAn === cau.dapAnDung) {
+            phanHoiQuiz.innerHTML = "Chính xác! " + cau.giaiThich;
+        } else {
+            phanHoiQuiz.innerHTML = "Chưa đúng. " + cau.giaiThich;
+        }
+        phanHoiQuiz.style.display = "block";
     }
 
-    document.getElementById("phanHoiQuiz").style.display = "block";
-    document.getElementById("nutTiep").disabled = false;
-
-    if (viTriCauHoi === danhSachCauHoi.length - 1) {
-        document.getElementById("nutTiep").innerHTML = "Xem kết quả";
+    var nutTiep = document.getElementById("nutTiep");
+    if (nutTiep) {
+        nutTiep.disabled = false;
+        if (viTriCauHoi === danhSachCauHoi.length - 1) {
+            nutTiep.innerHTML = "Xem kết quả";
+        }
     }
 }
 
-
 function cauTiepTheo() {
-    if (daTraLoi === false) {
-        return;
-    }
+    if (daTraLoi === false) return;
 
     if (viTriCauHoi < danhSachCauHoi.length - 1) {
-        viTriCauHoi = viTriCauHoi + 1;
+        viTriCauHoi++;
         hienThiCauHoi();
     } else {
-        // Hien thi ket qua cuoi cung
-        document.getElementById("demCau").innerHTML = "Hoàn thành";
+        var demCau = document.getElementById("demCau");
+        var cauHoi = document.getElementById("cauHoi");
+        var cacDapAn = document.getElementById("cacDapAn");
+        var phanHoiQuiz = document.getElementById("phanHoiQuiz");
+        var nutTiep = document.getElementById("nutTiep");
+        var nutLamLai = document.getElementById("nutLamLai");
 
-        document.getElementById("cauHoi").innerHTML =
-            "Kết quả của bạn: " + soCauDung +
-            " / " + danhSachCauHoi.length;
+        if(demCau) demCau.innerHTML = "Hoàn thành";
+        if(cauHoi) cauHoi.innerHTML = "Kết quả của bạn: " + soCauDung + " / " + danhSachCauHoi.length;
+        if(cacDapAn) cacDapAn.innerHTML = "";
+        if(nutTiep) nutTiep.style.display = "none";
+        if(nutLamLai) nutLamLai.style.display = "inline-block";
 
-        document.getElementById("cacDapAn").innerHTML = "";
-
-        document.getElementById("phanHoiQuiz").style.display = "block";
-
-        document.getElementById("nutTiep").style.display = "none";
-        document.getElementById("nutLamLai").style.display = "inline-block";
-
-        if (soCauDung >= 7) {
-            document.getElementById("phanHoiQuiz").innerHTML =
-                "Rất tốt! Bạn trả lời đúng " + soCauDung +
-                " / " + danhSachCauHoi.length +
-                " câu. Hãy tiếp tục vận dụng vào công việc nhóm.";
-        } else if (soCauDung >= 5) {
-            document.getElementById("phanHoiQuiz").innerHTML =
-                "Khá tốt! Bạn trả lời đúng " + soCauDung +
-                " / " + danhSachCauHoi.length +
-                " câu. Hãy đọc lại các phần còn phân vân.";
-        } else {
-            document.getElementById("phanHoiQuiz").innerHTML =
-                "Bạn trả lời đúng " + soCauDung +
-                " / " + danhSachCauHoi.length +
-                " câu. Hãy đọc lại kiến thức rồi thử lần nữa.";
+        if(phanHoiQuiz) {
+            phanHoiQuiz.style.display = "block";
+            if (soCauDung >= 7) {
+                phanHoiQuiz.innerHTML = "Rất tốt! Bạn trả lời đúng " + soCauDung + " / " + danhSachCauHoi.length + " câu. Hãy tiếp tục vận dụng vào công việc nhóm.";
+            } else if (soCauDung >= 5) {
+                phanHoiQuiz.innerHTML = "Khá tốt! Bạn trả lời đúng " + soCauDung + " / " + danhSachCauHoi.length + " câu. Hãy đọc lại các phần còn phân vân.";
+            } else {
+                phanHoiQuiz.innerHTML = "Bạn trả lời đúng " + soCauDung + " / " + danhSachCauHoi.length + " câu. Hãy đọc lại kiến thức rồi thử lần nữa.";
+            }
         }
     }
 }
@@ -223,136 +207,31 @@ function lamLaiQuiz() {
 
 function traLoiTinhHuong1(dapAn) {
     var phanHoi = "";
-
+    var oPhanHoi = document.getElementById("phanHoiTinhHuong1");
     if (dapAn === 1) {
-        phanHoi =
-            "Chính xác! Phù hợp nhất: mô tả lỗi, kiểm tra dữ kiện và cùng chốt cách sửa là góp ý hướng vào công việc.";
-    } else if (dapAn === 0) {
-        phanHoi =
-            "Chưa đúng. Nhận xét chung chung làm người nghe khó biết cần sửa gì. Hãy nêu lỗi quan sát được.";
+        phanHoi = "Chính xác! Phù hợp nhất: mô tả lỗi, kiểm tra dữ liệu và cùng thống nhất cách sửa.";
     } else {
-        phanHoi =
-            "Chưa đúng. Im lặng sửa thay có thể che mất nguyên nhân và không giúp nhóm tránh lỗi lần sau.";
+        phanHoi = "Lựa chọn này chưa tối ưu. Hãy thử cách tiếp cận mang tính xây dựng hơn.";
     }
-
-    document.getElementById("phanHoi1").innerHTML = phanHoi;
-
-    document.getElementById("tinhHuong1A").disabled = true;
-    document.getElementById("tinhHuong1B").disabled = true;
-    document.getElementById("tinhHuong1C").disabled = true;
-}
-
-function traLoiTinhHuong2(dapAn) {
-    var phanHoi = "";
-
-    if (dapAn === 1) {
-        phanHoi =
-            "Chính xác! Tái hiện lỗi, thu thập dữ kiện, tìm nguyên nhân rồi kiểm thử lại.";
-    } else if (dapAn === 0) {
-        phanHoi =
-            "Chưa đúng. Sửa ngẫu nhiên dễ làm phát sinh lỗi mới mà không hiểu nguyên nhân.";
-    } else {
-        phanHoi =
-            "Chưa đúng. Bỏ qua lỗi lặp lại có thể khiến sản phẩm không ổn định; cần kiểm tra cách khắc phục.";
+    if(oPhanHoi) {
+        oPhanHoi.innerHTML = phanHoi;
+        oPhanHoi.style.display = "block";
     }
-
-    document.getElementById("phanHoi2").innerHTML = phanHoi;
-
-    document.getElementById("tinhHuong2A").disabled = true;
-    document.getElementById("tinhHuong2B").disabled = true;
-    document.getElementById("tinhHuong2C").disabled = true;
 }
-function traLoiTinhHuong3(dapAn) {
-    var phanHoi = "";
-
-    if (dapAn === 2) {
-        phanHoi = "Chính xác! Biết lắng nghe góp ý, nhìn lại cách làm và cải thiện code sẽ giúp công việc tốt hơn.";
-    } else if (dapAn === 0) {
-        phanHoi = "Chưa đúng. Bỏ ngoài tai ý kiến góp ý sẽ khiến bản thân khó tiến bộ.";
-    } else {
-        phanHoi = "Chưa đúng. Lắng nghe qua loa chưa đủ, cần xem xét nghiêm túc và áp dụng góp ý phù hợp.";
+function removeHalloweenLoader() {
+    var loader = document.getElementById('halloween-loader');
+    if (loader) {
+        loader.style.transition = "opacity 0.4s ease, visibility 0.4s ease";
+        loader.style.opacity = "0";
+        loader.style.visibility = "hidden";
+        document.body.style.setProperty("overflow", "auto", "important");
+        document.body.style.setProperty("overflow-y", "auto", "important");
+        document.documentElement.style.setProperty("overflow", "auto", "important");
+        setTimeout(function() {
+            loader.remove();
+        }, 400);
     }
-
-    document.getElementById("phanHoi3").innerHTML = phanHoi;
-
-    document.getElementById("tinhHuong3A").disabled = true;
-    document.getElementById("tinhHuong3B").disabled = true;
-    document.getElementById("tinhHuong3C").disabled = true;
 }
 
-
-function traLoiTinhHuong4(dapAn) {
-    var phanHoi = "";
-
-    if (dapAn === 1) {
-        phanHoi = "Chính xác! Trưởng nhóm nên trao đổi nghiêm túc, xác định khó khăn, phân công lại công việc và thống nhất thời hạn hoàn thành.";
-    } else if (dapAn === 0) {
-        phanHoi = "Chưa đúng. Nếu luôn ôm hết công việc, trưởng nhóm dễ quá tải và các thành viên không cải thiện trách nhiệm.";
-    } else {
-        phanHoi = "Chưa đúng. Chỉ nhắc nhở qua loa chưa giải quyết nguyên nhân khiến công việc bị chậm.";
-    }
-
-    document.getElementById("phanHoi4").innerHTML = phanHoi;
-    document.getElementById("tinhHuong4A").disabled = true;
-    document.getElementById("tinhHuong4B").disabled = true;
-    document.getElementById("tinhHuong4C").disabled = true;
-}
-
-function lamLaiTinhHuong() {
-    document.getElementById("tinhHuong1A").disabled = false;
-    document.getElementById("tinhHuong1B").disabled = false;
-    document.getElementById("tinhHuong1C").disabled = false;
-    document.getElementById("tinhHuong2A").disabled = false;
-    document.getElementById("tinhHuong2B").disabled = false;
-    document.getElementById("tinhHuong2C").disabled = false;
-    document.getElementById("tinhHuong3A").disabled = false;
-    document.getElementById("tinhHuong3B").disabled = false;
-    document.getElementById("tinhHuong3C").disabled = false;
-    document.getElementById("tinhHuong4A").disabled = false;
-    document.getElementById("tinhHuong4B").disabled = false;
-    document.getElementById("tinhHuong4C").disabled = false;
-    document.getElementById("phanHoi1").innerHTML = "";
-    document.getElementById("phanHoi2").innerHTML = "";
-    document.getElementById("phanHoi3").innerHTML = "";
-    document.getElementById("phanHoi4").innerHTML = "";
-}
-hienThiCauHoi();
-
-function createSpookyFall() {
-    const icons = ['🎃', '🦇', '👻', '🕷️'];
-    const container = document.body;
-    
-    setInterval(() => {
-        const element = document.createElement('div');
-        element.className = 'spooky-item';
-        element.innerText = icons[Math.floor(Math.random() * icons.length)];
-        element.style.left = Math.random() * 100 + 'vw';
-        element.style.fontSize = Math.random() * 20 + 20 + 'px';
-        element.style.animationDuration = Math.random() * 3 + 2 + 's'; 
-        element.style.opacity = Math.random();
-        
-        container.appendChild(element);
-        setTimeout(() => {
-            element.remove();
-        }, 5000);
-    }, 300); 
-}
-    function removeLoader() {
-        var loader = document.getElementById('halloween-loader');
-        if (loader) {
-            loader.style.transition = "opacity 0.4s ease";
-            loader.style.opacity = "0";
-            setTimeout(function() {
-                loader.remove(); 
-                document.body.style.overflow = "auto";
-                document.documentElement.style.overflow = "auto";
-            }, 400);
-        }
-    }
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(removeLoader, 1000); 
-    });
-    setTimeout(removeLoader, 3000);
-
-   
-
+document.addEventListener('DOMContentLoaded', function() {
+    if(typeof hienThiCauHoi === "function") hienThiCauHoi(); 
