@@ -218,6 +218,7 @@ function traLoiTinhHuong1(dapAn) {
         oPhanHoi.style.display = "block";
     }
 }
+// ================= KHU VỰC ĐẶC TRỊ LỖI MÀN HÌNH CHỜ (HALLOWEEN LOADER) =================
 function removeHalloweenLoader() {
     var loader = document.getElementById('halloween-loader');
     if (loader) {
@@ -234,4 +235,11 @@ function removeHalloweenLoader() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    if(typeof hienThiCauHoi === "function") hienThiCauHoi(); 
+    if (typeof hienThiCauHoi === "function") {
+        hienThiCauHoi(); 
+    }
+    setTimeout(removeHalloweenLoader, 1000); 
+});
+setTimeout(removeHalloweenLoader, 2500);
+
+
