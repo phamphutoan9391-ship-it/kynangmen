@@ -5,7 +5,7 @@
             line-height: 1.6;
             color: #263238;
             background-color: #eef4f6;
-            overflow: hidden;
+            overflow: auto;
         }
 
         .wrap {
