@@ -220,54 +220,117 @@
             <div class="step"><b>05. KIỂM TRA</b>Chạy thử và rút kinh nghiệm.</div>
         </section>
 
-        <section id="doi-ve">
-            <p class="kicker">Halloween mini game</p>
-            <h2>Săn kẹo đổi phiếu trả lời</h2>
-            <p>Chơi trò Halloween bên dưới để tích lũy điểm. Kết thúc mỗi lượt, cứ đủ 20 điểm sẽ nhận 1 phiếu câu hỏi, tối đa 3 phiếu mỗi lượt.</p>
-            <div class="ticket-wallet">
-                <div class="ticket-stat">
-                    <span>🎟️ PHIẾU CÂU HỎI</span>
-                    <strong id="soPhieuHienCo">0</strong>
-                </div>
-                <div class="ticket-stat">
-                    <span>🎃 QUY ĐỔI</span>
-                    <strong>20 điểm = 1 phiếu</strong>
-                </div>
-            </div>
-            <p id="thongBaoGame" class="feedback">Chơi hết 40 giây trong khung game. Phiếu sẽ tự chuyển về website sau khi lượt chơi kết thúc.</p>
-            <div class="halloween-frame-wrap">
-                <iframe id="halloweenGameFrame" class="halloween-frame" src="./halloween-game.html" title="Halloween Candy Game" loading="lazy"></iframe>
-            </div>
-            <p class="small">Lưu ý: Phiếu được giữ trong phiên mở website hiện tại. Tải lại trang sẽ bắt đầu lại số phiếu từ 0.</p>
-        </section>
+<section id="doi-ve">
+    <p class="kicker">Halloween mini game</p>
 
-        <section id="trac-nghiem">
-            <p class="kicker">Trắc nghiệm tương tác</p>
-            <h2>Quiz 8 câu</h2>
-            <div class="quiz-ticket-wallet">
-                <span>🎟️ Phiếu còn lại: <b id="soPhieuQuiz">0</b></span>
-                <span>Mỗi câu hỏi cần 1 phiếu</span>
-            </div>
-            <div id="quizGate" class="quiz-gate">
-                <div class="gate-icon">🎫</div>
-                <h3>Câu hỏi đang được khóa</h3>
-                <p>Dùng 1 phiếu Halloween để mở câu hỏi này. Trả lời xong mới chuyển sang câu tiếp theo.</p>
-                <button id="nutMoCauHoi" onclick="moCauHoi()">Dùng 1 phiếu mở câu hỏi</button>
-                <p id="thongBaoPhieu" class="small">Chưa có phiếu. Hãy chơi Halloween để kiếm phiếu nhé!</p>
-                <a href="#doi-ve" class="ticket-link">🎃 Đi săn kẹo để kiếm phiếu</a>
-            </div>
-            <div id="quizContent" style="display: none;">
-                <p id="demCau">Câu 1 / 8</p>
-                <p id="cauHoi" class="question"></p>
-                <div id="cacDapAn"></div>
-                <div id="phanHoiQuiz" class="feedback" style="display: none;"></div>
-                <p>
-                    <button id="nutTiep" onclick="cauTiepTheo()">Câu tiếp theo</button>
-                    <button id="nutLamLai" class="secondary" onclick="lamLaiQuiz()" style="display: none;">Làm lại từ đầu</button>
-                </p>
-            </div>
-        </section>
+    <h2>Săn kẹo đổi phiếu trả lời</h2>
 
+    <p>
+        Chơi trò Halloween bên dưới để tích lũy điểm.
+        Cứ đủ 20 điểm sẽ nhận 1 phiếu câu hỏi,
+        tối đa 3 phiếu mỗi lượt chơi.
+    </p>
+
+    <div class="ticket-wallet">
+        <div class="ticket-stat">
+            <span>🎟️ PHIẾU CÂU HỎI</span>
+            <strong id="soPhieuHienCo">0</strong>
+        </div>
+
+        <div class="ticket-stat">
+            <span>🎃 QUY ĐỔI</span>
+            <strong>20 điểm = 1 phiếu</strong>
+        </div>
+    </div>
+
+    <p id="thongBaoGame" class="feedback">
+        Chơi hết 60 giây trong khung game.
+        Phiếu sẽ tự chuyển về website sau khi kết thúc.
+    </p>
+
+    <div class="halloween-frame-wrap">
+        <iframe
+            id="halloweenGameFrame"
+            class="halloween-frame"
+            src="./halloween-game.html"
+            title="Halloween Candy Game"
+            loading="lazy">
+        </iframe>
+    </div>
+
+    <p class="small">
+        Phiếu được lưu trên trình duyệt.
+        Tải lại trang vẫn giữ số phiếu đã nhận.
+    </p>
+</section>
+
+
+<section id="trac-nghiem">
+    <p class="kicker">Trắc nghiệm tương tác</p>
+
+    <h2>Quiz 8 câu</h2>
+
+    <div class="quiz-ticket-wallet">
+        <span>
+            🎟️ Phiếu còn lại:
+            <b id="soPhieuQuiz">0</b>
+        </span>
+
+        <span>Mỗi câu hỏi cần 1 phiếu</span>
+    </div>
+
+    <div id="quizGate" class="quiz-gate">
+        <div class="gate-icon">🎫</div>
+
+        <h3>Câu hỏi đang được khóa</h3>
+
+        <p>
+            Dùng 1 phiếu Halloween để mở câu hỏi.
+            Trả lời xong mới chuyển sang câu tiếp theo.
+        </p>
+
+        <button id="nutMoCauHoi" onclick="moCauHoi()">
+            Dùng 1 phiếu mở câu hỏi
+        </button>
+
+        <p id="thongBaoPhieu" class="small">
+            Chưa có phiếu. Hãy chơi Halloween để kiếm phiếu nhé!
+        </p>
+
+        <a href="#doi-ve" class="ticket-link">
+            🎃 Đi săn kẹo để kiếm phiếu
+        </a>
+    </div>
+
+    <div id="quizContent" style="display: none;">
+        <p id="demCau">Câu 1 / 8</p>
+
+        <p id="cauHoi" class="question"></p>
+
+        <div id="cacDapAn"></div>
+
+        <div
+            id="phanHoiQuiz"
+            class="feedback"
+            style="display: none;">
+        </div>
+
+        <p>
+            <button id="nutTiep" onclick="cauTiepTheo()">
+                Câu tiếp theo
+            </button>
+
+            <button
+                id="nutLamLai"
+                class="secondary"
+                onclick="lamLaiQuiz()"
+                style="display: none;">
+                Làm lại từ đầu
+            </button>
+        </p>
+    </div>
+</section>
+        
         <section id="tinh-huong">
             <p class="kicker">Lớp cùng thử</p>
             <h2>Góp ý thế nào cho tốt?</h2>
@@ -337,7 +400,7 @@
         <p>Quiz và tình huống là nội dung học tập do nhóm xây dựng.</p>
         <center>
     </footer>
-<script src="./js/js.js"></script>
-<script src="./js/minigame.js"></script>
+  <script src="./js/minigame.js"></script>
+  <script src="./js/js.js"></script>
 </body>
 </html>
