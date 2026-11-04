@@ -293,7 +293,6 @@ function traLoiTinhHuong4(dapAn) {
     }
 
     document.getElementById("phanHoi4").innerHTML = phanHoi;
-
     document.getElementById("tinhHuong4A").disabled = true;
     document.getElementById("tinhHuong4B").disabled = true;
     document.getElementById("tinhHuong4C").disabled = true;
@@ -303,19 +302,15 @@ function lamLaiTinhHuong() {
     document.getElementById("tinhHuong1A").disabled = false;
     document.getElementById("tinhHuong1B").disabled = false;
     document.getElementById("tinhHuong1C").disabled = false;
-
     document.getElementById("tinhHuong2A").disabled = false;
     document.getElementById("tinhHuong2B").disabled = false;
     document.getElementById("tinhHuong2C").disabled = false;
-
     document.getElementById("tinhHuong3A").disabled = false;
     document.getElementById("tinhHuong3B").disabled = false;
     document.getElementById("tinhHuong3C").disabled = false;
-
     document.getElementById("tinhHuong4A").disabled = false;
     document.getElementById("tinhHuong4B").disabled = false;
     document.getElementById("tinhHuong4C").disabled = false;
-
     document.getElementById("phanHoi1").innerHTML = "";
     document.getElementById("phanHoi2").innerHTML = "";
     document.getElementById("phanHoi3").innerHTML = "";
@@ -331,35 +326,33 @@ function createSpookyFall() {
         const element = document.createElement('div');
         element.className = 'spooky-item';
         element.innerText = icons[Math.floor(Math.random() * icons.length)];
-        
-        
         element.style.left = Math.random() * 100 + 'vw';
         element.style.fontSize = Math.random() * 20 + 20 + 'px';
         element.style.animationDuration = Math.random() * 3 + 2 + 's'; 
         element.style.opacity = Math.random();
         
         container.appendChild(element);
-        
-        
         setTimeout(() => {
             element.remove();
         }, 5000);
     }, 300); 
 }
-    function hideLoader() {
+    function removeLoader() {
         var loader = document.getElementById('halloween-loader');
-        if (loader && loader.style.display !== "none") {
+        if (loader) {
             loader.style.transition = "opacity 0.4s ease";
             loader.style.opacity = "0";
             setTimeout(function() {
-                loader.style.display = "none";
+                loader.remove(); 
+                document.body.style.overflow = "auto";
+                document.documentElement.style.overflow = "auto";
             }, 400);
         }
     }
     document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(hideLoader, 1000); 
+        setTimeout(removeLoader, 1000); 
     });
-    setTimeout(hideLoader, 3000);
+    setTimeout(removeLoader, 3000);
 
    
 
