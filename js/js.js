@@ -92,6 +92,71 @@ var danhSachCauHoi = [
 var viTriCauHoi = 0;
 var soCauDung = 0;
 var daTraLoi = false;
+var soPhieu = 0;
+var cauHoiDaMo = false;
+
+// Cap nhat so phieu va trang thai mo cau hoi.
+function capNhatPhieu() {
+    document.getElementById("soPhieuHienCo").innerHTML = soPhieu;
+    document.getElementById("soPhieuQuiz").innerHTML = soPhieu;
+
+    if (cauHoiDaMo === true) {
+        document.getElementById("quizGate").style.display = "none";
+        document.getElementById("quizContent").style.display = "block";
+    } else {
+        document.getElementById("quizGate").style.display = "block";
+        document.getElementById("quizContent").style.display = "none";
+    }
+
+    document.getElementById("nutMoCauHoi").disabled = soPhieu <= 0;
+
+    if (soPhieu <= 0) {
+        document.getElementById("thongBaoPhieu").innerHTML =
+            "Chưa có phiếu. Hãy chơi Halloween để kiếm phiếu nhé!";
+    } else {
+        document.getElementById("thongBaoPhieu").innerHTML =
+            "Bạn đang có " + soPhieu + " phiếu. Mỗi câu hỏi cần 1 phiếu.";
+    }
+}
+
+// Nhan phieu duoc gui tu game Halloween trong iframe.
+window.addEventListener("message", function(event) {
+    var duLieu = event.data;
+    var khungGame = document.getElementById("halloweenGameFrame");
+
+    if (khungGame == null || event.source !== khungGame.contentWindow) {
+        return;
+    }
+
+    if (duLieu == null || duLieu.type !== "HALLOWEEN_QUIZ_TICKETS") {
+        return;
+    }
+
+    var phieuNhan = parseInt(duLieu.tickets);
+    var diemNhan = parseInt(duLieu.points);
+
+    if (isNaN(phieuNhan) || phieuNhan < 0) {
+        return;
+    }
+
+    soPhieu = soPhieu + phieuNhan;
+    capNhatPhieu();
+
+    document.getElementById("thongBaoGame").innerHTML =
+        "🎉 Bạn đạt " + diemNhan + " điểm và nhận " + phieuNhan +
+        " phiếu câu hỏi. Phiếu đã được chuyển vào Quiz 8 câu!";
+});
+
+// Dung 1 phieu de mo mot cau hoi.
+function moCauHoi() {
+    if (soPhieu <= 0 || cauHoiDaMo === true) {
+        return;
+    }
+
+    soPhieu = soPhieu - 1;
+    cauHoiDaMo = true;
+    capNhatPhieu();
+}
 
 
 function hienThiCauHoi() {
@@ -100,6 +165,8 @@ function hienThiCauHoi() {
     var i;
 
     daTraLoi = false;
+    cauHoiDaMo = false;
+    capNhatPhieu();
 
     document.getElementById("demCau").innerHTML =
         "Câu " + (viTriCauHoi + 1) + " / " + danhSachCauHoi.length;
@@ -183,6 +250,8 @@ function cauTiepTheo() {
         hienThiCauHoi();
     } else {
         // Hien thi ket qua cuoi cung
+        cauHoiDaMo = true;
+        capNhatPhieu();
         document.getElementById("demCau").innerHTML = "Hoàn thành";
 
         document.getElementById("cauHoi").innerHTML =
@@ -322,6 +391,7 @@ function lamLaiTinhHuong() {
     document.getElementById("phanHoi4").innerHTML = "";
 }
 hienThiCauHoi();
+capNhatPhieu();
 
 function createSpookyFall() {
     const icons = ['🎃', '🦇', '👻', '🕷️'];
