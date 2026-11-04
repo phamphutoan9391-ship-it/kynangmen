@@ -1005,7 +1005,7 @@ function showLuckyPrize(prize) {
             '<h3>🎉 ' + prize.name + '</h3>' +
             '<p>Mã phiếu giảm giá của bạn:</p>' +
             '<div class="coupon-code">' + prize.code + '</div>' +
-            '<p class="screenshot-note">Hãy chụp ảnh màn hình này để đổi quà.</p>';
+            '<p class="screenshot-note">Cay Không Bé.</p>';
 
         showerLuckyConfetti();
 
