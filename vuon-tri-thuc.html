@@ -38,6 +38,8 @@
     <nav class="tabs panel" aria-label="Khu vực trò chơi">
       <button class="tab active" data-tab="farm">🌻 Nông trại</button>
       <button class="tab" data-tab="pets">🐾 Thú cưng</button>
+      <button class="tab" data-tab="breeding">🧬 Lai tạo</button>
+      <button class="tab" data-tab="delivery">🚚 Giao hàng</button>
       <button class="tab" data-tab="shop">🛒 Cửa hàng</button>
       <button class="tab" data-tab="inventory">🎒 Túi đồ</button>
       <button class="tab" data-tab="tasks">📜 Nhiệm vụ</button>
@@ -52,8 +54,44 @@
           <h3>🌱 Hạt giống</h3>
           <div id="seed-list" class="seed-list"></div>
           <p class="hint">Chọn hạt giống, sau đó bấm vào ô đất trống để gieo. Cây lớn dần theo thời gian thực.</p>
-          <button class="primary full" id="water-all">💧 Tưới tất cả cây (miễn phí)</button>
+          <div class="water-supplies panel-soft">
+            <b>💧 Bình nước: <span id="water-count">2</span></b>
+            <p class="hint" id="water-info">Mỗi cây cần 1 bình nước để tưới.</p>
+            <button class="primary full" id="water-all">💧 Tưới cây (tốn bình nước)</button>
+            <button class="secondary full" id="find-water">🔎 Nhặt bình nước</button>
+          </div>
         </aside>
+      </div>
+    </section>
+
+    <section class="tab-page" id="page-breeding">
+      <div class="section-heading"><div><p class="eyebrow">DI TRUYỀN HỌC THỰC VẬT</p><h2>🧬 Trạm lai tạo cây trồng</h2></div><span class="tag">Tạo giống mới</span></div>
+      <div class="feature-panel panel">
+        <p>Chọn hai loại hạt giống đang có trong túi. Lai tạo thành công sẽ tạo ra một giống lai mới với thời gian sinh trưởng và giá thu hoạch riêng.</p>
+        <div class="feature-controls">
+          <label>Cây bố <select id="breed-parent-a"></select></label>
+          <label>Cây mẹ <select id="breed-parent-b"></select></label>
+          <button class="primary" id="breed-button">🌱 Tiến hành lai tạo (10 xu)</button>
+        </div>
+        <p id="breed-result" class="feature-result">Chưa có lượt lai tạo nào.</p>
+        <h3>📖 Sổ giống lai đã khám phá</h3>
+        <div id="hybrid-book" class="hybrid-book">Chưa khám phá giống lai.</div>
+      </div>
+    </section>
+
+    <section class="tab-page" id="page-delivery">
+      <div class="section-heading"><div><p class="eyebrow">VẬN CHUYỂN NÔNG SẢN</p><h2>🚚 Giao hàng đến khu phố</h2></div><span class="tag">Đơn hàng trong thành phố</span></div>
+      <div class="feature-panel panel">
+        <p>Thu hoạch nông sản để tích kho, sau đó chọn khu phố và loại hàng để giao. Giao hàng thành công nhận xu và điểm nghiên cứu.</p>
+        <div class="delivery-stats"><b>📦 Kho nông sản: <span id="produce-total">0</span></b><b>🛵 Đơn đã giao: <span id="delivery-total">0</span></b></div>
+        <div class="feature-controls">
+          <label>Khu phố <select id="delivery-district"><option>Khu dân cư</option><option>Phố ẩm thực</option><option>Khu thương mại</option><option>Công viên xanh</option><option>Trung tâm thành phố</option></select></label>
+          <label>Nông sản <select id="delivery-crop"></select></label>
+          <label>Số lượng <input id="delivery-amount" type="number" min="1" max="5" value="1"></label>
+          <button class="primary" id="delivery-button">📦 Giao đơn hàng</button>
+        </div>
+        <p id="delivery-result" class="feature-result">Chưa có đơn hàng nào.</p>
+        <h3>📋 Nhật ký giao hàng</h3><div id="delivery-history" class="hybrid-book">Chưa có chuyến giao hàng.</div>
       </div>
     </section>
 
@@ -79,6 +117,10 @@
         <article class="shop-card panel"><div class="shop-art">🍓</div><h3>Hạt dâu tây</h3><p>Chờ lâu hơn nhưng thu hoạch nhận 30 xu.</p><div class="shop-bottom"><b>10 xu</b><button class="primary buy-seed" data-seed="strawberry">Mua hạt</button></div></article>
         <article class="shop-card panel quiz-shop"><div class="shop-art">🎟️</div><h3>Phiếu trả lời Quiz</h3><p>Đổi xu vườn lấy 1 phiếu để mở một câu hỏi trên website chính.</p><div class="shop-bottom"><b>25 xu</b><button class="primary" id="buy-ticket">Đổi 1 phiếu</button></div><small class="hint">Phiếu Quiz dùng chung với website AE Cây Khế; xu vườn vẫn là ví riêng.</small></article>
       </div>
+      <h3 class="shop-subtitle">🧬 Hạt giống mở khóa từ nghiên cứu</h3>
+      <p class="hint">Dùng điểm nghiên cứu để khám phá giống cây trong phòng thí nghiệm. Giống đã khám phá sẽ xuất hiện tại đây để mua.</p>
+      <div id="research-seed-shop" class="shop-grid research-seed-shop"></div>
+      <div class="shop-card panel water-shop-card"><div class="shop-art">💧</div><h3>Bình nước tưới cây</h3><p>Mua 1 bình nước để tưới 1 cây chưa được tưới.</p><div class="shop-bottom"><b>4 xu</b><button class="primary" id="buy-water">Mua bình</button></div></div>
       <div class="cart panel"><div><p class="eyebrow">GIỎ ĐỔI THƯỞNG</p><h3>Giỏ hàng của bạn</h3><p id="cart-description">Chưa có giao dịch nào.</p></div><div class="cart-total"><span>Tổng xu đã đổi</span><b id="spent-total">0 xu</b></div></div>
     </section>
 
@@ -95,6 +137,34 @@
         <div class="task"><span>🐾</span><div><b>Kết bạn với thú cưng</b><small>Chơi cùng pet một lần.</small></div><button class="secondary task-btn" data-task="play">Nhận 5 xu</button></div>
         <div class="task"><span>🍃</span><div><b>Thu hoạch thành quả</b><small>Thu hoạch ít nhất một cây.</small></div><button class="secondary task-btn" data-task="harvest">Nhận 10 xu</button></div>
       </div>
+      <section class="story-chapter panel" id="chapter2-story">
+        <div class="story-topline"><span class="story-badge">📖 CHƯƠNG 2</span><span class="story-progress" id="chapter2-progress">0/2 nhiệm vụ</span></div>
+        <h2>Thư viện của người ham học</h2>
+        <p class="story-intro">Thư viện cũ đã mở cửa, nhưng những trang sách quan trọng vẫn đang bị thất lạc. Hãy trò chuyện với Mực để bắt đầu hành trình tìm lại tri thức.</p>
+        <div class="story-npc">
+          <div class="story-npc-avatar" aria-hidden="true">🐈‍⬛</div>
+          <div class="story-npc-dialogue">
+            <b>Mực – Thủ thư</b>
+            <p id="muc-dialogue">“Chào người chăm vườn! Một người làm việc tốt có cần nhìn nhận những khuyết điểm của mình không?”</p>
+          </div>
+        </div>
+        <div class="story-actions" id="muc-start-area">
+          <button class="primary" id="muc-start-quest">💬 Nhận nhiệm vụ từ Mực</button>
+        </div>
+        <div class="story-answers" id="muc-answer-area" hidden>
+          <p class="story-question"><b>Câu hỏi của Mực:</b> Một người làm việc tốt có cần nhìn nhận những khuyết điểm của mình không?</p>
+          <button class="story-answer" data-muc-answer="a">A. Có, để nhận ra sai sót và sửa đổi.</button>
+          <button class="story-answer" data-muc-answer="b">B. Không, chỉ cần quan tâm đến kết quả.</button>
+          <button class="story-answer" data-muc-answer="c">C. Không cần học hỏi thêm.</button>
+        </div>
+        <p class="story-feedback" id="muc-feedback" aria-live="polite">Nhiệm vụ chính: Trò chuyện với Mực và trả lời câu hỏi trong sách.</p>
+        <div class="story-next-step" id="chapter2-next-step" hidden>
+          <b>🔎 Nhiệm vụ tiếp theo: Khám phá tri thức mới</b>
+          <p>Dùng ít nhất 5 điểm nghiên cứu để mở khóa một giống cây trong phòng thí nghiệm.</p>
+          <span id="chapter2-next-status">Tiến độ: Chưa hoàn thành</span>
+        </div>
+        <div class="story-complete" id="chapter2-complete" hidden>🏅 Chương 2 hoàn thành! Bạn đã chứng minh rằng học hỏi và sửa đổi phải đi cùng hành động.</div>
+      </section>
     </section>
 
 
@@ -144,9 +214,9 @@
         </section>
 
         <section class="arcade-game" id="arcade-chicken">
-          <div class="arcade-section-head"><div><p class="arcade-eyebrow">TRÒ CHƠI 03 · 3D FARM</p><h3>🐓 Hội thi gà nông trại 3D</h3><p>Hai chú gà thi chạy nhanh, giữ thăng bằng và phản xạ trong sân nông trại.</p></div><span class="arcade-reward">Thắng +15 điểm nghiên cứu</span></div>
+          <div class="arcade-section-head"><div><p class="arcade-eyebrow">TRÒ CHƠI 03 · PIXEL 2D</p><h3>🐓 Hội thi gà 2D</h3><p>Hai chú gà thi chạy nhanh, giữ thăng bằng và phản xạ trong sân nông trại.</p></div><span class="arcade-reward">Thắng +15 điểm nghiên cứu</span></div>
           <div class="farm3d-wrap">
-            <div id="farm3d-scene" class="farm3d-scene" aria-label="Sân thi đấu gà 3D trong nông trại"></div>
+            <div id="farm3d-scene" class="farm3d-scene" aria-label="Sân hội thi gà hoạt hình 2D pixel"></div>
             <div class="farm3d-caption"><span>🌾 NÔNG TRẠI AE CÂY KHẾ</span><span id="farm3d-status">Sẵn sàng vào hội thi</span></div>
           </div>
           <div class="farm3d-scoreboard">
@@ -161,7 +231,7 @@
             <button class="arcade-skill" data-arcade-skill="guard">🛡️ Né chướng ngại</button>
           </div>
           <div class="arcade-center"><button id="arcade-new-match" class="arcade-secondary">🔄 Hội thi mới</button></div>
-          <p class="arcade-muted arcade-small">Mô hình 3D chạy trực tiếp trên trình duyệt. Cần kết nối Internet để tải thư viện Three.js.</p>
+          <p class="arcade-muted arcade-small">Hội thi hoạt hình 2D pixel: chạy đua, giữ thăng bằng và vượt chướng ngại vật.</p>
         </section>
 
         <section class="arcade-game" id="arcade-rank">
