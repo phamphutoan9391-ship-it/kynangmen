@@ -82,7 +82,7 @@
     <section class="tab-page" id="page-delivery">
       <div class="section-heading"><div><p class="eyebrow">VẬN CHUYỂN NÔNG SẢN</p><h2>🚚 Giao hàng đến khu phố</h2></div><span class="tag">Đơn hàng trong thành phố</span></div>
       <div class="feature-panel panel">
-        <p>Thu hoạch nông sản để tích kho, sau đó chọn khu phố và loại hàng để giao. Giao hàng thành công nhận xu và điểm nghiên cứu.</p>
+        <p>Thu hoạch nông sản để tích kho, sau đó chọn khu phố và loại hàng để giao. Giao hàng thành công nhận xu và điểm bé ngoan.</p>
         <div class="delivery-stats"><b>📦 Kho nông sản: <span id="produce-total">0</span></b><b>🛵 Đơn đã giao: <span id="delivery-total">0</span></b></div>
         <div class="feature-controls">
           <label>Khu phố <select id="delivery-district"><option>Khu dân cư</option><option>Phố ẩm thực</option><option>Khu thương mại</option><option>Công viên xanh</option><option>Trung tâm thành phố</option></select></label>
@@ -117,8 +117,8 @@
         <article class="shop-card panel"><div class="shop-art">🍓</div><h3>Hạt dâu tây</h3><p>Chờ lâu hơn nhưng thu hoạch nhận 30 xu.</p><div class="shop-bottom"><b>10 xu</b><button class="primary buy-seed" data-seed="strawberry">Mua hạt</button></div></article>
         <article class="shop-card panel quiz-shop"><div class="shop-art">🎟️</div><h3>Phiếu trả lời Quiz</h3><p>Đổi xu vườn lấy 1 phiếu để mở một câu hỏi trên website chính.</p><div class="shop-bottom"><b>25 xu</b><button class="primary" id="buy-ticket">Đổi 1 phiếu</button></div><small class="hint">Phiếu Quiz dùng chung với website AE Cây Khế; xu vườn vẫn là ví riêng.</small></article>
       </div>
-      <h3 class="shop-subtitle">🧬 Hạt giống mở khóa từ nghiên cứu</h3>
-      <p class="hint">Dùng điểm nghiên cứu để khám phá giống cây trong phòng thí nghiệm. Giống đã khám phá sẽ xuất hiện tại đây để mua.</p>
+      <h3 class="shop-subtitle">🧬 Hạt giống mở khóa từ bé ngoan</h3>
+      <p class="hint">Dùng điểm bé ngoan để khám phá giống cây trong phòng thí nghiệm. Giống đã khám phá sẽ xuất hiện tại đây để mua.</p>
       <section id="daily-plant-panel" class="daily-plant-panel panel" aria-live="polite"></section>
       <div id="research-seed-shop" class="shop-grid research-seed-shop"></div>
       <div class="shop-card panel water-shop-card"><div class="shop-art">💧</div><h3>Bình nước tưới cây</h3><p>Mua 1 bình nước để tưới 1 cây chưa được tưới.</p><div class="shop-bottom"><b>4 xu</b><button class="primary" id="buy-water">Mua bình</button></div></div>
@@ -161,7 +161,7 @@
         <p class="story-feedback" id="muc-feedback" aria-live="polite">Nhiệm vụ chính: Trò chuyện với Mực và trả lời câu hỏi trong sách.</p>
         <div class="story-next-step" id="chapter2-next-step" hidden>
           <b>🔎 Nhiệm vụ tiếp theo: Khám phá tri thức mới</b>
-          <p>Dùng ít nhất 5 điểm nghiên cứu để mở khóa một giống cây trong phòng thí nghiệm.</p>
+          <p>Dùng ít nhất 5 điểm bé ngoan để mở khóa một giống cây trong phòng thí nghiệm.</p>
           <span id="chapter2-next-status">Tiến độ: Chưa hoàn thành</span>
         </div>
         <div class="story-complete" id="chapter2-complete" hidden>🏅 Chương 2 hoàn thành! Bạn đã chứng minh rằng học hỏi và sửa đổi phải đi cùng hành động.</div>
@@ -172,13 +172,13 @@
     <section class="tab-page" id="page-challenges">
       <div class="section-heading">
         <div><p class="eyebrow">KHU GIẢI TRÍ TRONG NÔNG TRẠI</p><h2>🎮 Sảnh thử thách</h2></div>
-        <span class="tag">🔬 Điểm nghiên cứu</span>
+        <span class="tag">🔬 Điểm bé ngoan</span>
       </div>
       <div class="challenge-arcade">
         <div class="arcade-intro">
           <div><p class="arcade-eyebrow">PIXEL ARCADE · AE CÂY KHẾ</p>
-            <h2>Chơi vui, tích lũy điểm nghiên cứu!</h2>
-            <p>Thử thách giải trí và khu nghiên cứu cây trồng; phần thưởng thu hoạch được cộng vào kho xu và hạt giống.</p>
+            <h2>Chơi vui, tích lũy điểm bé ngoan!</h2>
+            <p>Thử thách giải trí và khu bé ngoan cây trồng; phần thưởng thu hoạch được cộng vào kho xu và hạt giống.</p>
           </div>
           <div class="arcade-score">🏆 <span id="arcade-total-score">0</span><small>điểm bé ngoan</small></div>
         </div>
@@ -215,7 +215,7 @@
         </section>
 
         <section class="arcade-game" id="arcade-chicken">
-          <div class="arcade-section-head"><div><p class="arcade-eyebrow">TRÒ CHƠI 03 · PIXEL 2D</p><h3>🐓 Hội thi gà 2D</h3><p>Hai chú gà thi chạy nhanh, giữ thăng bằng và phản xạ trong sân nông trại.</p></div><span class="arcade-reward">Thắng +15 điểm nghiên cứu</span></div>
+          <div class="arcade-section-head"><div><p class="arcade-eyebrow">TRÒ CHƠI 03 · PIXEL 2D</p><h3>🐓 Hội thi gà 2D</h3><p>Hai chú gà thi chạy nhanh, giữ thăng bằng và phản xạ trong sân nông trại.</p></div><span class="arcade-reward">Thắng +15 điểm bé ngoan</span></div>
           <div class="farm3d-wrap">
             <div id="farm3d-scene" class="farm3d-scene" aria-label="Sân hội thi gà hoạt hình 2D pixel"></div>
             <div class="farm3d-caption"><span>🌾 NÔNG TRẠI AE CÂY KHẾ</span><span id="farm3d-status">Sẵn sàng vào hội thi</span></div>
@@ -238,9 +238,9 @@
         <section class="arcade-game" id="arcade-rank">
           <div class="arcade-section-head">
             <div>
-              <p class="arcade-eyebrow">NÔNG NGHIỆP · NGHIÊN CỨU GIỐNG MỚI</p>
+              <p class="arcade-eyebrow">NÔNG NGHIỆP · bé ngoan GIỐNG MỚI</p>
               <h3>🧪 Khu thí nghiệm tiến hóa cây trồng</h3>
-              <p>Chăm sóc cây đến khi chín, thu hoạch để nhận xu thưởng, hạt giống và điểm nghiên cứu.</p>
+              <p>Chăm sóc cây đến khi chín, thu hoạch để nhận xu thưởng, hạt giống và điểm bé ngoan.</p>
             </div>
           </div>
 
@@ -248,7 +248,7 @@
             <div class="evolution-lab-icon">🧬</div>
             <div>
               <span class="lab-kicker">PHÒNG THÍ NGHIỆM AE CÂY KHẾ</span>
-              <h3>Cấp nghiên cứu <b id="lab-level">1</b></h3>
+              <h3>Cấp bé ngoan <b id="lab-level">1</b></h3>
               <p id="lab-unlocks">Cấp 2 mở Việt quất · Cấp 4 mở Hoa ánh trăng</p>
             </div>
           </div>
@@ -261,7 +261,7 @@
 
           <div class="lab-progress-card">
             <div class="lab-progress-heading">
-              <b>Tiến độ nghiên cứu tiến hóa</b>
+              <b>Tiến độ bé ngoan tiến hóa</b>
               <span id="lab-next">Còn 30 điểm bé ngoan để lên cấp</span>
             </div>
             <div class="lab-progress-track"><span id="lab-progress"></span></div>
@@ -269,21 +269,21 @@
 
           <div class="collection-lab panel">
             <h3>🌿 Ngân hàng gen & bộ sưu tập</h3>
-            <p>Khám phá 1.140 giống cây trồng (140 giống ban đầu + 1.000 biến thể mới), 100 cây nghiên cứu, 40 pet và 40 giống gà.</p>
-            <div class="collection-stats"><div>🌱 Cây trồng <b id="count-crops">0/1140</b></div><div>🧬 Cây nghiên cứu <b id="count-research">0/100</b></div><div>🐾 Pet <b id="count-pets">0/40</b></div><div>🐓 Giống gà <b id="count-chickens">0/40</b></div></div>
-            <div class="gacha-actions"><button class="primary" id="collect-crop">🌱 Mở giống cây (5 điểm)</button><button class="primary" id="research-crop">🔬 Nghiên cứu cây (5 điểm)</button><button class="secondary" id="hatch-pet">🥚 Khám phá pet (10 điểm)</button><button class="secondary" id="hatch-chicken">🐣 Khám phá giống gà (10 điểm)</button></div>
+            <p>Khám phá 1.140 giống cây trồng (140 giống ban đầu + 1.000 biến thể mới), 100 cây bé ngoan, 40 pet và 40 giống gà.</p>
+            <div class="collection-stats"><div>🌱 Cây trồng <b id="count-crops">0/1140</b></div><div>🧬 Cây bé ngoan <b id="count-research">0/100</b></div><div>🐾 Pet <b id="count-pets">0/40</b></div><div>🐓 Giống gà <b id="count-chickens">0/40</b></div></div>
+            <div class="gacha-actions"><button class="primary" id="collect-crop">🌱 Mở giống cây (5 điểm)</button><button class="primary" id="research-crop">🔬 bé ngoan cây (5 điểm)</button><button class="secondary" id="hatch-pet">🥚 Khám phá pet (10 điểm)</button><button class="secondary" id="hatch-chicken">🐣 Khám phá giống gà (10 điểm)</button></div>
             <p id="collection-result" class="hint">Dùng điểm bé ngoan để mở khóa bộ sưu tập. Không đặt cược; mục mới được ưu tiên.</p><div id="collection-book" class="collection-book"></div>
           </div>
           <div class="lab-reward-info">
             <h4>🎁 Phần thưởng khi cây chín</h4>
             <p>🪙 Nhận xu theo loại cây và thêm xu thưởng theo cấp phòng thí nghiệm.</p>
             <p>🌱 Nhận thêm 1 hạt giống cùng loại sau mỗi lần thu hoạch.</p>
-            <p>🔬 Nhận 10 điểm nghiên cứu để nâng cấp phòng thí nghiệm và mở giống cây mới.</p>
+            <p>🔬 Nhận 10 điểm bé ngoan để nâng cấp phòng thí nghiệm và mở giống cây mới.</p>
           </div>
 
           <div hidden aria-hidden="true">
             <span id="arcade-rank-score">0</span><span id="arcade-rank-points">0</span>
-            <span id="arcade-games-played">0</span><span id="arcade-badge">Nhà nghiên cứu </span>
+            <span id="arcade-games-played">0</span><span id="arcade-badge">Nhà bé ngoan </span>
             <span id="online-status"></span><input id="player-nickname">
             <button id="save-player-profile" type="button"></button>
             <span id="leaderboard-message"></span><button id="refresh-leaderboard" type="button"></button>
