@@ -110,7 +110,7 @@
     </section>
 
     <section class="tab-page" id="page-shop">
-      <div class="section-heading"><div><p class="eyebrow">DÙNG XU bé ngoan TRONG GAME</p><h2>Cửa hàng khu vườn</h2></div><span class="tag">🪙 Xu riêng của nông trại</span></div>
+      <div class="section-heading"><div><p class="eyebrow">DÙNG XU TRONG GAME</p><h2>Cửa hàng khu vườn</h2></div><span class="tag">🪙 Xu riêng của nông trại</span></div>
       <div class="shop-grid">
         <article class="shop-card panel"><div class="shop-art">🌻</div><h3>Hạt hướng dương</h3><p>Trồng nhanh, thu hoạch nhận 12 xu.</p><div class="shop-bottom"><b>4 xu</b><button class="primary buy-seed" data-seed="sunflower">Mua hạt</button></div></article>
         <article class="shop-card panel"><div class="shop-art">🥕</div><h3>Hạt cà rốt</h3><p>Cây dễ chăm, thu hoạch nhận 18 xu.</p><div class="shop-bottom"><b>6 xu</b><button class="primary buy-seed" data-seed="carrot">Mua hạt</button></div></article>
@@ -119,6 +119,7 @@
       </div>
       <h3 class="shop-subtitle">🧬 Hạt giống mở khóa từ nghiên cứu</h3>
       <p class="hint">Dùng điểm nghiên cứu để khám phá giống cây trong phòng thí nghiệm. Giống đã khám phá sẽ xuất hiện tại đây để mua.</p>
+      <section id="daily-plant-panel" class="daily-plant-panel panel" aria-live="polite"></section>
       <div id="research-seed-shop" class="shop-grid research-seed-shop"></div>
       <div class="shop-card panel water-shop-card"><div class="shop-art">💧</div><h3>Bình nước tưới cây</h3><p>Mua 1 bình nước để tưới 1 cây chưa được tưới.</p><div class="shop-bottom"><b>4 xu</b><button class="primary" id="buy-water">Mua bình</button></div></div>
       <div class="cart panel"><div><p class="eyebrow">GIỎ ĐỔI THƯỞNG</p><h3>Giỏ hàng của bạn</h3><p id="cart-description">Chưa có giao dịch nào.</p></div><div class="cart-total"><span>Tổng xu đã đổi</span><b id="spent-total">0 xu</b></div></div>
@@ -176,7 +177,7 @@
       <div class="challenge-arcade">
         <div class="arcade-intro">
           <div><p class="arcade-eyebrow">PIXEL ARCADE · AE CÂY KHẾ</p>
-            <h2>Chơi vui, tích lũy điểm bé ngoan!</h2>
+            <h2>Chơi vui, tích lũy điểm nghiên cứu!</h2>
             <p>Thử thách giải trí và khu nghiên cứu cây trồng; phần thưởng thu hoạch được cộng vào kho xu và hạt giống.</p>
           </div>
           <div class="arcade-score">🏆 <span id="arcade-total-score">0</span><small>điểm bé ngoan</small></div>
@@ -268,8 +269,8 @@
 
           <div class="collection-lab panel">
             <h3>🌿 Ngân hàng gen & bộ sưu tập</h3>
-            <p>Khám phá 140 cây trồng, 100 cây nghiên cứu, 40 pet và 40 giống gà.</p>
-            <div class="collection-stats"><div>🌱 Cây trồng <b id="count-crops">0/140</b></div><div>🧬 Cây nghiên cứu <b id="count-research">0/100</b></div><div>🐾 Pet <b id="count-pets">0/40</b></div><div>🐓 Giống gà <b id="count-chickens">0/40</b></div></div>
+            <p>Khám phá 1.140 giống cây trồng (140 giống ban đầu + 1.000 biến thể mới), 100 cây nghiên cứu, 40 pet và 40 giống gà.</p>
+            <div class="collection-stats"><div>🌱 Cây trồng <b id="count-crops">0/1140</b></div><div>🧬 Cây nghiên cứu <b id="count-research">0/100</b></div><div>🐾 Pet <b id="count-pets">0/40</b></div><div>🐓 Giống gà <b id="count-chickens">0/40</b></div></div>
             <div class="gacha-actions"><button class="primary" id="collect-crop">🌱 Mở giống cây (5 điểm)</button><button class="primary" id="research-crop">🔬 Nghiên cứu cây (5 điểm)</button><button class="secondary" id="hatch-pet">🥚 Khám phá pet (10 điểm)</button><button class="secondary" id="hatch-chicken">🐣 Khám phá giống gà (10 điểm)</button></div>
             <p id="collection-result" class="hint">Dùng điểm bé ngoan để mở khóa bộ sưu tập. Không đặt cược; mục mới được ưu tiên.</p><div id="collection-book" class="collection-book"></div>
           </div>
