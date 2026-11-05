@@ -95,6 +95,7 @@ var daTraLoi = false;
 var soPhieu = Math.max(0, Number(localStorage.getItem("soPhieuQuiz")) || 0);
 var cauHoiDaMo = false;
 
+// Cap nhat so phieu va trang thai mo cau hoi.
 function capNhatPhieu() {
     soPhieu = Math.max(0, Number(soPhieu) || 0);
     localStorage.setItem("soPhieuQuiz", String(soPhieu));
@@ -120,6 +121,7 @@ function capNhatPhieu() {
     }
 }
 
+// Luôn đọc lại ví phiếu khi nông trại đổi phiếu ở tab khác.
 window.addEventListener("storage", function(event) {
     if (event.key === "soPhieuQuiz") {
         soPhieu = Math.max(0, Number(event.newValue) || 0);
@@ -131,6 +133,7 @@ window.addEventListener("ae-quiz-wallet-updated", function() {
     capNhatPhieu();
 });
 
+// Nhan phieu duoc gui tu game Halloween trong iframe.
 window.addEventListener("message", function(event) {
     var duLieu = event.data;
     var khungGame = document.getElementById("halloweenGameFrame");
@@ -158,6 +161,7 @@ window.addEventListener("message", function(event) {
         " phiếu câu hỏi. Phiếu đã được chuyển vào Quiz 8 câu!";
 });
 
+// Dung 1 phieu de mo mot cau hoi.
 function moCauHoi() {
     if (soPhieu <= 0 || cauHoiDaMo === true) {
         return;
@@ -259,7 +263,7 @@ function cauTiepTheo() {
         viTriCauHoi = viTriCauHoi + 1;
         hienThiCauHoi();
     } else {
-    
+        // Hien thi ket qua cuoi cung
         cauHoiDaMo = true;
         capNhatPhieu();
         document.getElementById("demCau").innerHTML = "Hoàn thành";

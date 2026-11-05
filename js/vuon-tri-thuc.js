@@ -12,6 +12,15 @@
   const defaultState = {
     coins:30, level:1, harvests:0, totalSpent:0, researchPoints:0, labLevel:1, bonusSeeds:0,
     waterBottles:2, waterPickupAt:0, unlockedResearchSeeds:[],
+    weatherTools:{shadeNet:false,greenhouse:false,drainage:false,windbreak:false},
+    agriculture:{
+      soil:Array.from({length:6},()=>({fertility:72,organicMatter:48,moisture:62,compaction:18,lastUpdated:Date.now()})),
+      plotStatus:Array.from({length:6},()=>({pestLoad:0,diseaseLoad:0,pest:"",disease:"",health:100})),
+      inventory:{compost:3,organicSpray:2,feed:4,manure:0},
+      beneficial:{ladybugs:0,bees:0},
+      livestock:{chicken:1,cow:0,goat:0,eggs:0,milk:0,products:{eggs:0,milk:0,manure:0},hunger:75,water:75,health:100,lastCare:Date.now()},
+      lastDailyKey:"",marketKey:"",marketPrices:{}
+    },
     hybrids:{}, produce:{}, deliveryCount:0, deliveryHistory:[], collections:{crops:[],research:[],pets:[],chickens:[]}, activePet:null, activeChicken:null, pet:{name:"Mèo Mướp",icon:"🐱",hunger:70,bond:0,variant:"normal",bonus:0},
     selectedSeed:"sunflower", seeds:{sunflower:3,carrot:1,strawberry:0,blueberry:0,moonflower:0},
     plots:Array(6).fill(null), tasks:{plant:false,water:false,play:false,harvest:false},
@@ -22,6 +31,7 @@
   };
   let state = loadState();
   let trackSeasonalEventAction = function(){};
+  let farmScienceSystem = null;
   
   try {
     const arcadeData = JSON.parse(localStorage.getItem("aeCayKhe_thanhTichSanThuThach") || "{}");
@@ -40,13 +50,22 @@
           waterBottles:Math.max(0,Number(saved.waterBottles ?? defaultState.waterBottles)||0),
           waterPickupAt:Number(saved.waterPickupAt)||0,
           unlockedResearchSeeds:Array.isArray(saved.unlockedResearchSeeds)?saved.unlockedResearchSeeds:[],
+          agriculture:{
+            ...defaultState.agriculture,...(saved.agriculture||{}),
+            soil:Array.from({length:6},(_,i)=>({...defaultState.agriculture.soil[i],...((saved.agriculture&&saved.agriculture.soil&&saved.agriculture.soil[i])||{})})),
+            plotStatus:Array.from({length:6},(_,i)=>({...defaultState.agriculture.plotStatus[i],...((saved.agriculture&&saved.agriculture.plotStatus&&saved.agriculture.plotStatus[i])||{})})),
+            inventory:{...defaultState.agriculture.inventory,...((saved.agriculture&&saved.agriculture.inventory)||{})},
+            beneficial:{...defaultState.agriculture.beneficial,...((saved.agriculture&&saved.agriculture.beneficial)||{})},
+            livestock:{...defaultState.agriculture.livestock,...((saved.agriculture&&saved.agriculture.livestock)||{})},
+            marketPrices:(saved.agriculture&&saved.agriculture.marketPrices)||{}
+          },
           collections:{...defaultState.collections,...(saved.collections||{})},
           hybrids:saved.hybrids||{}, produce:saved.produce||{}, deliveryCount:saved.deliveryCount||0, deliveryHistory:saved.deliveryHistory||[],
           seeds:{...defaultState.seeds,...saved.seeds},
           tasks:{...defaultState.tasks,...saved.tasks},
           story:{...defaultState.story,...(saved.story||{})},
           dailyPlant:{...defaultState.dailyPlant,...(saved.dailyPlant||{})},
-          plots:Array.isArray(saved.plots)?saved.plots.slice(0,6):Array(6).fill(null)};
+          plots:Array.from({length:6},(_,i)=>Array.isArray(saved.plots)&&saved.plots[i]?{...saved.plots[i],soilIndex:Number.isInteger(saved.plots[i].soilIndex)?saved.plots[i].soilIndex:i}:null)};
       }
     }catch(e){}
     return structuredClone(defaultState);
@@ -56,6 +75,109 @@
   function setCoins(value){state.coins=Math.max(0,Math.floor(value));save();render();}
   function notify(message){const el=$("toast");el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2400);}
 
+  // HE THONG THOI TIET CUC DOAN - mo phong trong game, khong lam mat cay.
+  const weatherSystem = (() => {
+    const ZONE = "Asia/Ho_Chi_Minh";
+    const weatherList = [
+      {id:"sunny",weight:22,name:"Nắng đẹp",icon:"☀️",multiplier:1.10,desc:"Ánh nắng thuận lợi giúp cây gieo hôm nay phát triển nhanh hơn 10%.",effect:"Tăng tốc độ sinh trưởng 10%.",color:"sun"},
+      {id:"cloudy",weight:18,name:"Nhiều mây",icon:"☁️",multiplier:1.00,desc:"Thời tiết ổn định, cây phát triển theo tốc độ bình thường.",effect:"Không tăng hoặc giảm tốc độ.",color:"cloud"},
+      {id:"rain",weight:15,name:"Mưa rào",icon:"🌧️",multiplier:1.00,naturalWater:true,desc:"Mưa tự tưới miễn phí cho cây mới gieo hôm nay.",effect:"Cây mới gieo được tưới tự động, không tốn bình nước.",color:"rain"},
+      {id:"heatwave",weight:10,name:"Nắng nóng gay gắt",icon:"🥵",multiplier:0.78,desc:"Nhiệt độ cao làm cây mới gieo phát triển chậm hơn. Lưới che nắng giúp giảm ảnh hưởng.",effect:"Giảm tốc độ sinh trưởng 22%.",color:"hot"},
+      {id:"drought",weight:8,name:"Hạn hán",icon:"🏜️",multiplier:0.65,desc:"Đất khô khiến cây mới gieo phát triển chậm. Lưới che nắng giúp giữ ẩm tốt hơn.",effect:"Giảm tốc độ sinh trưởng 35%.",color:"dry"},
+      {id:"thunderstorm",weight:9,name:"Mưa dông",icon:"⛈️",multiplier:0.76,desc:"Mưa dông làm việc chăm sóc khó khăn hơn. Rãnh thoát nước giúp bảo vệ khu vườn.",effect:"Giảm tốc độ sinh trưởng 24%.",color:"storm"},
+      {id:"cold",weight:7,name:"Rét đậm",icon:"🥶",multiplier:0.76,desc:"Không khí lạnh làm cây mới gieo phát triển chậm. Nhà kính giúp giảm tác động.",effect:"Giảm tốc độ sinh trưởng 24%.",color:"cold"},
+      {id:"frost",weight:4,name:"Sương giá",icon:"❄️",multiplier:0.62,desc:"Sương giá làm cây non phát triển chậm. Nhà kính có thể bảo vệ cây.",effect:"Giảm tốc độ sinh trưởng 38%.",color:"frost"},
+      {id:"windstorm",weight:4,name:"Gió giật mạnh",icon:"🌬️",multiplier:0.72,desc:"Gió mạnh ảnh hưởng cây mới gieo. Hàng cây chắn gió giúp giảm tác động.",effect:"Giảm tốc độ sinh trưởng 28%.",color:"wind"},
+      {id:"hail",weight:3,name:"Mưa đá",icon:"🌨️",multiplier:0.58,desc:"Mưa đá làm cây non phát triển chậm nhưng không phá hủy cây. Hàng cây chắn gió giúp che chắn.",effect:"Giảm tốc độ sinh trưởng 42%, không làm mất cây.",color:"hail"}
+    ];
+    const upgrades = [
+      {id:"shadeNet",name:"Lưới che nắng",icon:"⛱️",cost:70,research:15,desc:"Giảm ảnh hưởng của nắng nóng và hạn hán."},
+      {id:"greenhouse",name:"Nhà kính mini",icon:"🏡",cost:120,research:30,desc:"Giảm ảnh hưởng của rét đậm và sương giá."},
+      {id:"drainage",name:"Rãnh thoát nước",icon:"💧",cost:90,research:20,desc:"Giảm ảnh hưởng của mưa dông."},
+      {id:"windbreak",name:"Hàng cây chắn gió",icon:"🌳",cost:100,research:25,desc:"Giảm ảnh hưởng của gió giật và mưa đá."}
+    ];
+
+    function getDateParts(offsetDays=0){
+      const date=new Date(Date.now()+offsetDays*86400000);
+      const parts=new Intl.DateTimeFormat("en-CA",{timeZone:ZONE,year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(date);
+      const get=name=>Number(parts.find(part=>part.type===name)?.value||0);
+      const y=get("year"),m=get("month"),d=get("day");
+      return {y,m,d,key:y+"-"+String(m).padStart(2,"0")+"-"+String(d).padStart(2,"0")};
+    }
+    function hash(text){let h=2166136261;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+    function getForDate(date){
+      const roll=hash(date.key)%100;let total=0;
+      for(const item of weatherList){total+=item.weight;if(roll<total)return item;}
+      return weatherList[0];
+    }
+    function getToday(){return getForDate(getDateParts(0));}
+    function getTomorrow(){return getForDate(getDateParts(1));}
+    function getNextMidnight(){
+      const date=getDateParts(0);
+      return Date.UTC(date.y,date.m-1,date.d+1)-7*60*60*1000;
+    }
+    function getPlantEffect(){
+      const weather=getToday(),tools=state.weatherTools||{};
+      let multiplier=weather.multiplier;
+      let note=weather.effect;
+      if(weather.id==="heatwave"&&tools.shadeNet){multiplier+=0.15;note="Lưới che nắng giảm ảnh hưởng nắng nóng; tốc độ còn giảm nhẹ.";}
+      if(weather.id==="drought"&&tools.shadeNet){multiplier+=0.20;note="Lưới che nắng giúp giữ ẩm; cây phát triển tốt hơn.";}
+      if(weather.id==="thunderstorm"&&tools.drainage){multiplier+=0.18;note="Rãnh thoát nước đã giảm ảnh hưởng mưa dông.";}
+      if((weather.id==="cold"||weather.id==="frost")&&tools.greenhouse){multiplier+=weather.id==="frost"?0.25:0.20;note="Nhà kính mini giúp bảo vệ cây trước không khí lạnh.";}
+      if((weather.id==="windstorm"||weather.id==="hail")&&tools.windbreak){multiplier+=weather.id==="hail"?0.18:0.20;note="Hàng cây chắn gió giúp bảo vệ cây non.";}
+      return {weather,multiplier:Math.max(0.55,Math.min(1.2,multiplier)),naturalWater:!!weather.naturalWater,note};
+    }
+    function buyUpgrade(id){
+      const item=upgrades.find(x=>x.id===id);if(!item)return;
+      state.weatherTools=state.weatherTools||{};
+      if(state.weatherTools[id]){notify("Bạn đã có công trình này rồi.");return;}
+      if(state.coins<item.cost){notify("Cần "+item.cost+" xu để xây "+item.name+".");return;}
+      if((state.researchPoints||0)<item.research){notify("Cần "+item.research+" điểm bé ngoan để xây "+item.name+".");return;}
+      state.coins-=item.cost;state.researchPoints-=item.research;state.weatherTools[id]=true;
+      state.lastAction="Xây công trình bảo vệ thời tiết: "+item.name;
+      save();render();renderPanel();notify("Đã xây "+item.name+"! Công trình sẽ bảo vệ các cây gieo từ hôm nay trở đi.");
+    }
+    function ensurePanel(){
+      let panel=document.getElementById("farm-weather-panel");if(panel)return panel;
+      panel=document.createElement("section");panel.id="farm-weather-panel";panel.className="farm-weather-panel panel";
+      panel.innerHTML='<div class="weather-heading"><div><p class="weather-kicker">KHÍ HẬU MÔ PHỎNG · GIỜ VIỆT NAM</p><h2>🌦️ Trạm thời tiết nông trại</h2></div><span class="weather-live-tag">Cập nhật mỗi ngày</span></div><div class="weather-main" id="weather-main"></div><div class="weather-tools-wrap"><h3>🛡️ Công trình bảo vệ cây trồng</h3><p class="weather-note">Cây không bị phá hủy bởi thời tiết. Công trình giúp giảm tác động bất lợi cho những cây được gieo sau khi xây.</p><div class="weather-tools-grid" id="weather-tools-grid"></div></div>';
+      const weekly=document.getElementById("weekly-update-panel"),eventPanel=document.getElementById("seasonal-event-panel"),welcome=document.querySelector(".game-wrap .welcome");
+      if(weekly)weekly.insertAdjacentElement("afterend",panel);else if(eventPanel)eventPanel.insertAdjacentElement("afterend",panel);else if(welcome)welcome.insertAdjacentElement("afterend",panel);
+      panel.addEventListener("click",event=>{
+        const button=event.target.closest("[data-weather-upgrade]");if(!button||button.disabled)return;
+        const id=button.dataset.weatherUpgrade,item=upgrades.find(x=>x.id===id);if(!item)return;
+        askBeforeFarmAction("Xây công trình "+item.name,()=>buyUpgrade(id));
+      });
+      return panel;
+    }
+    function renderPanel(){
+      const panel=ensurePanel(),today=getToday(),tomorrow=getTomorrow(),effect=getPlantEffect(),tools=state.weatherTools||{};
+      const weatherMain=panel.querySelector("#weather-main");
+      weatherMain.innerHTML='<article class="weather-current weather-'+today.color+'"><div class="weather-icon">'+today.icon+'</div><div class="weather-copy"><small>THỜI TIẾT HÔM NAY</small><h3>'+today.name+'</h3><p>'+today.desc+'</p><b>Ảnh hưởng: '+effect.note+'</b></div></article><div class="weather-forecast"><div><small>DỰ BÁO NGÀY MAI</small><strong>'+tomorrow.icon+' '+tomorrow.name+'</strong><p>'+tomorrow.effect+'</p></div><div class="weather-count"><small>ĐỔI THỜI TIẾT SAU</small><strong id="weather-countdown">--:--:--</strong></div></div><p class="weather-simulation-note">Thời tiết được mô phỏng cố định theo ngày để mọi người chơi có cùng thử thách; không phải dự báo khí tượng ngoài đời.</p>';
+      panel.querySelector("#weather-tools-grid").innerHTML=upgrades.map(item=>{
+        const owned=!!tools[item.id];
+        return '<article class="weather-tool"><div class="weather-tool-icon">'+item.icon+'</div><div class="weather-tool-copy"><b>'+item.name+'</b><small>'+item.desc+'</small><small>Giá: '+item.cost+' xu · '+item.research+' điểm bé ngoan</small></div><button type="button" class="weather-upgrade-button" data-weather-upgrade="'+item.id+'" '+(owned?'disabled':'')+'>'+(owned?'✓ Đã xây':'Xây dựng')+'</button></article>';
+      }).join("");
+      updateCountdown();
+    }
+    function updateCountdown(){
+      const el=document.getElementById("weather-countdown");if(!el)return;
+      const left=Math.max(0,getNextMidnight()-Date.now()),hours=String(Math.floor(left/3600000)).padStart(2,"0"),minutes=String(Math.floor(left%3600000/60000)).padStart(2,"0"),seconds=String(Math.floor(left%60000/1000)).padStart(2,"0");
+      el.textContent=hours+":"+minutes+":"+seconds;
+    }
+    function init(){
+      state.weatherTools={...{shadeNet:false,greenhouse:false,drainage:false,windbreak:false},...(state.weatherTools||{})};
+      renderPanel();
+      let currentKey=getDateParts(0).key;
+      setInterval(()=>{updateCountdown();const newKey=getDateParts(0).key;if(newKey!==currentKey){currentKey=newKey;renderPanel();notify("🌦️ Thời tiết nông trại đã thay đổi! Hãy xem dự báo hôm nay.");}},1000);
+      window.addEventListener("focus",()=>{const newKey=getDateParts(0).key;if(newKey!==currentKey){currentKey=newKey;renderPanel();}else updateCountdown();});
+      document.addEventListener("visibilitychange",()=>{if(!document.hidden){const newKey=getDateParts(0).key;if(newKey!==currentKey){currentKey=newKey;renderPanel();}else updateCountdown();}});
+      save();
+    }
+    return {getPlantEffect,init,renderPanel};
+  })();
+
+  // Bo cau hoi dung chung: moi thao tac lam thay doi tien trinh deu phai qua cau hoi sach.
   const bookQuestions = [
     {q:"Tác phẩm Sửa đổi lối làm việc được viết vào thời gian nào?",a:["Tháng 10 năm 1947","Tháng 8 năm 1945","Tháng 5 năm 1954","Tháng 9 năm 1969"],correct:0,why:"Tác phẩm được viết vào tháng 10-1947 tại Việt Bắc."},
     {q:"Bút danh được dùng khi viết tác phẩm là gì?",a:["Nguyễn Ái Quốc","T.Lan","X.Y.Z","Trần Dân Tiên"],correct:2,why:"Tác phẩm Sửa đổi lối làm việc được ký bút danh X.Y.Z."},
@@ -172,8 +294,13 @@
     if(state.plots[index]){harvest(index);return;}
     const type=state.selectedSeed, seed=seeds[type];
     if(!seed || (state.seeds[type]||0)<=0){notify("Bạn đã hết hạt giống này. Hãy mua thêm trong cửa hàng.");return;}
-    state.seeds[type]--;state.plots[index]={type,plantedAt:Date.now(),watered:false};
-    state.tasks.plant=true;trackSeasonalEventAction("plant",type,1);save();render();notify("Đã gieo "+seed.name+"! Cây sẽ lớn dần.");
+    const plantedAt=Date.now();
+    const weatherEffect=weatherSystem.getPlantEffect();
+    state.seeds[type]--;
+    state.plots[index]={type,plantedAt,watered:weatherEffect.naturalWater,wateredAt:weatherEffect.naturalWater?plantedAt:0,weatherMultiplier:weatherEffect.multiplier,weatherName:weatherEffect.weather.name,soilIndex:index};
+    if(farmScienceSystem)farmScienceSystem.onPlant(index);
+    state.tasks.plant=true;trackSeasonalEventAction("plant",type,1);save();render();
+    notify("Đã gieo "+seed.name+"! Thời tiết: "+weatherEffect.weather.name+". "+(weatherEffect.naturalWater?"Mưa đã tưới miễn phí cho cây. ":weatherEffect.note));
   }
   function progress(plot){
     if(!plot)return 0;
@@ -185,7 +312,9 @@
       const after=Math.max(0,now-plot.wateredAt);
       elapsed=before+after*1.5;
     }
-    return Math.min(1,elapsed/(seed.seconds*1000));
+    const weatherMultiplier=Math.max(0.55,Number(plot.weatherMultiplier)||1);
+    const scienceMultiplier=farmScienceSystem?farmScienceSystem.getGrowthFactor(plot):1;
+    return Math.min(1,(elapsed*weatherMultiplier*scienceMultiplier)/(seed.seconds*1000));
   }
   function cropStage(plot){
     const p=progress(plot);if(p>=1)return 3;if(p>=.55)return 2;if(p>=.2)return 1;return 0;
@@ -210,6 +339,7 @@
     const seedBonus=1;
     state.coins+=seed.reward+coinBonus;
     state.seeds[plot.type]=(state.seeds[plot.type]||0)+seedBonus;
+    if(farmScienceSystem)farmScienceSystem.onHarvest(index);
     state.produce=state.produce||{};
     state.produce[plot.type]=(state.produce[plot.type]||0)+1;
     state.bonusSeeds=(state.bonusSeeds||0)+seedBonus;
@@ -231,7 +361,7 @@
     if(!growing.length){notify("Không có cây nào cần tưới.");return;}
     if((state.waterBottles||0)<growing.length){notify("Cần "+growing.length+" bình nước để tưới hết cây. Hãy nhặt hoặc mua thêm.");return;}
     state.waterBottles-=growing.length;
-    growing.forEach(p=>{p.watered=true;p.wateredAt=Date.now();});
+    growing.forEach(p=>{p.watered=true;p.wateredAt=Date.now();const soilIndex=Number.isInteger(p.soilIndex)?p.soilIndex:state.plots.indexOf(p);const soil=state.agriculture.soil[soilIndex];soil.moisture=Math.min(100,(soil.moisture||0)+38);soil.lastUpdated=Date.now();});
     state.tasks.water=true;trackSeasonalEventAction("water",null,growing.length);save();render();notify("Đã dùng "+growing.length+" bình nước. Cây phát triển nhanh hơn 50%! 💧");
   }
   function findWater(){
@@ -291,7 +421,10 @@
       if(!plot){button.innerHTML='<span class="crop">＋</span><small>Ô đất trống</small>';button.addEventListener("click",()=>askBeforeFarmAction("Trồng cây",()=>plant(index)));}
       else{
         const stage=cropStage(plot),seed=seeds[plot.type],remaining=Math.max(0,Math.ceil(seed.seconds*(1-progress(plot))));
-        button.innerHTML='<span class="crop">'+cropIcons[plot.type][stage]+'</span><small>'+seed.name+' · '+(stage===3?"Đã chín":remaining+" giây")+'</small>';
+        const lifeStage=farmScienceSystem?farmScienceSystem.getStageLabel(progress(plot)):(stage===3?"Đã chín":"Đang lớn");
+        const cropStageIcon=(cropIcons[plot.type]||["🌱","🌿","🍃",seed.icon])[stage]||seed.icon;
+        button.innerHTML='<span class="crop">'+cropStageIcon+'</span><small>'+seed.name+' · '+(stage===3?"Đã chín":lifeStage+" · "+remaining+" giây")+'</small>';
+        button.title=plot.weatherName?"Thời tiết lúc gieo: "+plot.weatherName:"Cây đang phát triển";
         button.addEventListener("click",()=>{if(progress(plot)>=1)askBeforeFarmAction("Thu hoạch cây",()=>harvest(index));else notify("Cây chưa chín đâu! Hãy chờ thêm một chút.");});
       }
       $("plots").appendChild(button);
@@ -312,6 +445,8 @@
 
   const makeCatalog=(prefixes,suffixes,icons,count,kind)=>{const out=[];for(let i=0;i<count;i++){out.push({id:kind+'_'+(i+1),name:prefixes[i%prefixes.length]+' '+suffixes[Math.floor(i/prefixes.length)%suffixes.length],icon:icons[i%icons.length],rank:i%20===0?'Huyền thoại':i%5===0?'Hiếm':'Thường',power:5+(i*7)%46,bonus:1+(i*3)%12});}return out;};
 
+  // 1.000 GIỐNG CÂY BỔ SUNG: 100 loài cây x 10 biến thể trong game.
+  // Các biến thể đặc biệt giúp người chơi có thêm mục tiêu sưu tầm/bé ngoan.
   const extraCropSpecies = [
     {name:'Xoài',icon:'🥭'},{name:'Chuối',icon:'🍌'},{name:'Dứa',icon:'🍍'},{name:'Đu đủ',icon:'🍈'},
     {name:'Thanh long',icon:'🐉'},{name:'Dưa hấu',icon:'🍉'},{name:'Dưa lưới',icon:'🍈'},{name:'Dưa gang',icon:'🍈'},
@@ -382,7 +517,11 @@
     state.seeds[key]=state.seeds[key]||0;
     cropIcons[key]=["🌱","🌿","🍃",item.icon];
   }
- 
+  // =============================================
+  // CAY MOI MOI NGAY - CAP NHAT THEO GIO VIET NAM
+  // Moi ngay gioi thieu 1 giong trong bo suu tap 1.140 giong cay.
+  // Mo khoa vinh vien bang 5 diem nghien cuu + 1 cau hoi sach.
+  // =============================================
   function getDailyPlantDateInfo(){
     const parts=new Intl.DateTimeFormat("en-US",{
       timeZone:"Asia/Ho_Chi_Minh",year:"numeric",month:"2-digit",day:"2-digit"
@@ -391,6 +530,7 @@
     const y=Number(part("year")),m=Number(part("month")),d=Number(part("day"));
     const key=y+"-"+String(m).padStart(2,"0")+"-"+String(d).padStart(2,"0");
     const dayNumber=Math.floor(Date.UTC(y,m-1,d)/86400000);
+    // Viet Nam dung UTC+7 va khong ap dung gio mua he.
     const nextMidnight=Date.UTC(y,m-1,d+1)-7*60*60*1000;
     return {y,m,d,key,dayNumber,nextMidnight};
   }
@@ -570,7 +710,8 @@
     const amount=Math.max(1,Math.min(5,Math.floor(Number($("delivery-amount").value)||1)));
     if(!type||!seeds[type]){notify("Bạn chưa có nông sản để giao.");return;}
     if((state.produce[type]||0)<amount){notify("Kho không đủ số lượng để giao đơn này.");return;}
-    const reward=amount*(seeds[type].reward+8);
+    const marketFactor=farmScienceSystem?farmScienceSystem.getMarketFactor(type):1;
+    const reward=Math.floor(amount*(seeds[type].reward+8)*marketFactor);
     state.produce[type]-=amount;state.coins+=reward;state.researchPoints=(state.researchPoints||0)+amount*2;
     state.deliveryCount=(state.deliveryCount||0)+1;
     state.deliveryHistory=state.deliveryHistory||[];
@@ -584,8 +725,21 @@
   function renderInventory(){
     const seedItems=Object.keys(seeds).map(k=>({icon:seeds[k].icon,name:"Hạt giống: "+seeds[k].name,count:state.seeds[k]||0,kind:"seed"}));
     const produceItems=Object.keys(state.produce||{}).filter(k=>seeds[k]&&(state.produce[k]||0)>0).map(k=>({icon:seeds[k].icon,name:"Nông sản: "+seeds[k].name,count:state.produce[k],kind:"produce"}));
-    const items=[...seedItems,...produceItems,{icon:"💧",name:"Bình nước",count:state.waterBottles||0,kind:"water"},{icon:"🎟️",name:"Phiếu Quiz",count:quizTickets(),kind:"ticket"},{icon:"🪙",name:"Xu vườn",count:state.coins,kind:"coin"}];
-    $("inventory-grid").innerHTML='<div class="inventory-group-title">🌱 HẠT GIỐNG TRONG TÚI</div>'+seedItems.map(x=>'<div class="inventory-item seed-in-bag"><span>'+x.icon+'</span><b>'+x.name+'</b><small>Số lượng: <strong>'+x.count+'</strong></small></div>').join("")+'<div class="inventory-group-title">📦 NÔNG SẢN & VẬT PHẨM</div>'+[...produceItems,...items.filter(x=>x.kind==="water"||x.kind==="ticket"||x.kind==="coin")].map(x=>'<div class="inventory-item"><span>'+x.icon+'</span><b>'+x.name+'</b><small>Số lượng: <strong>'+x.count+'</strong></small></div>').join("");
+    const ag=state.agriculture||defaultState.agriculture,livestock=ag.livestock||{},inv=ag.inventory||{},beneficial=ag.beneficial||{},animalProducts=livestock.products||{};
+    const farmItems=[
+      {icon:"💧",name:"Bình nước",count:state.waterBottles||0},
+      {icon:"🌿",name:"Phân ủ hữu cơ",count:inv.compost||0},
+      {icon:"🧴",name:"Chế phẩm sinh học",count:inv.organicSpray||0},
+      {icon:"🌾",name:"Thức ăn vật nuôi",count:inv.feed||0},
+      {icon:"🐞",name:"Bọ rùa thiên địch",count:beneficial.ladybugs||0},
+      {icon:"🐝",name:"Ong có ích",count:beneficial.bees||0},
+      {icon:"🥚",name:"Trứng gà",count:animalProducts.eggs||0},
+      {icon:"🥛",name:"Sữa tươi",count:animalProducts.milk||0},
+      {icon:"💩",name:"Phân chuồng",count:animalProducts.manure||0},
+      {icon:"🎟️",name:"Phiếu Quiz",count:quizTickets()},
+      {icon:"🪙",name:"Xu vườn",count:state.coins}
+    ];
+    $("inventory-grid").innerHTML='<div class="inventory-group-title">🌱 HẠT GIỐNG TRONG TÚI</div>'+seedItems.map(x=>'<div class="inventory-item seed-in-bag"><span>'+x.icon+'</span><b>'+x.name+'</b><small>Số lượng: <strong>'+x.count+'</strong></small></div>').join("")+'<div class="inventory-group-title">📦 NÔNG SẢN & VẬT PHẨM</div>'+produceItems.map(x=>'<div class="inventory-item"><span>'+x.icon+'</span><b>'+x.name+'</b><small>Số lượng: <strong>'+x.count+'</strong></small></div>').join("")+'<div class="inventory-group-title">🧪 VẬT TƯ NÔNG NGHIỆP & CHĂN NUÔI</div>'+farmItems.map(x=>'<div class="inventory-item"><span>'+x.icon+'</span><b>'+x.name+'</b><small>Số lượng: <strong>'+x.count+'</strong></small></div>').join("");
   }
   function startMucQuest(){
     if(state.story.chapter2MucDone){notify("Bạn đã hoàn thành nhiệm vụ của Bình Mực rồi!");return;}
@@ -647,6 +801,7 @@
     $("pet-mood").textContent=state.pet.hunger<30?"Mình hơi đói rồi...":state.pet.bond>=70?"Mình rất quý bạn!":"Mình đang vui vẻ!";
     $("spent-total").textContent=state.totalSpent+" xu";$("cart-description").textContent=state.lastAction||"Chưa có giao dịch nào.";
     renderPlots();renderSeeds();renderInventory();renderTasks();renderStory();renderEvolutionLab();renderCollection();renderBreeding();renderDelivery();renderResearchSeedShop();renderDailyPlant();
+    if(farmScienceSystem)farmScienceSystem.render();
     if($("water-count"))$("water-count").textContent=state.waterBottles||0;
     if($("water-info")){const left=10*60*1000-(Date.now()-(state.waterPickupAt||0));$("water-info").textContent=left>0?"Có thể nhặt bình tiếp theo sau "+Math.ceil(left/60000)+" phút. Mỗi cây cần 1 bình.":"Có thể nhặt 1 bình nước. Mỗi cây cần 1 bình.";}
   }
@@ -676,7 +831,9 @@
   setInterval(updateDailyPlantClock,1000);
  
   window.addEventListener("storage",e=>{if(e.key===QUIZ_KEY)renderInventory();});
- 
+  // =============================================
+  // SỰ KIỆN THEO MÙA + PHẦN THƯỞNG VĨNH VIỄN + UPDATE TUẦN
+  // =============================================
   (function initSeasonalEvents(){
     const EVENT_TZ = "Asia/Ho_Chi_Minh";
     const EVENT_STORE_KEY = "aeCayKheSeasonalEvents_v1";
@@ -949,6 +1106,7 @@
     function trackActions(action,detail,amount){
       const today=getVNDate(),todayNo=dayNumber(today),events=getEventList(today),active=events.find(e=>e.startNo<=todayNo&&e.endNo>=todayNo);
       const count=Math.max(1,Number(amount)||1),data=readEventStore();let messages=[],shouldRender=false;
+      // Nhiệm vụ sự kiện: chỉ ghi nhận hành động trong đúng thời gian lễ hội.
       if(active){
         const questState=data.quests[active.id]||(data.quests[active.id]={counts:{},completed:[],finalRewardClaimed:false});
         active.content.quests.forEach(q=>{
@@ -1043,5 +1201,149 @@
     window.addEventListener("storage",function(event){if(event.key===EVENT_STORE_KEY||event.key===GAME_KEY)updateAllEventUI();});
     document.addEventListener("visibilitychange",function(){if(!document.hidden)updateAllEventUI();});
   })();
+
+  // ==========================================================
+  // HE THONG NONG NGHIEP MO PHONG: DAT, VONG DOI, THIEN DICH,
+  // DICH BENH, CHAN NUOI, THI TRUONG, ANH SANG VA NHIET DO.
+  // ==========================================================
+  function createFarmScienceSystem(){
+    const root=document.getElementById("page-farm");
+    const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+    const ag=()=>state.agriculture;
+    const vnParts=(date=new Date())=>{
+      const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Ho_Chi_Minh",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"}).formatToParts(date);
+      const get=k=>Number(parts.find(x=>x.type===k)?.value||0);
+      return {y:get("year"),m:get("month"),d:get("day"),hour:get("hour"),key:get("year")+"-"+String(get("month")).padStart(2,"0")+"-"+String(get("day")).padStart(2,"0")};
+    };
+    const hash=text=>{let h=2166136261;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;};
+    const soilNames=soil=>soil.fertility>=80?"Đất rất màu mỡ":soil.fertility>=60?"Đất tốt":soil.fertility>=40?"Đất trung bình":"Đất bạc màu";
+    const currentClimate=()=>{
+      const now=vnParts(),weather=weatherSystem.getPlantEffect().weather;
+      const tempAdjust={sunny:2,cloudy:0,rain:-2,heatwave:9,drought:7,thunderstorm:-2,cold:-8,frost:-12,windstorm:-1,hail:-4};
+      const temperature=clamp(27+(tempAdjust[weather.id]||0)+((now.hour>=11&&now.hour<=15)?3:(now.hour<6||now.hour>=20?-4:0)),4,43);
+      let light=now.hour>=7&&now.hour<17?1:now.hour>=6&&now.hour<7?0.55:now.hour>=17&&now.hour<19?0.5:0.18;
+      if(["cloudy","rain","thunderstorm","hail"].includes(weather.id))light*=0.78;
+      const humidity=clamp(68+(weather.id==="rain"||weather.id==="thunderstorm"?22:weather.id==="drought"||weather.id==="heatwave"?-25:0),20,100);
+      return {now,weather,temperature,light,humidity,lightText:light>=0.85?"Ánh sáng tốt":light>=0.45?"Ánh sáng trung bình":"Ánh sáng yếu"};
+    };
+    const marketFactor=(id)=>{
+      const today=vnParts().key;
+      const value=hash(today+"|market|"+id)%61;
+      return 0.75+value/100;
+    };
+    function ensurePanel(){
+      let panel=document.getElementById("farm-science-panel");if(panel)return panel;
+      panel=document.createElement("section");panel.id="farm-science-panel";panel.className="farm-science-panel panel";
+      panel.innerHTML=`
+        <div class="science-head"><div><p class="eyebrow">NÔNG NGHIỆP MÔ PHỎNG</p><h2>🔬 Trung tâm quản lý nông trại</h2><p>Theo dõi đất, vòng đời cây, sinh vật có ích, đàn vật nuôi và giá nông sản.</p></div><span class="science-tag">Dữ liệu lưu trong tiến trình</span></div>
+        <div class="science-grid">
+          <article class="science-card"><h3>🌱 Chất lượng đất</h3><p class="science-desc">Chọn ô đất để cải tạo độ màu mỡ, hữu cơ, độ ẩm và độ nén.</p><label class="science-label" for="science-plot-select">Ô đất đang xem</label><select id="science-plot-select"></select><div id="science-soil-detail"></div><div class="science-actions"><button data-agri-action="buy-compost">Mua 2 phân ủ · 12 xu</button><button data-agri-action="apply-compost">Bón 1 phân ủ</button><button data-agri-action="loosen-soil">Xới đất · 6 xu</button></div><small id="science-soil-stock"></small></article>
+          <article class="science-card"><h3>🌿 Vòng đời cây trồng</h3><p class="science-desc">Cây trải qua các giai đoạn từ hạt đến thu hoạch; chỉ số môi trường điều chỉnh tốc độ sinh trưởng.</p><div id="science-life-cycle" class="science-life-cycle"></div></article>
+          <article class="science-card"><h3>🐞 Thiên địch & dịch bệnh</h3><p class="science-desc">Bọ rùa hỗ trợ kiểm soát rệp; chế phẩm sinh học giúp giảm sâu bệnh.</p><div id="science-pest-status"></div><div class="science-actions"><button data-agri-action="buy-ladybugs">Mua 2 đàn bọ rùa · 20 xu</button><button data-agri-action="buy-spray">Mua chế phẩm · 18 xu</button><button data-agri-action="treat-plots">Phun sinh học · 1 bình</button></div><small id="science-pest-stock"></small></article>
+          <article class="science-card"><h3>🐔 Mô phỏng chăn nuôi</h3><p class="science-desc">Nuôi gà, bò và dê; cho ăn, cấp nước, thu trứng, sữa và phân chuồng.</p><div id="science-livestock-status"></div><div class="science-actions"><button data-agri-action="buy-chicken">Mua gà · 55 xu</button><button data-agri-action="buy-cow">Mua bò · 160 xu</button><button data-agri-action="buy-goat">Mua dê · 110 xu</button><button data-agri-action="buy-feed">Mua 5 phần thức ăn · 12 xu</button><button data-agri-action="feed-animals">Cho đàn ăn</button><button data-agri-action="water-animals">Cấp nước · 1 bình</button><button data-agri-action="collect-animal">Thu sản phẩm</button><button data-agri-action="compost-manure">Ủ phân chuồng</button></div><small id="science-livestock-stock"></small></article>
+          <article class="science-card"><h3>📈 Kinh tế & thị trường</h3><p class="science-desc">Giá mua bán biến động theo ngày; bán nông sản hoặc sản phẩm chăn nuôi theo giá hiện tại.</p><div id="science-market-prices"></div><div class="science-market-form"><label>Sản phẩm<select id="science-market-item"></select></label><label>Số lượng<input id="science-market-amount" type="number" min="1" max="99" value="1"></label><button data-agri-action="sell-market">Bán theo giá hôm nay</button></div><small id="science-market-note"></small></article>
+          <article class="science-card"><h3>🌞 Ánh sáng & nhiệt độ</h3><p class="science-desc">Điều kiện ánh sáng thay đổi theo giờ; nhiệt độ và độ ẩm phụ thuộc thời tiết mô phỏng.</p><div id="science-climate-status"></div><div class="science-climate-bar"><span>Ánh sáng</span><i><b id="science-light-bar"></b></i></div><div class="science-climate-bar"><span>Độ ẩm không khí</span><i><b id="science-humidity-bar"></b></i></div><p class="science-hint">Nhiệt độ quá cao hoặc quá thấp và thiếu ánh sáng đều làm cây sinh trưởng chậm.</p></article>
+        </div>`;
+      const farmLayout=root&&root.querySelector(".farm-layout");
+      const weather=document.getElementById("farm-weather-panel");
+      if(farmLayout)farmLayout.insertAdjacentElement("afterend",panel);else if(weather)weather.insertAdjacentElement("afterend",panel);else if(root)root.appendChild(panel);
+      panel.addEventListener("click",event=>{
+        const button=event.target.closest("[data-agri-action]");if(!button)return;
+        const action=button.dataset.agriAction;
+        const map={
+          "buy-compost":["Mua phân ủ hữu cơ",buyCompost],"apply-compost":["Bón phân ủ cho đất",applyCompost],"loosen-soil":["Xới đất",loosenSoil],
+          "buy-ladybugs":["Mua bọ rùa thiên địch",buyLadybugs],"buy-spray":["Mua chế phẩm sinh học",buySpray],"treat-plots":["Xử lý sâu bệnh sinh học",treatPlots],
+          "buy-chicken":["Mua gà nuôi",()=>buyAnimal("chicken")],"buy-cow":["Mua bò nuôi",()=>buyAnimal("cow")],"buy-goat":["Mua dê nuôi",()=>buyAnimal("goat")],
+          "buy-feed":["Mua thức ăn chăn nuôi",buyFeed],"feed-animals":["Cho vật nuôi ăn",feedAnimals],"water-animals":["Cấp nước cho vật nuôi",waterAnimals],
+          "collect-animal":["Thu sản phẩm chăn nuôi",collectAnimalProducts],"compost-manure":["Ủ phân chuồng",compostManure],"sell-market":["Bán nông sản theo giá thị trường",sellAtMarket]
+        };
+        if(map[action])askBeforeFarmAction(map[action][0],map[action][1]);
+      });
+      panel.querySelector("#science-plot-select").addEventListener("change",render);
+      return panel;
+    }
+    function selectedPlotIndex(){const el=document.getElementById("science-plot-select");return clamp(Number(el&&el.value)||0,0,5);}
+    function soilFor(index){return ag().soil[index]||(ag().soil[index]={fertility:70,organicMatter:45,moisture:60,compaction:20,lastUpdated:Date.now()});}
+    function statusFor(index){return ag().plotStatus[index]||(ag().plotStatus[index]={pestLoad:0,diseaseLoad:0,pest:"",disease:"",health:100});}
+    function onPlant(index){const soil=soilFor(index);const st=statusFor(index);st.pestLoad=0;st.diseaseLoad=0;st.pest="";st.disease="";soil.moisture=Math.max(soil.moisture,48);soil.lastUpdated=Date.now();}
+    function onHarvest(index){const soil=soilFor(index);soil.fertility=clamp(soil.fertility-7,0,100);soil.organicMatter=clamp(soil.organicMatter-3,0,100);const st=statusFor(index);st.pestLoad=0;st.diseaseLoad=0;st.pest="";st.disease="";st.health=100;}
+    function getStageLabel(p){if(p<.08)return"Hạt giống";if(p<.20)return"Nảy mầm";if(p<.40)return"Cây con";if(p<.65)return"Sinh trưởng thân lá";if(p<.82)return"Ra hoa";if(p<.97)return"Kết trái";return"Sắp thu hoạch";}
+    function getGrowthFactor(plot){
+      const index=clamp(Number(plot.soilIndex)||0,0,5),soil=soilFor(index),st=statusFor(index),climate=currentClimate();
+      const fertility=0.78+(soil.fertility/100)*0.25;
+      const organic=0.92+(soil.organicMatter/100)*0.10;
+      const moisture=soil.moisture<20?0.68:soil.moisture<40?0.84:soil.moisture>96?0.94:1;
+      const compaction=1-(soil.compaction/100)*0.20;
+      const temperature=clamp(1-Math.abs(climate.temperature-24)*0.012,0.68,1.08);
+      const light=0.72+climate.light*0.30;
+      const pest=1-(st.pestLoad/100)*0.22-(st.diseaseLoad/100)*0.28;
+      const pollination=ag().beneficial.bees>0?1.025:1;
+      return clamp(fertility*organic*moisture*compaction*temperature*light*pest*pollination,0.5,1.28);
+    }
+    function getMarketFactor(id){return marketFactor(id);}
+    function applyDailySimulation(){
+      const climate=currentClimate(),today=climate.now.key;if(ag().lastDailyKey===today)return;
+      ag().lastDailyKey=today;
+      ag().soil.forEach((soil,index)=>{
+        soil.moisture=clamp(soil.moisture-(climate.weather.id==="drought"||climate.weather.id==="heatwave"?18:10),0,100);
+        if(climate.weather.id==="rain"||climate.weather.id==="thunderstorm")soil.moisture=clamp(soil.moisture+24,0,100);
+        if(state.plots[index]){soil.fertility=clamp(soil.fertility-1.5,0,100);soil.organicMatter=clamp(soil.organicMatter-.5,0,100);}
+        const st=statusFor(index);if(!state.plots[index]){st.pestLoad=Math.max(0,st.pestLoad-10);st.diseaseLoad=Math.max(0,st.diseaseLoad-10);return;}
+        const risk=.07+(soil.moisture>82?.14:0)+(soil.fertility<35?.10:0)+(climate.temperature>33?.08:0);
+        const protectedByLadybugs=ag().beneficial.ladybugs>0;
+        const roll=(hash(today+"|pest|"+index)%100)/100;
+        if(roll<risk*(protectedByLadybugs?.35:1)){st.pest="Rệp hoặc sâu ăn lá";st.pestLoad=clamp(st.pestLoad+24,0,100);}else st.pestLoad=Math.max(0,st.pestLoad-5);
+        if((soil.moisture>88&&climate.humidity>82)&&hash(today+"|disease|"+index)%100<22){st.disease="Nấm lá do ẩm cao";st.diseaseLoad=clamp(st.diseaseLoad+22,0,100);}else st.diseaseLoad=Math.max(0,st.diseaseLoad-4);
+        if(protectedByLadybugs){st.pestLoad=Math.max(0,st.pestLoad-7);st.pest=st.pestLoad?st.pest:"";}
+      });
+      const live=ag().livestock,total=live.chicken+live.cow+live.goat;
+      if(total>0){live.hunger=clamp(live.hunger-12,0,100);live.water=clamp(live.water-14,0,100);if(live.hunger>=35&&live.water>=30){live.health=clamp(live.health+2,0,100);live.eggs+=live.chicken;live.milk+=live.cow+live.goat;ag().inventory.manure+=Math.max(1,Math.floor(total/2));}else live.health=clamp(live.health-5,20,100);}
+      ag().marketKey=today;save();
+    }
+    function buyCompost(){if(state.coins<12){notify("Cần 12 xu để mua 2 phần phân ủ.");return;}state.coins-=12;ag().inventory.compost+=2;save();render();notify("Đã mua 2 phần phân ủ hữu cơ.");}
+    function applyCompost(){const i=selectedPlotIndex(),soil=soilFor(i);if(ag().inventory.compost<1){notify("Bạn đã hết phân ủ. Hãy mua thêm hoặc ủ phân chuồng.");return;}ag().inventory.compost--;soil.fertility=clamp(soil.fertility+18,0,100);soil.organicMatter=clamp(soil.organicMatter+20,0,100);soil.moisture=clamp(soil.moisture+5,0,100);save();render();notify("Đất ô "+(i+1)+" đã được bổ sung dinh dưỡng.");}
+    function loosenSoil(){const i=selectedPlotIndex(),soil=soilFor(i);if(state.coins<6){notify("Cần 6 xu để xới đất.");return;}state.coins-=6;soil.compaction=clamp(soil.compaction-22,0,100);soil.fertility=clamp(soil.fertility+2,0,100);save();render();notify("Đã làm tơi đất ô "+(i+1)+".");}
+    function buyLadybugs(){if(state.coins<20){notify("Cần 20 xu để mua bọ rùa.");return;}state.coins-=20;ag().beneficial.ladybugs+=2;ag().beneficial.bees+=1;save();render();notify("Đã thả 2 nhóm bọ rùa và thu hút 1 nhóm ong có ích.");}
+    function buySpray(){if(state.coins<18){notify("Cần 18 xu để mua 2 bình chế phẩm sinh học.");return;}state.coins-=18;ag().inventory.organicSpray+=2;save();render();notify("Đã mua 2 bình chế phẩm sinh học.");}
+    function treatPlots(){if(ag().inventory.organicSpray<1){notify("Bạn không còn chế phẩm sinh học.");return;}ag().inventory.organicSpray--;ag().plotStatus.forEach(st=>{st.pestLoad=clamp(st.pestLoad-60,0,100);st.diseaseLoad=clamp(st.diseaseLoad-55,0,100);if(!st.pestLoad)st.pest="";if(!st.diseaseLoad)st.disease="";});save();render();notify("Đã xử lý sâu bệnh sinh học cho toàn bộ khu vườn.");}
+    function buyAnimal(kind){const cfg={chicken:{cost:55,label:"gà"},cow:{cost:160,label:"bò"},goat:{cost:110,label:"dê"}}[kind];if(!cfg)return;if(state.coins<cfg.cost){notify("Không đủ xu để mua "+cfg.label+".");return;}state.coins-=cfg.cost;ag().livestock[kind]++;save();render();notify("Đã thêm 1 "+cfg.label+" vào chuồng.");}
+    function buyFeed(){if(state.coins<12){notify("Cần 12 xu để mua thức ăn.");return;}state.coins-=12;ag().inventory.feed+=5;save();render();notify("Đã mua 5 phần thức ăn chăn nuôi.");}
+    function feedAnimals(){const live=ag().livestock,total=live.chicken+live.cow+live.goat;if(!total){notify("Chuồng chưa có vật nuôi.");return;}if(ag().inventory.feed<total){notify("Không đủ thức ăn cho toàn đàn. Hãy mua thêm.");return;}ag().inventory.feed-=total;live.hunger=clamp(live.hunger+35,0,100);live.health=clamp(live.health+3,0,100);save();render();notify("Đàn vật nuôi đã được cho ăn.");}
+    function waterAnimals(){const live=ag().livestock;if(!live.chicken&&!live.cow&&!live.goat){notify("Chuồng chưa có vật nuôi.");return;}if((state.waterBottles||0)<1){notify("Cần 1 bình nước để bổ sung máng uống.");return;}state.waterBottles--;live.water=clamp(live.water+45,0,100);save();render();notify("Đã bổ sung nước sạch cho máng uống.");}
+    function collectAnimalProducts(){const live=ag().livestock;if(!live.eggs&&!live.milk&&!ag().inventory.manure){notify("Chưa có sản phẩm chăn nuôi để thu.");return;}const eggs=live.eggs,milk=live.milk,manure=ag().inventory.manure;live.eggs=0;live.milk=0;ag().inventory.manure=0;ag().livestock.products={...(ag().livestock.products||{}),eggs:(ag().livestock.products?.eggs||0)+eggs,milk:(ag().livestock.products?.milk||0)+milk,manure:(ag().livestock.products?.manure||0)+manure};save();render();notify("Thu được "+eggs+" trứng, "+milk+" sữa và "+manure+" phân chuồng.");}
+    function compostManure(){const products=ag().livestock.products||{};if((products.manure||0)<2){notify("Cần 2 phân chuồng đã thu để ủ thành 1 phân hữu cơ.");return;}products.manure-=2;ag().inventory.compost++;save();render();notify("Ủ thành công 1 phần phân hữu cơ.");}
+    function allMarketGoods(){const goods=[];Object.keys(state.produce||{}).forEach(id=>{const count=state.produce[id]||0;if(count>0&&seeds[id])goods.push({id,name:seeds[id].name,icon:seeds[id].icon,count,base:seeds[id].reward});});const prod=ag().livestock.products||{};if(prod.eggs>0)goods.push({id:"eggs",name:"Trứng gà",icon:"🥚",count:prod.eggs,base:8});if(prod.milk>0)goods.push({id:"milk",name:"Sữa tươi",icon:"🥛",count:prod.milk,base:14});return goods;}
+    function sellAtMarket(){const id=document.getElementById("science-market-item").value,amount=clamp(Math.floor(Number(document.getElementById("science-market-amount").value)||1),1,99),goods=allMarketGoods(),item=goods.find(x=>x.id===id);if(!item){notify("Bạn chưa có sản phẩm này trong kho.");return;}if(item.count<amount){notify("Kho không đủ số lượng để bán.");return;}const factor=marketFactor(id),price=Math.max(1,Math.floor(item.base*factor)),total=price*amount;if(id==="eggs"||id==="milk"){ag().livestock.products[id]-=amount;}else state.produce[id]-=amount;state.coins+=total;state.lastAction="Bán "+amount+" "+item.name+" theo giá thị trường";save();render();notify("Đã bán "+amount+" "+item.name+" với giá "+price+" xu/món. Nhận +"+total+" xu.");}
+    function render(){
+      const panel=ensurePanel(),climate=currentClimate(),soilSelect=panel.querySelector("#science-plot-select"),selected=selectedPlotIndex(),soil=soilFor(selected);
+      soilSelect.innerHTML=Array.from({length:6},(_,i)=>'<option value="'+i+'">Ô đất '+(i+1)+(state.plots[i]?' · Có cây':' · Đất trống')+'</option>').join("");soilSelect.value=String(selected);
+      panel.querySelector("#science-soil-detail").innerHTML='<div class="science-stat"><b>'+soilNames(soil)+'</b><small>Độ màu mỡ: '+Math.round(soil.fertility)+'% · Hữu cơ: '+Math.round(soil.organicMatter)+'%</small><div class="science-meter"><i style="width:'+soil.fertility+'%"></i></div><small>Độ ẩm: '+Math.round(soil.moisture)+'% · Độ nén: '+Math.round(soil.compaction)+'%</small><div class="science-meter"><i style="width:'+soil.moisture+'%"></i></div>'+(state.plots[selected]?'<small>Đang trồng: '+(seeds[state.plots[selected].type]?.name||"Cây trồng")+'</small>':'<small>Ô đất đang trống.</small>')+'</div>';
+      panel.querySelector("#science-soil-stock").textContent="Phân ủ: "+ag().inventory.compost+" · Phân chuồng đã thu: "+((ag().livestock.products||{}).manure||0);
+      panel.querySelector("#science-life-cycle").innerHTML=state.plots.map((plot,i)=>{if(!plot)return '<div class="science-life-row"><b>Ô '+(i+1)+'</b><span>Chưa gieo hạt</span></div>';const p=progress(plot);return '<div class="science-life-row"><b>Ô '+(i+1)+' · '+(seeds[plot.type]?.name||"Cây")+'</b><span>'+getStageLabel(p)+' · '+Math.round(p*100)+'%</span></div>';}).join("");
+      panel.querySelector("#science-pest-status").innerHTML=state.plots.map((plot,i)=>{if(!plot)return '';const st=statusFor(i),risk=st.pestLoad||st.diseaseLoad;return '<div class="science-life-row"><b>Ô '+(i+1)+'</b><span>'+(risk?((st.pest||st.disease||"Có dấu hiệu bất thường")+" · "+Math.max(st.pestLoad,st.diseaseLoad)+"%"):'✅ Chưa phát hiện sâu bệnh')+'</span></div>';}).join("")||'<p class="science-hint">Chưa có cây trồng cần theo dõi.</p>';
+      panel.querySelector("#science-pest-stock").textContent="Bọ rùa: "+ag().beneficial.ladybugs+" · Ong có ích: "+ag().beneficial.bees+" · Chế phẩm sinh học: "+ag().inventory.organicSpray;
+      const live=ag().livestock,products=live.products||{};panel.querySelector("#science-livestock-status").innerHTML='<div class="science-livestock-grid"><span>🐔 Gà: <b>'+live.chicken+'</b></span><span>🐄 Bò: <b>'+live.cow+'</b></span><span>🐐 Dê: <b>'+live.goat+'</b></span><span>🍽️ Độ no: <b>'+live.hunger+'%</b></span><span>💧 Nước: <b>'+live.water+'%</b></span><span>💚 Sức khỏe: <b>'+live.health+'%</b></span></div><p class="science-hint">Sản phẩm chờ thu: '+live.eggs+' trứng · '+live.milk+' sữa · '+ag().inventory.manure+' phân chuồng. Trong kho: '+(products.eggs||0)+' trứng · '+(products.milk||0)+' sữa · '+(products.manure||0)+' phân.</p>';
+      panel.querySelector("#science-livestock-stock").textContent="Thức ăn còn: "+ag().inventory.feed+" phần · Mỗi ngày vật nuôi khỏe tạo ra sản phẩm.";
+      const goods=allMarketGoods();panel.querySelector("#science-market-item").innerHTML=goods.map(x=>'<option value="'+x.id+'">'+x.icon+' '+x.name+' · '+x.count+' món</option>').join("")||'<option value="">Chưa có nông sản hoặc sản phẩm chăn nuôi</option>';
+      const marketShowcase=goods.length?goods.slice(0,6):["sunflower","carrot","strawberry","blueberry","moonflower"].filter(id=>seeds[id]).map(id=>({id,name:seeds[id].name,icon:seeds[id].icon,count:0,base:seeds[id].reward}));
+      panel.querySelector("#science-market-prices").innerHTML=marketShowcase.map(x=>{const price=Math.max(1,Math.floor(x.base*marketFactor(x.id)));return '<div class="science-market-row"><span>'+x.icon+' '+x.name+'</span><b>'+price+' xu</b><small>Kho: '+x.count+'</small></div>';}).join("")||'<p class="science-hint">Hãy thu hoạch cây hoặc thu sản phẩm từ chuồng để bán.</p>';
+      panel.querySelector("#science-market-note").textContent="Giá thay đổi lúc 00:00 giờ Việt Nam. Thời tiết và nhu cầu mô phỏng tạo ra biến động giá.";
+      panel.querySelector("#science-climate-status").innerHTML='<div class="science-climate-number">'+Math.round(climate.temperature)+'°C</div><b>'+climate.weather.icon+' '+climate.weather.name+'</b><p>'+climate.lightText+' · Độ ẩm không khí '+Math.round(climate.humidity)+'%</p>';
+      panel.querySelector("#science-light-bar").style.width=Math.round(climate.light*100)+"%";panel.querySelector("#science-humidity-bar").style.width=climate.humidity+"%";
+    }
+    function init(){
+      const panel=ensurePanel();applyDailySimulation();render();
+      let lastDay=vnParts().key;
+      setInterval(()=>{const day=vnParts().key;if(day!==lastDay){lastDay=day;applyDailySimulation();render();notify("🌱 Dữ liệu đất, sâu bệnh, chăn nuôi và thị trường đã sang ngày mới.");}else render();},60000);
+      window.addEventListener("focus",()=>{applyDailySimulation();render();});
+      window.addEventListener("storage",e=>{if(e.key===GAME_KEY){applyDailySimulation();render();}});
+    }
+    return {init,render,getGrowthFactor,getStageLabel,getMarketFactor,onPlant,onHarvest};
+  }
+
+  farmScienceSystem=createFarmScienceSystem();
+  // Khoi dong tram thoi tiet sau khi cac bang su kien da duoc tao.
+  weatherSystem.init();
+  farmScienceSystem.init();
 
 })();
