@@ -179,3 +179,16 @@ body.book-quiz-open{overflow:hidden}
 @keyframes bookQuizIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
 @media(max-width:600px){.book-quiz-box{padding:20px 16px;border-radius:16px}.book-quiz-box h2{font-size:20px}.book-quiz-box h3{font-size:15px}.book-quiz-option{padding:11px}}
 .book-quiz-options[hidden],.book-quiz-retry[hidden]{display:none!important}
+
+.daily-plant-panel{margin:12px 0 16px;padding:15px 17px;border:1px solid #cfe3c4;border-radius:16px;background:linear-gradient(115deg,#f0f8e9,#fffdf1);box-shadow:0 8px 20px rgba(54,91,49,.07)}
+.daily-plant-head{display:flex;align-items:center;gap:13px;min-width:0}
+.daily-plant-icon{display:grid;place-items:center;flex:0 0 62px;width:62px;height:62px;border-radius:15px;background:#e2f0d9;font-size:34px;box-shadow:inset 0 -4px rgba(55,104,55,.08)}
+.daily-plant-info{min-width:0;flex:1}.daily-plant-kicker{margin:0 0 3px;color:#52804a;font-size:10px;font-weight:900;letter-spacing:1.1px}
+.daily-plant-info h3,.daily-plant-head h3{margin:0 0 4px;color:#294d32;font-size:17px}.daily-plant-info p:not(.daily-plant-kicker),.daily-plant-head p:not(.daily-plant-kicker){margin:0;color:#667765;font-size:12px;line-height:1.45}
+.daily-plant-cost,.daily-plant-owned{display:inline-flex;margin-top:7px;padding:5px 8px;border-radius:20px;background:#fff4d8;color:#785c21;font-size:10px;font-weight:900}
+.daily-plant-owned{background:#e2f3df;color:#2e7040}
+.daily-plant-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding-top:11px;border-top:1px solid #dce9d5}
+.daily-plant-countdown{color:#687a67;font-size:11px}.daily-plant-countdown b{color:#315d3c;font-variant-numeric:tabular-nums}
+.daily-plant-button{flex:0 0 auto;border:0;border-radius:10px;padding:10px 14px;background:#315f3d;color:#fff;font:900 12px Nunito,sans-serif;cursor:pointer}
+.daily-plant-button:disabled{background:#dfe9d9;color:#668068;cursor:default}
+@media(max-width:600px){.daily-plant-panel{padding:13px}.daily-plant-icon{flex-basis:52px;width:52px;height:52px;font-size:29px}.daily-plant-bottom{align-items:stretch;flex-direction:column}.daily-plant-button{width:100%}}
