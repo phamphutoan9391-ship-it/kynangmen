@@ -518,4 +518,85 @@
   setInterval(()=>{if(state.plots.some(Boolean))renderPlots();},1000);
  
   window.addEventListener("storage",e=>{if(e.key===QUIZ_KEY)renderInventory();});
+  
+// =====================================
+// NHIỆM VỤ NÔNG TRẠI TỰ LÀM MỚI MỖI 5 PHÚT
+// =====================================
+
+const TASK_REFRESH_TIME = 5 * 60 * 1000;
+const TASK_REFRESH_KEY = "aeCayKhe_taskRefreshAt_v1";
+
+// Lấy thời gian làm mới đã lưu
+let taskRefreshAt = Number(localStorage.getItem(TASK_REFRESH_KEY));
+
+// Nếu chưa có thời gian thì bắt đầu chu kỳ 5 phút
+if (!taskRefreshAt || !Number.isFinite(taskRefreshAt)) {
+    taskRefreshAt = Date.now() + TASK_REFRESH_TIME;
+    localStorage.setItem(TASK_REFRESH_KEY, taskRefreshAt);
+}
+
+// Tạo bộ đếm ngược ở tiêu đề nhiệm vụ
+const taskHeading = document.querySelector("#page-tasks .section-heading");
+
+let taskTimer = document.getElementById("task-reset-timer");
+
+if (taskHeading && !taskTimer) {
+    taskTimer = document.createElement("span");
+    taskTimer.id = "task-reset-timer";
+    taskTimer.className = "tag";
+    taskTimer.style.marginLeft = "auto";
+    taskTimer.style.color = "#287a48";
+    taskHeading.appendChild(taskTimer);
+}
+
+function resetFarmTasks() {
+
+    const taskList = ["plant", "water", "play", "harvest"];
+
+    taskList.forEach(function(task) {
+        state.tasks[task] = false;
+        state.tasks["claimed_" + task] = false;
+    });
+
+    taskRefreshAt = Date.now() + TASK_REFRESH_TIME;
+
+    localStorage.setItem(TASK_REFRESH_KEY, taskRefreshAt);
+
+    save();
+    renderTasks();
+
+    notify("🔄 Nhiệm vụ đã được làm mới! Hãy tiếp tục chăm sóc khu vườn.");
+}
+
+function updateTaskTimer() {
+
+    const now = Date.now();
+
+    if (now >= taskRefreshAt) {
+        resetFarmTasks();
+    }
+
+    const remaining = Math.max(0, taskRefreshAt - Date.now());
+
+    const minutes = Math.floor(remaining / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
+
+    if (taskTimer) {
+        taskTimer.textContent =
+            "⏳ Làm mới sau " +
+            String(minutes).padStart(2, "0") +
+            ":" +
+            String(seconds).padStart(2, "0");
+    }
+}
+
+window.addEventListener("storage", function(event) {
+    if (event.key === TASK_REFRESH_KEY && event.newValue) {
+        taskRefreshAt = Number(event.newValue);
+    }
+});
+
+updateTaskTimer();
+setInterval(updateTaskTimer, 1000);
+
 })();
