@@ -149,14 +149,11 @@
 
   window.addEventListener("storage",e=>{if(e.key===QUIZ_KEY)renderInventory();});
 })();
-// ===============================
-// THỬ THÁCH SÁCH SỬA ĐỔI LỐI LÀM VIỆC
-// ===============================
+
 
 var quizSachDangMo = false;
 var quizSachDaTraLoi = false;
 
-// Danh sách câu hỏi
 var cauHoiSach = [
     {
         cauHoi: "Tác phẩm Sửa đổi lối làm việc do ai viết?",
@@ -384,8 +381,11 @@ function traLoiQuizSach(chon, viTri) {
 }
 
 function dongQuizSach() {
-
     document.getElementById("quizSachPopup").style.display = "none";
-
     quizSachDangMo = false;
 }
+
+window.traLoiQuizSach = traLoiQuizSach;
+window.dongQuizSach = dongQuizSach;
+
+})();
