@@ -350,21 +350,19 @@
   }
 
 
-
-  function buyTicket() {
+function buyTicket() {
     const cost = 25;
 
     if (state.coins < cost) {
-      notify("Bạn cần 25 xu để đổi 1 phiếu Quiz.");
-      return;
+        notify("Bạn cần 25 xu để đổi 1 phiếu Quiz!");
+        return;
     }
+    const current =
+        Number(localStorage.getItem("soPhieuQuiz")) || 0;
 
-    const current = quizTickets();
+    const newTickets = current + 1;
 
-    localStorage.setItem(
-      QUIZ_KEY,
-      String(current + 1)
-    );
+    localStorage.setItem("soPhieuQuiz", String(newTickets));
 
     state.coins -= cost;
     state.totalSpent += cost;
@@ -374,23 +372,25 @@
     render();
 
     try {
-      const channel = new BroadcastChannel("ae-cay-khe-quiz-wallet");
+        const channel = new BroadcastChannel("ae-cay-khe-quiz-wallet");
 
-      channel.postMessage({
-        type: "QUIZ_TICKETS_UPDATED",
-        tickets: current + 1
-      });
+        channel.postMessage({
+            type: "QUIZ_TICKETS_UPDATED",
+            tickets: newTickets
+        });
 
-      channel.close();
+        channel.close();
     } catch (e) {
-      console.log("BroadcastChannel không khả dụng.");
+        console.log("Không thể gửi thông báo cập nhật phiếu.");
     }
 
-    notify("Đổi thành công 1 phiếu Quiz! Đang trở về website...");
-    setTimeout(() => {
-    window.location.href = "index.html";
-}, 1500);
-  }
+    notify("Đổi thành công! Đã chuyển 1 phiếu về website chính.");
+
+    setTimeout(function() {
+        window.location.href = "index.html";
+    }, 1500);
+}
+
 
  
 
