@@ -15,140 +15,43 @@
 
   function setOnlineMessage(message){const el=$("online-status");if(el)el.textContent=message;}
   function safeText(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-  
-async function connectOnline() {
-    const url = window.AE_SUPABASE_URL;
-    const key = window.AE_SUPABASE_ANON_KEY;
-
-    if (!window.supabase || !url || !key ||
-        url.includes("DAN_") || key.includes("DAN_")) {
-
-        setOnlineMessage(
-            "Chưa cấu hình Supabase. Game vẫn chơi và lưu điểm trên thiết bị này."
-        );
-
-        const message = $("leaderboard-message");
-        if (message) {
-            message.textContent =
-                "Cần cấu hình Supabase để mở bảng xếp hạng chung.";
-        }
-
-        return;
+  async function connectOnline(){
+    const url=window.AE_SUPABASE_URL, key=window.AE_SUPABASE_ANON_KEY;
+    if(!window.supabase||!url||!key||url.includes("DAN_")||key.includes("DAN_")){
+      setOnlineMessage("Chưa cấu hình Supabase. Game vẫn chơi và lưu điểm trên thiết bị này.");
+      $("leaderboard-message").textContent="Cần cấu hình Supabase để mở bảng xếp hạng chung.";return;
     }
-
-    try {
-        cloud = window.supabase.createClient(url, key);
-
-        let { data: sessionData, error: sessionError } =
-            await cloud.auth.getSession();
-
-        if (sessionError) throw sessionError;
-
-        if (!sessionData.session) {
-            const signed = await cloud.auth.signInAnonymously();
-
-            if (signed.error) throw signed.error;
-
-            sessionData = { session: signed.data.session };
-        }
-
-        cloudUser = sessionData.session.user;
-        cloudReady = true;
-
-        const profile = await cloud
-            .from("player_scores")
-            .select("nickname,score,games")
-            .eq("user_id", cloudUser.id)
-            .maybeSingle();
-
-        if (profile.error) throw profile.error;
-
-        if (profile.data) {
-            playerNickname = profile.data.nickname;
-
-            const nicknameInput = $("player-nickname");
-            if (nicknameInput) {
-                nicknameInput.value = playerNickname;
-            }
-
-            data.score = Number(profile.data.score) || 0;
-            data.games = Number(profile.data.games) || 0;
-            save();
-
-            setOnlineMessage(
-                "Đã kết nối bảng xếp hạng chung với biệt danh: " +
-                playerNickname
-            );
-        } else {
-            setOnlineMessage(
-                "Đã kết nối. Hãy chọn biệt danh để tạo hồ sơ người chơi."
-            );
-        }
-
-        await loadLeaderboard();
-
-    } catch (error) {
-        cloudReady = false;
-
-        setOnlineMessage(
-            "Chưa kết nối được: " +
-            (error.message || "Kiểm tra cấu hình Supabase")
-        );
-
-        const message = $("leaderboard-message");
-        if (message) {
-            message.textContent =
-                "Không tải được bảng xếp hạng. Kiểm tra SQL và cấu hình Supabase.";
-        }
-
-        console.error("Supabase connection error:", error);
+    try{
+      cloud=window.supabase.createClient(url,key);
+      let {data:sessionData,error:sessionError}=await cloud.auth.getSession();
+      if(sessionError)throw sessionError;
+      if(!sessionData.session){const signed=await cloud.auth.signInAnonymously();if(signed.error)throw signed.error;sessionData={session:signed.data.session};}
+      cloudUser=sessionData.session.user;cloudReady=true;
+      const profile=await cloud.from("player_scores").select("nickname,score,games").eq("user_id",cloudUser.id).maybeSingle();
+      if(profile.error)throw profile.error;
+      if(profile.data){
+        playerNickname=profile.data.nickname;
+        $("player-nickname").value=playerNickname;
+        data.score=Number(profile.data.score)||0;data.games=Number(profile.data.games)||0;save();
+      }else{
+        setOnlineMessage("Đã kết nối. Hãy chọn biệt danh để tạo hồ sơ người chơi.");
+      }
+      if(profile.data)setOnlineMessage("Đã kết nối bảng xếp hạng chung với biệt danh: "+playerNickname);
+      await loadLeaderboard();
+    }catch(error){
+      cloudReady=false;setOnlineMessage("Chưa kết nối được: "+(error.message||"kiểm tra cấu hình Supabase"));
+      $("leaderboard-message").textContent="Không tải được bảng xếp hạng. Kiểm tra SQL và cấu hình Supabase.";
     }
-}
-  
-  
-async function saveNickname() {
-    const input = $("player-nickname");
-
-    if (!input) {
-        setOnlineMessage("Không tìm thấy ô nhập biệt danh trong HTML.");
-        return;
-    }
-
-    const nickname = input.value.trim().replace(/\s+/g, " ");
-
-    if (nickname.length < 3 || nickname.length > 18) {
-        setOnlineMessage("Biệt danh cần từ 3 đến 18 ký tự.");
-        return;
-    }
-
-    if (!cloudReady) {
-        setOnlineMessage("Bạn cần kết nối Supabase trước.");
-        return;
-    }
-
-    try {
-        const { error } = await cloud.rpc(
-            "set_player_nickname",
-            { p_nickname: nickname }
-        );
-
-        if (error) throw error;
-
-        playerNickname = nickname;
-
-        setOnlineMessage("Đã lưu biệt danh: " + nickname);
-
-        await loadLeaderboard();
-
-    } catch (error) {
-        setOnlineMessage(
-            "Không lưu được biệt danh: " + error.message
-        );
-
-        console.error("Save nickname error:", error);
-    }
-}
-
+  }
+  async function saveNickname(){
+    const nickname=$("player-nickname").value.trim().replace(/\s+/g," ");
+    if(nickname.length<3||nickname.length>18){setOnlineMessage("Biệt danh cần từ 3 đến 18 ký tự.");return;}
+    if(!cloudReady){setOnlineMessage("Bạn cần cấu hình và kết nối Supabase trước.");return;}
+    try{
+      const {error}=await cloud.rpc("set_player_nickname",{p_nickname:nickname});if(error)throw error;
+      playerNickname=nickname;setOnlineMessage("Đã lưu biệt danh: "+nickname);await loadLeaderboard();
+    }catch(error){setOnlineMessage("Không lưu được biệt danh: "+error.message);}
+  }
   async function submitOnlineResult(points){
     if(!cloudReady)return;
     try{
@@ -156,59 +59,15 @@ async function saveNickname() {
       await loadLeaderboard();
     }catch(error){setOnlineMessage("Chưa đồng bộ được điểm online: "+error.message);}
   }
-  
-async function loadLeaderboard() {
-    if (!cloudReady || !cloud) return;
-
-    const list = $("global-leaderboard");
-    const message = $("leaderboard-message");
-
-    if (!list || !message) {
-        console.error(
-            "Thiếu phần tử global-leaderboard hoặc leaderboard-message trong HTML."
-        );
-        return;
-    }
-
-    try {
-        const { data: rows, error } = await cloud
-            .from("player_scores")
-            .select("user_id,nickname,score,games,updated_at")
-            .order("score", { ascending: false })
-            .order("updated_at", { ascending: true })
-            .limit(50);
-
-        if (error) throw error;
-
-        message.textContent = rows.length
-            ? "Top " + rows.length + " người chơi có điểm cao nhất"
-            : "Chưa có người chơi. Hãy là người đầu tiên!";
-
-        list.innerHTML = rows.length
-            ? rows.map((row, index) =>
-                `<li class="${row.user_id === cloudUser?.id ? "me" : ""}">
-                    <span>${index + 1}. ${safeText(row.nickname)}</span>
-                    <b>${Number(row.score) || 0} điểm</b>
-                </li>`
-            ).join("")
-            : "<li>Chưa có dữ liệu.</li>";
-
-        const own = rows.find(
-            row => row.user_id === cloudUser?.id
-        );
-
-        if (own) {
-            data.score = Number(own.score) || 0;
-            data.games = Number(own.games) || 0;
-            save();
-        }
-
-    } catch (error) {
-        message.textContent = "Lỗi tải bảng: " + error.message;
-        console.error("Leaderboard error:", error);
-    }
-}
-
+  async function loadLeaderboard(){
+    if(!cloudReady)return;
+    const list=$("global-leaderboard");
+    const {data:rows,error}=await cloud.from("player_scores").select("user_id,nickname,score,games,updated_at").order("score",{ascending:false}).order("updated_at",{ascending:true}).limit(50);
+    if(error){$("leaderboard-message").textContent="Lỗi tải bảng: "+error.message;return;}
+    $("leaderboard-message").textContent=rows.length?"Top "+rows.length+" người chơi có điểm cao nhất":"Chưa có người chơi. Hãy là người đầu tiên!";
+    list.innerHTML=rows.length?rows.map((row,index)=>`<li class="${row.user_id===cloudUser?.id?"me":""}"><span>${index+1}. ${safeText(row.nickname)}</span><b>${Number(row.score)||0} điểm</b></li>`).join(""):"<li>Chưa có dữ liệu.</li>";
+    const own=rows.find(row=>row.user_id===cloudUser?.id);
+    if(own){data.score=Number(own.score)||0;data.games=Number(own.games)||0;save();}
   }
   $("save-player-profile").addEventListener("click",saveNickname);
   $("refresh-leaderboard").addEventListener("click",loadLeaderboard);
