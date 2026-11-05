@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const GAME_KEY = "aeCayKheVuonTriThuc_v1";
-  const QUIZ_KEY = "soPhieuQuiz"; // Khóa phiếu Quiz dùng chung với website chính
+  const QUIZ_KEY = "soPhieuQuiz"; 
   const seeds = {
     sunflower: {name:"Hướng dương", icon:"🌻", cost:4, reward:12, seconds:25, amount:0},
     carrot: {name:"Cà rốt", icon:"🥕", cost:6, reward:18, seconds:40, amount:0},
@@ -134,12 +134,86 @@
   $("water-all").addEventListener("click",waterAll);$("feed-pet").addEventListener("click",feedPet);$("play-pet").addEventListener("click",playPet);$("buy-ticket").addEventListener("click",buyTicket);
   document.querySelectorAll(".buy-seed").forEach(b=>b.addEventListener("click",()=>buySeed(b.dataset.seed)));
   document.querySelectorAll(".task-btn").forEach(b=>b.addEventListener("click",()=>claimTask(b.dataset.task)));
-  // Giảm độ no từ từ khi người chơi quay lại; không dùng bộ đếm nền.
+
   const elapsed=Math.floor((Date.now()-(state.lastCare||Date.now()))/60000);
   if(elapsed>0){state.pet.hunger=Math.max(0,state.pet.hunger-Math.min(25,elapsed));state.lastCare=Date.now();save();}
   render();
-  // Cập nhật thời gian cây trồng mỗi giây.
+
   setInterval(()=>{if(state.plots.some(Boolean))renderPlots();},1000);
-  // Đồng bộ phiếu nếu trang chính và game đang mở ở hai tab.
+
   window.addEventListener("storage",e=>{if(e.key===QUIZ_KEY)renderInventory();});
 })();
+var quizSachDangMo = false;
+var quizSachDaTraLoi = false;
+
+function moThuThachSach() {
+  
+    if (Math.random() > 0.65) return;
+
+    if (quizSachDangMo) return;
+
+    quizSachDangMo = true;
+    quizSachDaTraLoi = false;
+
+    var viTri = Math.floor(Math.random() * cauHoiSach.length);
+    var cau = cauHoiSach[viTri];
+
+    document.getElementById("quizSachPopup").style.display = "flex";
+
+    document.getElementById("quizSachCauHoi").innerHTML =
+        cau.cauHoi;
+
+    document.getElementById("quizSachKetQua").innerHTML = "";
+
+    document.getElementById("quizSachDong").style.display = "none";
+
+    var html = "";
+
+    for (var i = 0; i < cau.dapAn.length; i++) {
+        html += '<button onclick="traLoiQuizSach(' + i + ',' + viTri + ')">' +
+            String.fromCharCode(65 + i) + ". " +
+            cau.dapAn[i] +
+            '</button>';
+    }
+
+    document.getElementById("quizSachDapAn").innerHTML = html;
+}
+
+function traLoiQuizSach(chon, viTri) {
+    if (quizSachDaTraLoi) return;
+
+    quizSachDaTraLoi = true;
+
+    var cau = cauHoiSach[viTri];
+    var cacNut = document.getElementById("quizSachDapAn").children;
+
+    if (chon === cau.dapAnDung) {
+        document.getElementById("quizSachKetQua").innerHTML =
+            "🎉 Chính xác! +10 xu<br>" + cau.giaiThich;
+
+        cacNut[chon].classList.add("dung");
+
+      
+        if (typeof tien === "number") {
+            tien += 10;
+        } else if (typeof xu === "number") {
+            xu += 10;
+        }
+
+    } else {
+        document.getElementById("quizSachKetQua").innerHTML =
+            "❌ Chưa chính xác!<br>Đáp án đúng: " +
+            cau.dapAn[cau.dapAnDung] +
+            "<br>" + cau.giaiThich;
+
+        cacNut[chon].classList.add("sai");
+        cacNut[cau.dapAnDung].classList.add("dung");
+    }
+
+    document.getElementById("quizSachDong").style.display = "inline-block";
+}
+
+function dongQuizSach() {
+    document.getElementById("quizSachPopup").style.display = "none";
+    quizSachDangMo = false;
+}
