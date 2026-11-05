@@ -16,6 +16,7 @@
     selectedSeed:"sunflower", seeds:{sunflower:3,carrot:1,strawberry:0,blueberry:0,moonflower:0},
     plots:Array(6).fill(null), tasks:{plant:false,water:false,play:false,harvest:false},
     story:{chapter2MucAccepted:false,chapter2MucDone:false,chapter2ResearchDone:false},
+    actionQuizIndex:0, actionQuizCorrect:0,
     lastCare:Date.now(), lastAction:"Chào mừng bạn đến với khu vườn!"
   };
   let state = loadState();
@@ -51,6 +52,108 @@
   function quizTickets(){return Math.max(0,Number(localStorage.getItem(QUIZ_KEY))||0);}
   function setCoins(value){state.coins=Math.max(0,Math.floor(value));save();render();}
   function notify(message){const el=$("toast");el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2400);}
+
+  // Bo cau hoi dung chung: moi thao tac lam thay doi tien trinh deu phai qua cau hoi sach.
+  const bookQuestions = [
+    {q:"Tác phẩm Sửa đổi lối làm việc được viết vào thời gian nào?",a:["Tháng 10 năm 1947","Tháng 8 năm 1945","Tháng 5 năm 1954","Tháng 9 năm 1969"],correct:0,why:"Tác phẩm được viết vào tháng 10-1947 tại Việt Bắc."},
+    {q:"Bút danh được dùng khi viết tác phẩm là gì?",a:["Nguyễn Ái Quốc","T.Lan","X.Y.Z","Trần Dân Tiên"],correct:2,why:"Tác phẩm Sửa đổi lối làm việc được ký bút danh X.Y.Z."},
+    {q:"Tác phẩm có bao nhiêu phần chính?",a:["4 phần","5 phần","6 phần","8 phần"],correct:2,why:"Tác phẩm gồm 6 phần chính, từ Phê bình và sửa chữa đến Chống thói ba hoa."},
+    {q:"Phần đầu tiên của tác phẩm có tên là gì?",a:["Cách lãnh đạo","Phê bình và sửa chữa","Vấn đề cán bộ","Mấy điều kinh nghiệm"],correct:1,why:"Phần I có tên Phê bình và sửa chữa."},
+    {q:"Một mục đích quan trọng của việc tự phê bình là gì?",a:["Che giấu khuyết điểm","Đổ lỗi cho người khác","Nhận ra thiếu sót để sửa chữa và tiến bộ","Chỉ tìm lỗi của người khác"],correct:2,why:"Nhìn nhận đúng khuyết điểm giúp sửa chữa và làm công việc tiến bộ hơn."},
+    {q:"Ba loại khuyết điểm được nhấn mạnh cần khắc phục gồm những gì?",a:["Chủ quan, hẹp hòi, ba hoa","Chậm chạp, ít nói, tiết kiệm","Thiếu ngủ, nóng nảy, vội vàng","Quên việc, ít tiền, thiếu dụng cụ"],correct:0,why:"Tác phẩm nêu bệnh chủ quan, bệnh hẹp hòi và thói ba hoa là những khuyết điểm cần khắc phục."},
+    {q:"Phần nào của tác phẩm bàn về đạo đức và tư cách của người cách mạng?",a:["Tư cách và đạo đức cách mạng","Chống thói ba hoa","Cách lãnh đạo","Mấy điều kinh nghiệm"],correct:0,why:"Đây là tên phần III của tác phẩm."},
+    {q:"Phần nào tập trung bàn về công tác cán bộ?",a:["Phê bình và sửa chữa","Vấn đề cán bộ","Chống thói ba hoa","Cách lãnh đạo"],correct:1,why:"Vấn đề cán bộ là phần IV của tác phẩm."},
+    {q:"Theo tinh thần tác phẩm, khi phát hiện cách làm chưa hiệu quả ta nên làm gì?",a:["Giữ nguyên vì đã quen","Bỏ qua và không trao đổi","Xem xét nguyên nhân, tiếp thu góp ý và sửa cách làm","Đổ lỗi cho hoàn cảnh"],correct:2,why:"Tinh thần sửa đổi là nhìn nhận thực tế, học hỏi và chủ động sửa những điểm chưa tốt."},
+    {q:"Thói ba hoa trong nói và viết nên được thay bằng cách diễn đạt nào?",a:["Dài dòng, nhiều từ khó","Rõ ràng, đúng trọng tâm, dễ hiểu","Dùng thật nhiều thuật ngữ","Nói càng lâu càng tốt"],correct:1,why:"Nói và viết cần thiết thực, rõ ràng, phù hợp với người nghe và nội dung."},
+    {q:"Phần cuối cùng của tác phẩm có tên là gì?",a:["Vấn đề cán bộ","Cách lãnh đạo","Chống thói ba hoa","Tư cách và đạo đức cách mạng"],correct:2,why:"Phần VI, cũng là phần cuối, có tên Chống thói ba hoa."},
+    {q:"Khi góp ý cho bạn trong nhóm, cách làm phù hợp nhất là gì?",a:["Nêu cụ thể việc cần sửa và trao đổi trên tinh thần xây dựng","Chê bai trước đám đông","Im lặng dù thấy lỗi rõ ràng","Chỉ nói lỗi mà không đề xuất cách sửa"],correct:0,why:"Góp ý nên chân thành, cụ thể, nhằm giúp nhau tiến bộ chứ không công kích cá nhân."},
+    {q:"Vì sao cần gắn học tập với thực hành?",a:["Để chỉ nhớ lý thuyết","Để kiến thức được vận dụng và tạo kết quả thực tế","Để tránh làm việc","Để có thêm khẩu hiệu"],correct:1,why:"Kiến thức cần được vận dụng vào công việc cụ thể để tạo chuyển biến thực tế."},
+    {q:"Khi nhận nhiệm vụ nhóm, cách làm nào thể hiện tinh thần trách nhiệm?",a:["Chờ người khác làm","Làm theo cảm tính, không kiểm tra","Lập kế hoạch, thực hiện và kiểm tra kết quả","Bỏ qua góp ý"],correct:2,why:"Làm việc có kế hoạch và kiểm tra kết quả giúp công việc thiết thực, hiệu quả."},
+    {q:"Nội dung chính của phần Cách lãnh đạo hướng đến điều gì?",a:["Phương pháp và cách tổ chức lãnh đạo công việc","Cách trồng cây trong vườn","Cách viết truyện dài","Cách buôn bán ở chợ"],correct:0,why:"Phần V bàn về phương pháp lãnh đạo, tổ chức và thực hiện công việc."},
+    {q:"Nếu mắc lỗi trong công việc, lựa chọn nào phù hợp với tinh thần sửa đổi?",a:["Giấu lỗi","Thừa nhận, tìm nguyên nhân và sửa chữa","Đổ lỗi cho đồng đội","Không làm việc đó nữa"],correct:1,why:"Tinh thần tự phê bình là dám nhận thiếu sót và có hành động khắc phục."},
+    {q:"Một bài học có thể áp dụng khi làm bài tập nhóm là gì?",a:["Không cần lắng nghe ai","Phân công rõ ràng, phối hợp và góp ý xây dựng","Chỉ một người làm tất cả","Không cần kiểm tra sản phẩm"],correct:1,why:"Phối hợp, phân công và trao đổi thẳng thắn giúp tập thể làm việc tốt hơn."},
+    {q:"Tác phẩm hướng đến việc nâng cao điều gì ở người cán bộ cách mạng?",a:["Trình độ lý luận, phẩm chất đạo đức và tác phong công tác","Khả năng nói thật dài","Sự nổi tiếng cá nhân","Số lượng khẩu hiệu"],correct:0,why:"Mục đích tác phẩm gắn với nâng cao lý luận, tư tưởng, đạo đức và tác phong công tác."},
+    {q:"Khi báo cáo kết quả, nên trình bày như thế nào?",a:["Nói chung chung, không có căn cứ","Dùng lời lẽ phức tạp","Nêu đúng việc đã làm, kết quả và vấn đề còn tồn tại","Chỉ kể thành tích"],correct:2,why:"Báo cáo cần trung thực, cụ thể, rõ kết quả và cả điểm còn hạn chế."},
+    {q:"Điều nào thể hiện tinh thần học hỏi để tiến bộ?",a:["Không tiếp nhận góp ý","Cho rằng mình luôn đúng","Thường xuyên xem lại cách làm và điều chỉnh khi cần","Lặp lại sai sót mà không rút kinh nghiệm"],correct:2,why:"Tự xem xét và điều chỉnh cách làm là biểu hiện của tinh thần học hỏi, sửa đổi."}
+  ];
+  let pendingFarmAction = null;
+  let currentBookQuestion = null;
+
+  function createBookQuiz(){
+    if($("farm-book-quiz"))return;
+    const wrap=document.createElement("div");
+    wrap.id="farm-book-quiz";wrap.className="book-quiz-backdrop";wrap.hidden=true;
+    wrap.innerHTML='<section class="book-quiz-box" role="dialog" aria-modal="true" aria-labelledby="farm-book-title">'+
+      '<button type="button" class="book-quiz-close" id="farm-book-close" aria-label="Đóng">×</button>'+ 
+      '<div class="book-quiz-kicker">📖 THỬ THÁCH TRI THỨC</div>'+ 
+      '<h2 id="farm-book-title">Trả lời câu hỏi để tiếp tục</h2>'+ 
+      '<p class="book-quiz-desc">Mỗi thao tác trong nông trại cần một câu trả lời đúng về sách <b>Sửa đổi lối làm việc</b>.</p>'+ 
+      '<p class="book-quiz-action" id="farm-book-action"></p>'+ 
+      '<div class="book-quiz-progress" id="farm-book-progress"></div>'+ 
+      '<h3 id="farm-book-question"></h3>'+ 
+      '<div class="book-quiz-options" id="farm-book-options"></div>'+ 
+      '<p class="book-quiz-feedback" id="farm-book-feedback" aria-live="polite"></p>'+ 
+      '<button type="button" class="book-quiz-retry" id="farm-book-retry" hidden>↻ Thử câu hỏi khác</button>'+ 
+      '<small class="book-quiz-reward">Trả lời đúng: +10 xu. Trả lời sai: xem giải thích rồi thử câu khác.</small>'+ 
+      '</section>';
+    document.body.appendChild(wrap);
+    $("farm-book-close").addEventListener("click",cancelBookAction);
+    $("farm-book-retry").addEventListener("click",showNextBookQuestion);
+    $("farm-book-options").addEventListener("click",function(event){
+      const btn=event.target.closest("[data-book-answer]");
+      if(btn)answerFarmBookQuestion(Number(btn.dataset.bookAnswer));
+    });
+    wrap.addEventListener("click",function(event){if(event.target===wrap)cancelBookAction();});
+    document.addEventListener("keydown",function(event){if(event.key==="Escape"&&!wrap.hidden)cancelBookAction();});
+  }
+  function showNextBookQuestion(){
+    createBookQuiz();
+    const index=(Number(state.actionQuizIndex)||0)%bookQuestions.length;
+    currentBookQuestion=bookQuestions[index];
+    state.actionQuizIndex=(Number(state.actionQuizIndex)||0)+1;
+    save();
+    $("farm-book-progress").textContent="Câu hỏi "+(index+1)+" / "+bookQuestions.length;
+    $("farm-book-question").textContent=currentBookQuestion.q;
+    $("farm-book-options").innerHTML=currentBookQuestion.a.map((choice,i)=>'<button type="button" class="book-quiz-option" data-book-answer="'+i+'"><b>'+String.fromCharCode(65+i)+'.</b> '+choice+'</button>').join("");
+    $("farm-book-feedback").textContent="";
+    $("farm-book-retry").hidden=true;
+    $("farm-book-options").hidden=false;
+  }
+  function askBeforeFarmAction(actionName,callback){
+    pendingFarmAction={name:actionName,callback};
+    createBookQuiz();
+    $("farm-book-action").textContent="Thao tác đang chờ: "+actionName;
+    showNextBookQuestion();
+    $("farm-book-quiz").hidden=false;
+    document.body.classList.add("book-quiz-open");
+  }
+  function cancelBookAction(){
+    const wrap=$("farm-book-quiz");if(wrap)wrap.hidden=true;
+    document.body.classList.remove("book-quiz-open");
+    pendingFarmAction=null;currentBookQuestion=null;
+    notify("Đã hủy thao tác. Bạn có thể thực hiện lại khi sẵn sàng.");
+  }
+  function answerFarmBookQuestion(answerIndex){
+    if(!pendingFarmAction||!currentBookQuestion)return;
+    if(answerIndex!==currentBookQuestion.correct){
+      const correctText=String.fromCharCode(65+currentBookQuestion.correct)+". "+currentBookQuestion.a[currentBookQuestion.correct];
+      $("farm-book-feedback").textContent="Chưa đúng. Đáp án: "+correctText+". "+currentBookQuestion.why;
+      $("farm-book-options").hidden=true;
+      $("farm-book-retry").hidden=false;
+      return;
+    }
+    const action=pendingFarmAction.callback;
+    const actionName=pendingFarmAction.name;
+    pendingFarmAction=null;currentBookQuestion=null;
+    $("farm-book-quiz").hidden=true;
+    document.body.classList.remove("book-quiz-open");
+    state.coins=(Number(state.coins)||0)+10;
+    state.actionQuizCorrect=(Number(state.actionQuizCorrect)||0)+1;
+    state.lastAction="Trả lời đúng câu hỏi sách trước khi: "+actionName;
+    save();render();
+    notify("Chính xác! +10 xu. Đang thực hiện: "+actionName+".");
+    action();
+  }
   function switchTab(tab){
     document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
     document.querySelectorAll(".tab-page").forEach(p=>p.classList.toggle("active",p.id==="page-"+tab));
@@ -181,11 +284,11 @@
     $("plots").innerHTML="";
     state.plots.forEach((plot,index)=>{
       const button=document.createElement("button");button.className="plot"+(plot&&progress(plot)>=1?" ready":"")+(plot?"":" empty");
-      if(!plot){button.innerHTML='<span class="crop">＋</span><small>Ô đất trống</small>';button.addEventListener("click",()=>plant(index));}
+      if(!plot){button.innerHTML='<span class="crop">＋</span><small>Ô đất trống</small>';button.addEventListener("click",()=>askBeforeFarmAction("Trồng cây",()=>plant(index)));}
       else{
         const stage=cropStage(plot),seed=seeds[plot.type],remaining=Math.max(0,Math.ceil(seed.seconds*(1-progress(plot))));
         button.innerHTML='<span class="crop">'+cropIcons[plot.type][stage]+'</span><small>'+seed.name+' · '+(stage===3?"Đã chín":remaining+" giây")+'</small>';
-        button.addEventListener("click",()=>harvest(index));
+        button.addEventListener("click",()=>{if(progress(plot)>=1)askBeforeFarmAction("Thu hoạch cây",()=>harvest(index));else notify("Cây chưa chín đâu! Hãy chờ thêm một chút.");});
       }
       $("plots").appendChild(button);
     });
@@ -198,7 +301,7 @@
       button.className="seed-option"+(state.selectedSeed===type?" selected":"")+(locked?" locked":"");
       button.disabled=locked;
       button.innerHTML='<span>'+seed.icon+'</span><div><b>'+seed.name+'</b><small>'+(locked?"🔒 Mở ở phòng thí nghiệm cấp "+seed.unlockLevel:"Đang có: "+(state.seeds[type]||0))+'</small></div>';
-      button.addEventListener("click",()=>{if(locked)return;state.selectedSeed=type;save();renderSeeds();});
+      button.addEventListener("click",()=>{if(locked)return;askBeforeFarmAction("Chọn hạt giống",()=>{state.selectedSeed=type;save();renderSeeds();});});
       $("seed-list").appendChild(button);
     });
   }
@@ -234,7 +337,7 @@
       const seed=seeds[id];
       return '<article class="shop-card panel research-seed-card"><div class="shop-art">'+seed.icon+'</div><h3>'+seed.name+'</h3><p>Giống đã được khám phá trong phòng thí nghiệm. Thu hoạch nhận '+seed.reward+' xu.</p><div class="shop-bottom"><b>'+seed.cost+' xu</b><button class="primary" data-research-buy="'+id+'">Mua hạt</button></div><small class="hint">Trong túi: '+(state.seeds[id]||0)+'</small></article>';
     }).join("")||'<div class="panel research-empty">🔒 Chưa có giống nghiên cứu nào được mở khóa. Hãy vào phòng thí nghiệm và chọn “Mở giống cây”.</div>';
-    host.querySelectorAll('[data-research-buy]').forEach(btn=>btn.addEventListener('click',()=>buySeed(btn.dataset.researchBuy)));
+    host.querySelectorAll('[data-research-buy]').forEach(btn=>btn.addEventListener('click',()=>askBeforeFarmAction('Mua hạt giống nghiên cứu',()=>buySeed(btn.dataset.researchBuy))));
   }
   function rollPetVariant(){
     const r=Math.random();
@@ -245,10 +348,10 @@
   }
   function discover(kind,cost,catalog){if((state.researchPoints||0)<cost){notify('Chưa đủ điểm bé ngoan!');return;}const owned=state.collections[kind]||[];const available=catalog.filter(x=>!owned.includes(x.id));if(!available.length){notify('Bạn đã sưu tầm đủ bộ này rồi!');return;}state.researchPoints-=cost;const item=available[Math.floor(Math.random()*available.length)];owned.push(item.id);state.collections[kind]=owned;if(kind==='crops'){unlockResearchSeed(item);if(state.story&&state.story.chapter2MucDone&&!state.story.chapter2ResearchDone){state.story.chapter2ResearchDone=true;state.coins+=15;state.researchPoints+=5;state.lastAction='Hoàn thành Chương 2: +15 xu, +5 điểm nghiên cứu';}}if(kind==='pets'){state.activePet=item.id;const variant=rollPetVariant();state.pet={...state.pet,name:item.name,icon:item.icon,variant:variant.id,variantName:variant.name,bonus:variant.bonus};}if(kind==='chickens'){state.activeChicken=item.id;}save();render();renderCollection();renderEvolutionLab();$('collection-result').textContent=item.icon+' '+item.name+' · '+item.rank+' · Chỉ số '+item.power+' · Thưởng '+item.bonus+(kind==='pets'?' · '+state.pet.variantName:'');notify('Đã mở khóa '+item.name+(kind==='pets'?' · '+state.pet.variantName:'')+'!');}
   function renderCollection(){const groups=[['crops',cropCatalog],['research',researchCatalog],['pets',petCatalog],['chickens',chickenCatalog]];groups.forEach(([key,list])=>{const el=$('count-'+key);if(el)el.textContent=(state.collections[key]||[]).length+'/'+list.length;});const all=[...cropCatalog.map(x=>({...x,group:'Cây trồng',key:'crops'})),...researchCatalog.map(x=>({...x,group:'Cây nghiên cứu',key:'research'})),...petCatalog.map(x=>({...x,group:'Pet',key:'pets'})),...chickenCatalog.map(x=>({...x,group:'Giống gà',key:'chickens'}))];$('collection-book').innerHTML=all.filter(x=>(state.collections[x.key]||[]).includes(x.id)).map(x=>'<div class="collection-entry">'+x.icon+' <b>'+x.name+'</b><small>'+x.group+' · '+x.rank+' · Chỉ số '+x.power+' · Bonus '+x.bonus+'</small></div>').join('')||'Chưa có mục sưu tầm nào.';}
-  $('collect-crop').addEventListener('click',()=>discover('crops',5,cropCatalog));
-  $('research-crop').addEventListener('click',()=>discover('research',5,researchCatalog));
-  $('hatch-pet').addEventListener('click',()=>discover('pets',10,petCatalog));
-  $('hatch-chicken').addEventListener('click',()=>discover('chickens',10,chickenCatalog));
+  $('collect-crop').addEventListener('click',()=>askBeforeFarmAction('Mở khóa giống cây',()=>discover('crops',5,cropCatalog)));
+  $('research-crop').addEventListener('click',()=>askBeforeFarmAction('Nghiên cứu cây trồng',()=>discover('research',5,researchCatalog)));
+  $('hatch-pet').addEventListener('click',()=>askBeforeFarmAction('Khám phá pet',()=>discover('pets',10,petCatalog)));
+  $('hatch-chicken').addEventListener('click',()=>askBeforeFarmAction('Khám phá giống gà',()=>discover('chickens',10,chickenCatalog)));
 
   function renderEvolutionLab(){
     const points=state.researchPoints||0;
@@ -391,13 +494,13 @@
     if($("water-count"))$("water-count").textContent=state.waterBottles||0;
     if($("water-info")){const left=10*60*1000-(Date.now()-(state.waterPickupAt||0));$("water-info").textContent=left>0?"Có thể nhặt bình tiếp theo sau "+Math.ceil(left/60000)+" phút. Mỗi cây cần 1 bình.":"Có thể nhặt 1 bình nước. Mỗi cây cần 1 bình.";}
   }
-  $("water-all").addEventListener("click",waterAll);
-  $("find-water").addEventListener("click",findWater);
-  $("buy-water").addEventListener("click",buyWater);
-  $("breed-button").addEventListener("click",breedPlants);
-  $("delivery-button").addEventListener("click",deliverProduce);$("feed-pet").addEventListener("click",feedPet);$("play-pet").addEventListener("click",playPet);$("buy-ticket").addEventListener("click",buyTicket);
-  document.querySelectorAll(".buy-seed").forEach(b=>b.addEventListener("click",()=>buySeed(b.dataset.seed)));
-  document.querySelectorAll(".task-btn").forEach(b=>b.addEventListener("click",()=>claimTask(b.dataset.task)));
+  $("water-all").addEventListener("click",()=>askBeforeFarmAction("Tưới cây",waterAll));
+  $("find-water").addEventListener("click",()=>askBeforeFarmAction("Nhặt bình nước",findWater));
+  $("buy-water").addEventListener("click",()=>askBeforeFarmAction("Mua bình nước",buyWater));
+  $("breed-button").addEventListener("click",()=>askBeforeFarmAction("Lai tạo cây trồng",breedPlants));
+  $("delivery-button").addEventListener("click",()=>askBeforeFarmAction("Giao hàng đến khu phố",deliverProduce));$("feed-pet").addEventListener("click",()=>askBeforeFarmAction("Cho pet ăn",feedPet));$("play-pet").addEventListener("click",()=>askBeforeFarmAction("Chơi cùng pet",playPet));$("buy-ticket").addEventListener("click",()=>askBeforeFarmAction("Đổi phiếu Quiz",buyTicket));
+  document.querySelectorAll(".buy-seed").forEach(b=>b.addEventListener("click",()=>askBeforeFarmAction("Mua hạt giống",()=>buySeed(b.dataset.seed))));
+  document.querySelectorAll(".task-btn").forEach(b=>b.addEventListener("click",()=>askBeforeFarmAction("Nhận thưởng nhiệm vụ",()=>claimTask(b.dataset.task))));
  
   const elapsed=Math.floor((Date.now()-(state.lastCare||Date.now()))/60000);
   if(elapsed>0){state.pet.hunger=Math.max(0,state.pet.hunger-Math.min(25,elapsed));state.lastCare=Date.now();save();}
