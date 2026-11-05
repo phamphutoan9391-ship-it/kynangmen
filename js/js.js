@@ -92,11 +92,13 @@ var danhSachCauHoi = [
 var viTriCauHoi = 0;
 var soCauDung = 0;
 var daTraLoi = false;
-var soPhieu = 0;
+var soPhieu = Math.max(0, Number(localStorage.getItem("soPhieuQuiz")) || 0);
 var cauHoiDaMo = false;
 
 // Cap nhat so phieu va trang thai mo cau hoi.
 function capNhatPhieu() {
+    soPhieu = Math.max(0, Number(soPhieu) || 0);
+    localStorage.setItem("soPhieuQuiz", String(soPhieu));
     document.getElementById("soPhieuHienCo").innerHTML = soPhieu;
     document.getElementById("soPhieuQuiz").innerHTML = soPhieu;
 
@@ -118,6 +120,18 @@ function capNhatPhieu() {
             "Bạn đang có " + soPhieu + " phiếu. Mỗi câu hỏi cần 1 phiếu.";
     }
 }
+
+// Luôn đọc lại ví phiếu khi nông trại đổi phiếu ở tab khác.
+window.addEventListener("storage", function(event) {
+    if (event.key === "soPhieuQuiz") {
+        soPhieu = Math.max(0, Number(event.newValue) || 0);
+        capNhatPhieu();
+    }
+});
+window.addEventListener("ae-quiz-wallet-updated", function() {
+    soPhieu = Math.max(0, Number(localStorage.getItem("soPhieuQuiz")) || 0);
+    capNhatPhieu();
+});
 
 // Nhan phieu duoc gui tu game Halloween trong iframe.
 window.addEventListener("message", function(event) {
@@ -428,3 +442,6 @@ window.addEventListener('DOMContentLoaded', () => {
         });
    
 
+
+// Khởi tạo ví phiếu từ dữ liệu đã lưu trên trình duyệt.
+window.addEventListener("load", function(){ soPhieu=Math.max(0,Number(localStorage.getItem("soPhieuQuiz"))||0); capNhatPhieu(); });
