@@ -16,10 +16,12 @@
     selectedSeed:"sunflower", seeds:{sunflower:3,carrot:1,strawberry:0,blueberry:0,moonflower:0},
     plots:Array(6).fill(null), tasks:{plant:false,water:false,play:false,harvest:false},
     story:{chapter2MucAccepted:false,chapter2MucDone:false,chapter2ResearchDone:false},
+    dailyPlant:{dateKey:"",cropId:"",claimed:false},
     actionQuizIndex:0, actionQuizCorrect:0,
     lastCare:Date.now(), lastAction:"Chào mừng bạn đến với khu vườn!"
   };
   let state = loadState();
+  let trackSeasonalEventAction = function(){};
   
   try {
     const arcadeData = JSON.parse(localStorage.getItem("aeCayKhe_thanhTichSanThuThach") || "{}");
@@ -43,6 +45,7 @@
           seeds:{...defaultState.seeds,...saved.seeds},
           tasks:{...defaultState.tasks,...saved.tasks},
           story:{...defaultState.story,...(saved.story||{})},
+          dailyPlant:{...defaultState.dailyPlant,...(saved.dailyPlant||{})},
           plots:Array.isArray(saved.plots)?saved.plots.slice(0,6):Array(6).fill(null)};
       }
     }catch(e){}
@@ -53,7 +56,6 @@
   function setCoins(value){state.coins=Math.max(0,Math.floor(value));save();render();}
   function notify(message){const el=$("toast");el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2400);}
 
-  // Bo cau hoi dung chung: moi thao tac lam thay doi tien trinh deu phai qua cau hoi sach.
   const bookQuestions = [
     {q:"Tác phẩm Sửa đổi lối làm việc được viết vào thời gian nào?",a:["Tháng 10 năm 1947","Tháng 8 năm 1945","Tháng 5 năm 1954","Tháng 9 năm 1969"],correct:0,why:"Tác phẩm được viết vào tháng 10-1947 tại Việt Bắc."},
     {q:"Bút danh được dùng khi viết tác phẩm là gì?",a:["Nguyễn Ái Quốc","T.Lan","X.Y.Z","Trần Dân Tiên"],correct:2,why:"Tác phẩm Sửa đổi lối làm việc được ký bút danh X.Y.Z."},
@@ -149,6 +151,7 @@
     document.body.classList.remove("book-quiz-open");
     state.coins=(Number(state.coins)||0)+10;
     state.actionQuizCorrect=(Number(state.actionQuizCorrect)||0)+1;
+    trackSeasonalEventAction("book",null,1);
     state.lastAction="Trả lời đúng câu hỏi sách trước khi: "+actionName;
     save();render();
     notify("Chính xác! +10 xu. Đang thực hiện: "+actionName+".");
@@ -170,7 +173,7 @@
     const type=state.selectedSeed, seed=seeds[type];
     if(!seed || (state.seeds[type]||0)<=0){notify("Bạn đã hết hạt giống này. Hãy mua thêm trong cửa hàng.");return;}
     state.seeds[type]--;state.plots[index]={type,plantedAt:Date.now(),watered:false};
-    state.tasks.plant=true;save();render();notify("Đã gieo "+seed.name+"! Cây sẽ lớn dần.");
+    state.tasks.plant=true;trackSeasonalEventAction("plant",type,1);save();render();notify("Đã gieo "+seed.name+"! Cây sẽ lớn dần.");
   }
   function progress(plot){
     if(!plot)return 0;
@@ -215,6 +218,7 @@
     state.harvests++;
     state.plots[index]=null;
     state.tasks.harvest=true;
+    trackSeasonalEventAction("harvest",plot.type,1);
     state.level=1+Math.floor(state.harvests/5);
     const newLabLevel=Math.min(5,1+Math.floor(state.researchPoints/30));
     const leveledUp=newLabLevel>(state.labLevel||1);
@@ -228,7 +232,7 @@
     if((state.waterBottles||0)<growing.length){notify("Cần "+growing.length+" bình nước để tưới hết cây. Hãy nhặt hoặc mua thêm.");return;}
     state.waterBottles-=growing.length;
     growing.forEach(p=>{p.watered=true;p.wateredAt=Date.now();});
-    state.tasks.water=true;save();render();notify("Đã dùng "+growing.length+" bình nước. Cây phát triển nhanh hơn 50%! 💧");
+    state.tasks.water=true;trackSeasonalEventAction("water",null,growing.length);save();render();notify("Đã dùng "+growing.length+" bình nước. Cây phát triển nhanh hơn 50%! 💧");
   }
   function findWater(){
     const cooldown=10*60*1000, now=Date.now(), left=cooldown-(now-(state.waterPickupAt||0));
@@ -246,7 +250,7 @@
     state.coins-=5;state.totalSpent+=5;state.pet.hunger=Math.min(100,state.pet.hunger+30);state.pet.bond=Math.min(100,state.pet.bond+3);save();render();notify("Mèo Mướp ăn ngon lành! 🍓");
   }
   function playPet(){
-    state.pet.bond=Math.min(100,state.pet.bond+10);state.pet.hunger=Math.max(0,state.pet.hunger-5);state.tasks.play=true;save();render();notify("Pet rất vui khi được chơi cùng bạn! 💚");
+    state.pet.bond=Math.min(100,state.pet.bond+10);state.pet.hunger=Math.max(0,state.pet.hunger-5);state.tasks.play=true;trackSeasonalEventAction("play",null,1);save();render();notify("Pet rất vui khi được chơi cùng bạn! 💚");
   }
   function buyTicket(){
     const cost=25;
@@ -307,7 +311,55 @@
   }
 
   const makeCatalog=(prefixes,suffixes,icons,count,kind)=>{const out=[];for(let i=0;i<count;i++){out.push({id:kind+'_'+(i+1),name:prefixes[i%prefixes.length]+' '+suffixes[Math.floor(i/prefixes.length)%suffixes.length],icon:icons[i%icons.length],rank:i%20===0?'Huyền thoại':i%5===0?'Hiếm':'Thường',power:5+(i*7)%46,bonus:1+(i*3)%12});}return out;};
-  const cropCatalog=makeCatalog(['Cà chua','Dâu','Ớt','Bí','Đậu','Khoai','Ngô','Cải','Hoa','Lúa','Táo','Lê','Nho','Cam'],['đỏ','vàng','tím','xanh','mật ong','pha lê','sao','băng','mặt trời','rừng','sa mạc'],['🍅','🍓','🌶️','🎃','🫘','🥔','🌽','🥬','🌼','🌾','🍎','🍐','🍇','🍊'],140,'crop');
+
+  const extraCropSpecies = [
+    {name:'Xoài',icon:'🥭'},{name:'Chuối',icon:'🍌'},{name:'Dứa',icon:'🍍'},{name:'Đu đủ',icon:'🍈'},
+    {name:'Thanh long',icon:'🐉'},{name:'Dưa hấu',icon:'🍉'},{name:'Dưa lưới',icon:'🍈'},{name:'Dưa gang',icon:'🍈'},
+    {name:'Bưởi',icon:'🍊'},{name:'Chanh',icon:'🍋'},{name:'Quýt',icon:'🍊'},{name:'Bơ',icon:'🥑'},
+    {name:'Mận',icon:'🍑'},{name:'Đào',icon:'🍑'},{name:'Mơ',icon:'🍑'},{name:'Ổi',icon:'🍐'},
+    {name:'Mít',icon:'🍈'},{name:'Sầu riêng',icon:'🌳'},{name:'Măng cụt',icon:'🍇'},{name:'Chôm chôm',icon:'🍒'},
+    {name:'Nhãn',icon:'🍒'},{name:'Vải',icon:'🍒'},{name:'Khế',icon:'⭐'},{name:'Mãng cầu',icon:'🍈'},
+    {name:'Dâu tằm',icon:'🫐'},{name:'Dừa',icon:'🥥'},{name:'Cóc',icon:'🥭'},{name:'Me',icon:'🫘'},
+    {name:'Sim',icon:'🫐'},{name:'Nho',icon:'🍇'},{name:'Cà tím',icon:'🍆'},{name:'Dưa leo',icon:'🥒'},
+    {name:'Bí xanh',icon:'🥒'},{name:'Bí đỏ',icon:'🎃'},{name:'Mướp',icon:'🥒'},{name:'Khổ qua',icon:'🥒'},
+    {name:'Cà rốt',icon:'🥕'},{name:'Củ cải',icon:'🥕'},{name:'Củ dền',icon:'🫜'},{name:'Khoai lang',icon:'🍠'},
+    {name:'Khoai môn',icon:'🥔'},{name:'Khoai tây',icon:'🥔'},{name:'Hành tây',icon:'🧅'},{name:'Tỏi',icon:'🧄'},
+    {name:'Gừng',icon:'🫚'},{name:'Nghệ',icon:'🫚'},{name:'Riềng',icon:'🫚'},{name:'Sả',icon:'🌿'},
+    {name:'Rau muống',icon:'🥬'},{name:'Cải thìa',icon:'🥬'},{name:'Cải ngọt',icon:'🥬'},{name:'Cải bó xôi',icon:'🥬'},
+    {name:'Xà lách',icon:'🥬'},{name:'Rau dền',icon:'🥬'},{name:'Mồng tơi',icon:'🍃'},{name:'Đậu bắp',icon:'🌶️'},
+    {name:'Hẹ',icon:'🌿'},{name:'Cần tây',icon:'🥬'},{name:'Bắp cải',icon:'🥬'},{name:'Súp lơ',icon:'🥦'},
+    {name:'Lúa nếp',icon:'🌾'},{name:'Lúa tẻ',icon:'🌾'},{name:'Lúa mì',icon:'🌾'},{name:'Yến mạch',icon:'🌾'},
+    {name:'Đại mạch',icon:'🌾'},{name:'Kê',icon:'🌾'},{name:'Cao lương',icon:'🌾'},{name:'Ngô nếp',icon:'🌽'},
+    {name:'Đậu xanh',icon:'🫘'},{name:'Đậu đỏ',icon:'🫘'},{name:'Đậu đen',icon:'🫘'},{name:'Đậu nành',icon:'🫘'},
+    {name:'Đậu phộng',icon:'🥜'},{name:'Đậu Hà Lan',icon:'🫛'},{name:'Đậu đũa',icon:'🫘'},{name:'Mè',icon:'🌱'},
+    {name:'Húng quế',icon:'🌿'},{name:'Bạc hà',icon:'🌿'},{name:'Tía tô',icon:'🍃'},{name:'Kinh giới',icon:'🌿'},
+    {name:'Rau răm',icon:'🍃'},{name:'Ngò rí',icon:'🌿'},{name:'Thì là',icon:'🌿'},{name:'Hương thảo',icon:'🌿'},
+    {name:'Lá lốt',icon:'🍃'},{name:'Ngải cứu',icon:'🌿'},{name:'Nha đam',icon:'🪴'},{name:'Cỏ ngọt',icon:'🌱'},
+    {name:'Cà phê',icon:'☕'},{name:'Ca cao',icon:'🍫'},{name:'Chè',icon:'🍵'},{name:'Hồ tiêu',icon:'🫒'},
+    {name:'Điều',icon:'🥜'},{name:'Sen',icon:'🪷'},{name:'Súng',icon:'🪷'},{name:'Cúc',icon:'🌼'},
+    {name:'Hồng',icon:'🌹'},{name:'Tulip',icon:'🌷'},{name:'Cẩm tú cầu',icon:'💐'},{name:'Hướng dương',icon:'🌻'}
+  ];
+  const extraCropVariants = ['Ánh Trăng','Cầu Vồng','Pha Lê','Lá Đỏ','Thân Tím','Mini','Khổng Lồ','Sinh Trưởng Nhanh','Chịu Hạn','Ngân Hà'];
+  function makeExtraCropCatalog(){
+    const out=[];
+    extraCropSpecies.forEach((species,speciesIndex)=>{
+      extraCropVariants.forEach((variant,variantIndex)=>{
+        const index=speciesIndex*extraCropVariants.length+variantIndex;
+        out.push({
+          id:'crop_'+(141+index),
+          name:species.name+' '+variant,
+          icon:species.icon,
+          rank:index%100===0?'Huyền thoại':index%10===0?'Hiếm':'Thường',
+          power:20+(index*11)%81,
+          bonus:3+(index*7)%28,
+          species:species.name,
+          variant:variant
+        });
+      });
+    });
+    return out;
+  }
+  const cropCatalog=makeCatalog(['Cà chua','Dâu','Ớt','Bí','Đậu','Khoai','Ngô','Cải','Hoa','Lúa','Táo','Lê','Nho','Cam'],['đỏ','vàng','tím','xanh','mật ong','pha lê','sao','băng','mặt trời','rừng','sa mạc'],['🍅','🍓','🌶️','🎃','🫘','🥔','🌽','🥬','🌼','🌾','🍎','🍐','🍇','🍊'],140,'crop').concat(makeExtraCropCatalog());
   const researchCatalog=makeCatalog(['Lan','Sen','Cúc','Hồng','Tulip','Phong lan','Dạ yến thảo','Mộc lan','Anh đào','Thược dược'],['biến dị','phát sáng','kháng hạn','siêu sinh trưởng','thích nghi','di truyền','ánh trăng','cầu vồng','bất tử','ngân hà'],['🌸','🪷','🌼','🌹','🌷','💠','🌺','🌻','🌸','💐'],100,'gene');
   const petCatalog=makeCatalog(['Mèo','Chó','Thỏ','Cáo','Gấu trúc','Rái cá','Sóc','Nhím'],['mây','đốm','tuyết','kẹo','lá non'],['🐱','🐶','🐰','🦊','🐼','🦦','🐿️','🦔'],40,'pet');
   const chickenCatalog=makeCatalog(['Gà tre','Gà ri','Gà hồ','Gà ác','Gà lông xù','Gà sao','Gà rừng','Gà vàng'],['mơ','đốm','tuyết','lửa','mây'],['🐓','🐔','🐣','🐤'],40,'chicken');
@@ -330,14 +382,116 @@
     state.seeds[key]=state.seeds[key]||0;
     cropIcons[key]=["🌱","🌿","🍃",item.icon];
   }
+ 
+  function getDailyPlantDateInfo(){
+    const parts=new Intl.DateTimeFormat("en-US",{
+      timeZone:"Asia/Ho_Chi_Minh",year:"numeric",month:"2-digit",day:"2-digit"
+    }).formatToParts(new Date());
+    const part=name=>parts.find(x=>x.type===name)?.value||"0";
+    const y=Number(part("year")),m=Number(part("month")),d=Number(part("day"));
+    const key=y+"-"+String(m).padStart(2,"0")+"-"+String(d).padStart(2,"0");
+    const dayNumber=Math.floor(Date.UTC(y,m-1,d)/86400000);
+    const nextMidnight=Date.UTC(y,m-1,d+1)-7*60*60*1000;
+    return {y,m,d,key,dayNumber,nextMidnight};
+  }
+
+  function getDailyPlantSelection(){
+    const date=getDailyPlantDateInfo();
+    if(!state.dailyPlant)state.dailyPlant={dateKey:"",cropId:"",claimed:false};
+    if(state.dailyPlant.dateKey!==date.key){
+      const owned=new Set([...(state.collections.crops||[]),...(state.unlockedResearchSeeds||[])]);
+      const start=((date.dayNumber*37+13)%cropCatalog.length+cropCatalog.length)%cropCatalog.length;
+      let item=null;
+      for(let i=0;i<cropCatalog.length;i++){
+        const candidate=cropCatalog[(start+i)%cropCatalog.length];
+        if(!owned.has(candidate.id)){item=candidate;break;}
+      }
+      state.dailyPlant={dateKey:date.key,cropId:item?item.id:"",claimed:false};
+      save();
+    }
+    const item=cropCatalog.find(x=>x.id===state.dailyPlant.cropId)||null;
+    const alreadyOwned=!!(item&&((state.collections.crops||[]).includes(item.id)||(state.unlockedResearchSeeds||[]).includes(item.id)));
+    if(alreadyOwned&&!state.dailyPlant.claimed){
+      state.dailyPlant.claimed=true;
+      save();
+    }
+    return {date,item,claimed:!!state.dailyPlant.claimed||alreadyOwned};
+  }
+
+  function unlockDailyPlant(id,dateKey){
+    const daily=getDailyPlantSelection();
+    if(daily.date.key!==dateKey||!daily.item||daily.item.id!==id){
+      notify("Cây mới đã đổi sang ngày mới. Hãy xem giống cây hôm nay nhé!");
+      renderDailyPlant();
+      return;
+    }
+    if(daily.claimed){notify("Giống cây hôm nay đã được mở khóa rồi!");return;}
+    if((state.researchPoints||0)<5){notify("Bạn cần 5 điểm bé ngoan để mở khóa cây mới hôm nay.");return;}
+
+    const item=daily.item;
+    state.researchPoints-=5;
+    state.collections.crops=state.collections.crops||[];
+    if(!state.collections.crops.includes(item.id))state.collections.crops.push(item.id);
+    unlockResearchSeed(item);
+    state.seeds[item.id]=(state.seeds[item.id]||0)+1;
+    state.dailyPlant.claimed=true;
+    trackSeasonalEventAction("research",item.id,1);
+    state.lastAction="Mở khóa cây mới hôm nay: "+item.name;
+    save();
+    render();
+    renderCollection();
+    renderEvolutionLab();
+    notify("🌱 Đã mở khóa vĩnh viễn "+item.name+" và nhận 1 hạt giống vào túi đồ!");
+  }
+
+  function renderDailyPlant(){
+    const host=$("daily-plant-panel");
+    if(!host)return;
+    const daily=getDailyPlantSelection(),item=daily.item;
+    const remaining=Math.max(0,daily.date.nextMidnight-Date.now());
+    const hh=String(Math.floor(remaining/3600000)).padStart(2,"0");
+    const mm=String(Math.floor((remaining%3600000)/60000)).padStart(2,"0");
+    const ss=String(Math.floor((remaining%60000)/1000)).padStart(2,"0");
+
+    if(!item){
+      host.innerHTML='<div class="daily-plant-head"><span class="daily-plant-icon">🏆</span><div><p class="daily-plant-kicker">BỘ SƯU TẬP HẰNG NGÀY</p><h3>Đã khám phá toàn bộ cây trồng</h3><p>Bạn đã mở khóa đủ '+cropCatalog.length+' giống trong bộ sưu tập hiện tại.</p></div></div><small class="daily-plant-countdown">Kiểm tra lại vào ngày mai: <b id="daily-plant-countdown-value">'+hh+':'+mm+':'+ss+'</b></small>';
+      return;
+    }
+
+    const status=daily.claimed
+      ?'<span class="daily-plant-owned">✓ Đã mở khóa hôm nay</span>'
+      :'<span class="daily-plant-cost">🔬 5 điểm bé ngoan</span>';
+    const button=daily.claimed
+      ?'<button type="button" class="daily-plant-button" disabled>Đã sở hữu</button>'
+      :'<button type="button" class="daily-plant-button" id="unlock-daily-plant">Mở khóa cây hôm nay</button>';
+    host.innerHTML='<div class="daily-plant-head"><span class="daily-plant-icon">'+item.icon+'</span><div class="daily-plant-info"><p class="daily-plant-kicker">🌱 CÂY MỚI HÔM NAY</p><h3>'+item.name+'</h3><p>Giống cây nổi bật trong ngày · '+item.rank+' · Thu hoạch nhận '+(35+(Number(item.id.split("_")[1]||1)-1)%10*5)+' xu.</p>'+status+'</div></div><div class="daily-plant-bottom"><small class="daily-plant-countdown">Giống tiếp theo sau <b id="daily-plant-countdown-value">'+hh+':'+mm+':'+ss+'</b> · Mở khóa sẽ giữ vĩnh viễn.</small>'+button+'</div>';
+    const buttonEl=$("unlock-daily-plant");
+    if(buttonEl)buttonEl.addEventListener("click",()=>askBeforeFarmAction("Mở khóa cây mới hôm nay",()=>unlockDailyPlant(item.id,daily.date.key)));
+  }
+
+  function updateDailyPlantClock(){
+    const date=getDailyPlantDateInfo();
+    if(!state.dailyPlant||state.dailyPlant.dateKey!==date.key){
+      renderDailyPlant();
+      return;
+    }
+    const timer=$("daily-plant-countdown-value");
+    if(!timer)return;
+    const remaining=Math.max(0,date.nextMidnight-Date.now());
+    const hh=String(Math.floor(remaining/3600000)).padStart(2,"0");
+    const mm=String(Math.floor((remaining%3600000)/60000)).padStart(2,"0");
+    const ss=String(Math.floor((remaining%60000)/1000)).padStart(2,"0");
+    timer.textContent=hh+":"+mm+":"+ss;
+  }
+
   function renderResearchSeedShop(){
     const host=$("research-seed-shop");if(!host)return;
     const unlocked=(state.unlockedResearchSeeds||[]).filter(id=>seeds[id]);
     host.innerHTML=unlocked.map(id=>{
       const seed=seeds[id];
       return '<article class="shop-card panel research-seed-card"><div class="shop-art">'+seed.icon+'</div><h3>'+seed.name+'</h3><p>Giống đã được khám phá trong phòng thí nghiệm. Thu hoạch nhận '+seed.reward+' xu.</p><div class="shop-bottom"><b>'+seed.cost+' xu</b><button class="primary" data-research-buy="'+id+'">Mua hạt</button></div><small class="hint">Trong túi: '+(state.seeds[id]||0)+'</small></article>';
-    }).join("")||'<div class="panel research-empty">🔒 Chưa có giống nghiên cứu nào được mở khóa. Hãy vào phòng thí nghiệm và chọn “Mở giống cây”.</div>';
-    host.querySelectorAll('[data-research-buy]').forEach(btn=>btn.addEventListener('click',()=>askBeforeFarmAction('Mua hạt giống nghiên cứu',()=>buySeed(btn.dataset.researchBuy))));
+    }).join("")||'<div class="panel research-empty">🔒 Chưa có giống bé ngoan nào được mở khóa. Hãy vào phòng thí nghiệm và chọn “Mở giống cây”.</div>';
+    host.querySelectorAll('[data-research-buy]').forEach(btn=>btn.addEventListener('click',()=>askBeforeFarmAction('Mua hạt giống bé ngoan',()=>buySeed(btn.dataset.researchBuy))));
   }
   function rollPetVariant(){
     const r=Math.random();
@@ -346,10 +500,10 @@
     if(r<0.30)return {id:"shiny",name:"Shiny",bonus:6};
     return {id:"normal",name:"Thường",bonus:0};
   }
-  function discover(kind,cost,catalog){if((state.researchPoints||0)<cost){notify('Chưa đủ điểm bé ngoan!');return;}const owned=state.collections[kind]||[];const available=catalog.filter(x=>!owned.includes(x.id));if(!available.length){notify('Bạn đã sưu tầm đủ bộ này rồi!');return;}state.researchPoints-=cost;const item=available[Math.floor(Math.random()*available.length)];owned.push(item.id);state.collections[kind]=owned;if(kind==='crops'){unlockResearchSeed(item);if(state.story&&state.story.chapter2MucDone&&!state.story.chapter2ResearchDone){state.story.chapter2ResearchDone=true;state.coins+=15;state.researchPoints+=5;state.lastAction='Hoàn thành Chương 2: +15 xu, +5 điểm nghiên cứu';}}if(kind==='pets'){state.activePet=item.id;const variant=rollPetVariant();state.pet={...state.pet,name:item.name,icon:item.icon,variant:variant.id,variantName:variant.name,bonus:variant.bonus};}if(kind==='chickens'){state.activeChicken=item.id;}save();render();renderCollection();renderEvolutionLab();$('collection-result').textContent=item.icon+' '+item.name+' · '+item.rank+' · Chỉ số '+item.power+' · Thưởng '+item.bonus+(kind==='pets'?' · '+state.pet.variantName:'');notify('Đã mở khóa '+item.name+(kind==='pets'?' · '+state.pet.variantName:'')+'!');}
-  function renderCollection(){const groups=[['crops',cropCatalog],['research',researchCatalog],['pets',petCatalog],['chickens',chickenCatalog]];groups.forEach(([key,list])=>{const el=$('count-'+key);if(el)el.textContent=(state.collections[key]||[]).length+'/'+list.length;});const all=[...cropCatalog.map(x=>({...x,group:'Cây trồng',key:'crops'})),...researchCatalog.map(x=>({...x,group:'Cây nghiên cứu',key:'research'})),...petCatalog.map(x=>({...x,group:'Pet',key:'pets'})),...chickenCatalog.map(x=>({...x,group:'Giống gà',key:'chickens'}))];$('collection-book').innerHTML=all.filter(x=>(state.collections[x.key]||[]).includes(x.id)).map(x=>'<div class="collection-entry">'+x.icon+' <b>'+x.name+'</b><small>'+x.group+' · '+x.rank+' · Chỉ số '+x.power+' · Bonus '+x.bonus+'</small></div>').join('')||'Chưa có mục sưu tầm nào.';}
+  function discover(kind,cost,catalog){if((state.researchPoints||0)<cost){notify('Chưa đủ điểm bé ngoan!');return;}const owned=state.collections[kind]||[];const available=catalog.filter(x=>!owned.includes(x.id));if(!available.length){notify('Bạn đã sưu tầm đủ bộ này rồi!');return;}state.researchPoints-=cost;const item=available[Math.floor(Math.random()*available.length)];owned.push(item.id);state.collections[kind]=owned;if(kind==='crops'||kind==='research')trackSeasonalEventAction("research",item.id,1);if(kind==='crops'){unlockResearchSeed(item);if(state.story&&state.story.chapter2MucDone&&!state.story.chapter2ResearchDone){state.story.chapter2ResearchDone=true;state.coins+=15;state.researchPoints+=5;state.lastAction='Hoàn thành Chương 2: +15 xu, +5 điểm bé ngoan';}}if(kind==='pets'){state.activePet=item.id;const variant=rollPetVariant();state.pet={...state.pet,name:item.name,icon:item.icon,variant:variant.id,variantName:variant.name,bonus:variant.bonus};}if(kind==='chickens'){state.activeChicken=item.id;}save();render();renderCollection();renderEvolutionLab();$('collection-result').textContent=item.icon+' '+item.name+' · '+item.rank+' · Chỉ số '+item.power+' · Thưởng '+item.bonus+(kind==='pets'?' · '+state.pet.variantName:'');notify('Đã mở khóa '+item.name+(kind==='pets'?' · '+state.pet.variantName:'')+'!');}
+  function renderCollection(){const groups=[['crops',cropCatalog],['research',researchCatalog],['pets',petCatalog],['chickens',chickenCatalog]];groups.forEach(([key,list])=>{const el=$('count-'+key);if(el)el.textContent=(state.collections[key]||[]).length+'/'+list.length;});const all=[...cropCatalog.map(x=>({...x,group:'Cây trồng',key:'crops'})),...researchCatalog.map(x=>({...x,group:'Cây bé ngoan',key:'research'})),...petCatalog.map(x=>({...x,group:'Pet',key:'pets'})),...chickenCatalog.map(x=>({...x,group:'Giống gà',key:'chickens'}))];$('collection-book').innerHTML=all.filter(x=>(state.collections[x.key]||[]).includes(x.id)).map(x=>'<div class="collection-entry">'+x.icon+' <b>'+x.name+'</b><small>'+x.group+' · '+x.rank+' · Chỉ số '+x.power+' · Bonus '+x.bonus+'</small></div>').join('')||'Chưa có mục sưu tầm nào.';}
   $('collect-crop').addEventListener('click',()=>askBeforeFarmAction('Mở khóa giống cây',()=>discover('crops',5,cropCatalog)));
-  $('research-crop').addEventListener('click',()=>askBeforeFarmAction('Nghiên cứu cây trồng',()=>discover('research',5,researchCatalog)));
+  $('research-crop').addEventListener('click',()=>askBeforeFarmAction('bé ngoan cây trồng',()=>discover('research',5,researchCatalog)));
   $('hatch-pet').addEventListener('click',()=>askBeforeFarmAction('Khám phá pet',()=>discover('pets',10,petCatalog)));
   $('hatch-chicken').addEventListener('click',()=>askBeforeFarmAction('Khám phá giống gà',()=>discover('chickens',10,chickenCatalog)));
 
@@ -381,7 +535,7 @@
     if(!a||!b){notify("Bạn cần có ít nhất một loại hạt giống để lai.");return;}
     if(a===b && (state.seeds[a]||0)<2){notify("Lai cùng một giống cần 2 hạt giống.");return;}
     if((state.seeds[a]||0)<1||(state.seeds[b]||0)<1){notify("Không đủ hạt giống bố mẹ.");return;}
-    if(state.coins<10){notify("Cần 10 xu cho chi phí nghiên cứu lai tạo.");return;}
+    if(state.coins<10){notify("Cần 10 xu cho chi phí bé ngoan lai tạo.");return;}
     state.coins-=10;state.totalSpent+=10;state.seeds[a]--;state.seeds[b]--;
     const key=[a,b].sort().join("_");
     if(!state.hybrids[key]){
@@ -394,12 +548,13 @@
       state.seeds[key]=(state.seeds[key]||0)+2;
       cropIcons[key]=["🌱","🌿","🍃",hybrid.icon];
       state.researchPoints=(state.researchPoints||0)+5;
-      $("breed-result").textContent="🎉 Khám phá giống mới: "+hybrid.icon+" "+hybrid.name+"! Nhận 2 hạt giống lai và +5 điểm nghiên cứu.";
+      $("breed-result").textContent="🎉 Khám phá giống mới: "+hybrid.icon+" "+hybrid.name+"! Nhận 2 hạt giống lai và +5 điểm bé ngoan.";
     }else{
       state.seeds[key]=(state.seeds[key]||0)+2;
       $("breed-result").textContent="Đã lai lại thành công! Nhận thêm 2 hạt giống "+state.hybrids[key].name+".";
     }
     state.labLevel=Math.min(5,Math.max(1,1+Math.floor(state.researchPoints/30)));
+    trackSeasonalEventAction("breed",null,1);
     save();render();renderBreeding();notify("Lai tạo thành công!");
   }
   function renderDelivery(){
@@ -420,8 +575,9 @@
     state.deliveryCount=(state.deliveryCount||0)+1;
     state.deliveryHistory=state.deliveryHistory||[];
     state.deliveryHistory.push({crop:seeds[type].name,district,amount,coins:reward});
+    trackSeasonalEventAction("deliver",type,amount);
     state.labLevel=Math.min(5,Math.max(1,1+Math.floor(state.researchPoints/30)));
-    $("delivery-result").textContent="✅ Đã giao "+amount+" "+seeds[type].name+" đến "+district+". Nhận +"+reward+" xu và +"+(amount*2)+" điểm nghiên cứu.";
+    $("delivery-result").textContent="✅ Đã giao "+amount+" "+seeds[type].name+" đến "+district+". Nhận +"+reward+" xu và +"+(amount*2)+" điểm bé ngoan.";
     save();render();renderDelivery();notify("Giao hàng thành công!");
   }
 
@@ -490,7 +646,7 @@
     $("hunger-bar").style.width=state.pet.hunger+"%";$("bond-bar").style.width=state.pet.bond+"%";
     $("pet-mood").textContent=state.pet.hunger<30?"Mình hơi đói rồi...":state.pet.bond>=70?"Mình rất quý bạn!":"Mình đang vui vẻ!";
     $("spent-total").textContent=state.totalSpent+" xu";$("cart-description").textContent=state.lastAction||"Chưa có giao dịch nào.";
-    renderPlots();renderSeeds();renderInventory();renderTasks();renderStory();renderEvolutionLab();renderCollection();renderBreeding();renderDelivery();renderResearchSeedShop();
+    renderPlots();renderSeeds();renderInventory();renderTasks();renderStory();renderEvolutionLab();renderCollection();renderBreeding();renderDelivery();renderResearchSeedShop();renderDailyPlant();
     if($("water-count"))$("water-count").textContent=state.waterBottles||0;
     if($("water-info")){const left=10*60*1000-(Date.now()-(state.waterPickupAt||0));$("water-info").textContent=left>0?"Có thể nhặt bình tiếp theo sau "+Math.ceil(left/60000)+" phút. Mỗi cây cần 1 bình.":"Có thể nhặt 1 bình nước. Mỗi cây cần 1 bình.";}
   }
@@ -516,87 +672,376 @@
   });
  
   setInterval(()=>{if(state.plots.some(Boolean))renderPlots();},1000);
+  // Cap nhat dong ho va tu chuyen cay moi khi sang ngay moi (gio Viet Nam).
+  setInterval(updateDailyPlantClock,1000);
  
   window.addEventListener("storage",e=>{if(e.key===QUIZ_KEY)renderInventory();});
-  
-// =====================================
-// NHIỆM VỤ NÔNG TRẠI TỰ LÀM MỚI MỖI 5 PHÚT
-// =====================================
+ 
+  (function initSeasonalEvents(){
+    const EVENT_TZ = "Asia/Ho_Chi_Minh";
+    const EVENT_STORE_KEY = "aeCayKheSeasonalEvents_v1";
+    const DAY_MS = 86400000;
 
-const TASK_REFRESH_TIME = 5 * 60 * 1000;
-const TASK_REFRESH_KEY = "aeCayKhe_taskRefreshAt_v1";
+    const EVENT_CONTENT = {
+      halloween: {
+        crop:{id:"event_halloween_pumpkin",name:"Bí Ngô Ma",icon:"🎃",cost:0,reward:95,seconds:105},
+        pet:{id:"event_pet_halloween_cat",name:"Mèo Bí Ngô",icon:"🐈‍⬛",rank:"Độc quyền Halloween",power:88,bonus:14,variant:"shiny",variantName:"Halloween Shiny"},
+        quests:[
+          {id:"harvest",title:"Thu hoạch 5 nông sản",icon:"🌾",action:"harvest",target:5},
+          {id:"book",title:"Trả lời đúng 3 câu hỏi sách",icon:"📖",action:"book",target:3},
+          {id:"play",title:"Chơi cùng pet 2 lần",icon:"🐈",action:"play",target:2}
+        ]
+      },
+      christmas: {
+        crop:{id:"event_christmas_poinsettia",name:"Trạng Nguyên Tuyết",icon:"🌺",cost:0,reward:110,seconds:125},
+        pet:{id:"event_pet_christmas_reindeer",name:"Tuần Lộc Nhí",icon:"🦌",rank:"Độc quyền Giáng Sinh",power:92,bonus:18,variant:"golden",variantName:"Golden Noel"},
+        quests:[
+          {id:"water",title:"Dùng 6 bình nước tưới cây",icon:"💧",action:"water",target:6},
+          {id:"deliver",title:"Giao 5 nông sản đến khu phố",icon:"🚚",action:"deliver",target:5},
+          {id:"breed",title:"Lai tạo thành công 1 giống cây",icon:"🧬",action:"breed",target:1}
+        ]
+      },
+      tet: {
+        crop:{id:"event_tet_mai",name:"Mai Vàng Tài Lộc",icon:"🌼",cost:0,reward:120,seconds:135},
+        pet:{id:"event_pet_tet_luckycat",name:"Mèo Thần Tài",icon:"🐱",rank:"Độc quyền Tết",power:96,bonus:20,variant:"golden",variantName:"Golden Tài Lộc"},
+        quests:[
+          {id:"plant",title:"Gieo 5 hạt giống",icon:"🌱",action:"plant",target:5},
+          {id:"harvest",title:"Thu hoạch 5 cây",icon:"🌻",action:"harvest",target:5},
+          {id:"research",title:"Khám phá 1 giống cây trong phòng bé ngoan",icon:"🔬",action:"research",target:1}
+        ]
+      },
+      easter: {
+        crop:{id:"event_easter_carrot",name:"Cà Rốt Cầu Vồng",icon:"🥕",cost:0,reward:105,seconds:115},
+        pet:{id:"event_pet_easter_bunny",name:"Thỏ Phục Sinh",icon:"🐰",rank:"Độc quyền Phục Sinh",power:90,bonus:16,variant:"galaxy",variantName:"Galaxy Phục Sinh"},
+        quests:[
+          {id:"breed",title:"Lai tạo thành công 2 lần",icon:"🧬",action:"breed",target:2},
+          {id:"book",title:"Trả lời đúng 3 câu hỏi sách",icon:"📚",action:"book",target:3},
+          {id:"deliver",title:"Giao 3 nông sản đến khu phố",icon:"📦",action:"deliver",target:3}
+        ]
+      }
+    };
 
-// Lấy thời gian làm mới đã lưu
-let taskRefreshAt = Number(localStorage.getItem(TASK_REFRESH_KEY));
+    const TET_DATES = {
+      2026:[2026,2,17], 2027:[2027,2,6], 2028:[2028,1,26],
+      2029:[2029,2,13], 2030:[2030,2,2], 2031:[2031,1,23],
+      2032:[2032,2,11], 2033:[2033,1,31], 2034:[2034,2,19],
+      2035:[2035,2,8], 2036:[2036,1,28], 2037:[2037,2,15],
+      2038:[2038,2,4], 2039:[2039,1,24], 2040:[2040,2,12]
+    };
 
-// Nếu chưa có thời gian thì bắt đầu chu kỳ 5 phút
-if (!taskRefreshAt || !Number.isFinite(taskRefreshAt)) {
-    taskRefreshAt = Date.now() + TASK_REFRESH_TIME;
-    localStorage.setItem(TASK_REFRESH_KEY, taskRefreshAt);
-}
-
-// Tạo bộ đếm ngược ở tiêu đề nhiệm vụ
-const taskHeading = document.querySelector("#page-tasks .section-heading");
-
-let taskTimer = document.getElementById("task-reset-timer");
-
-if (taskHeading && !taskTimer) {
-    taskTimer = document.createElement("span");
-    taskTimer.id = "task-reset-timer";
-    taskTimer.className = "tag";
-    taskTimer.style.marginLeft = "auto";
-    taskTimer.style.color = "#287a48";
-    taskHeading.appendChild(taskTimer);
-}
-
-function resetFarmTasks() {
-
-    const taskList = ["plant", "water", "play", "harvest"];
-
-    taskList.forEach(function(task) {
-        state.tasks[task] = false;
-        state.tasks["claimed_" + task] = false;
-    });
-
-    taskRefreshAt = Date.now() + TASK_REFRESH_TIME;
-
-    localStorage.setItem(TASK_REFRESH_KEY, taskRefreshAt);
-
-    save();
-    renderTasks();
-
-    notify("🔄 Nhiệm vụ đã được làm mới! Hãy tiếp tục chăm sóc khu vườn.");
-}
-
-function updateTaskTimer() {
-
-    const now = Date.now();
-
-    if (now >= taskRefreshAt) {
-        resetFarmTasks();
+    function getVNDate(){
+      const parts=new Intl.DateTimeFormat("en-CA-u-ca-gregory",{timeZone:EVENT_TZ,year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());
+      const part=key=>Number(parts.find(p=>p.type===key).value);
+      return {y:part("year"),m:part("month"),d:part("day")};
+    }
+    function dayNumber(date){return Math.floor(Date.UTC(date.y,date.m-1,date.d)/DAY_MS);}
+    function addDays(date,amount){const d=new Date(Date.UTC(date.y,date.m-1,date.d+amount));return {y:d.getUTCFullYear(),m:d.getUTCMonth()+1,d:d.getUTCDate()};}
+    function formatDate(date){return new Intl.DateTimeFormat("vi-VN",{timeZone:"UTC",day:"2-digit",month:"2-digit",year:"numeric"}).format(new Date(Date.UTC(date.y,date.m-1,date.d,12)));}
+    function getTetDate(year){
+      if(TET_DATES[year]){const a=TET_DATES[year];return {y:a[0],m:a[1],d:a[2]};}
+      try{
+        const lunar=new Intl.DateTimeFormat("en-u-ca-chinese",{timeZone:EVENT_TZ,month:"numeric",day:"numeric"});
+        for(let month=1;month<=2;month++){
+          const lastDay=new Date(Date.UTC(year,month,0)).getUTCDate();
+          for(let day=1;day<=lastDay;day++){
+            const date=new Date(Date.UTC(year,month-1,day,12));
+            const parts=lunar.formatToParts(date);
+            if(parts.find(p=>p.type==="month")?.value==="1"&&parts.find(p=>p.type==="day")?.value==="1")return {y:year,m:month,d:day};
+          }
+        }
+      }catch(error){console.warn("Không đọc được lịch âm:",error);}
+      return {y:year,m:2,d:1};
+    }
+    function getEasterDate(year){
+      const a=year%19,b=Math.floor(year/100),c=year%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),month=Math.floor((h+l-7*m+114)/31),day=((h+l-7*m+114)%31)+1;
+      return {y:year,m:month,d:day};
+    }
+    function makeEvent(type,year){
+      let start,end,event;
+      if(type==="halloween"){
+        start={y:year,m:10,d:25};end={y:year,m:11,d:1};
+        event={id:"halloween-"+year,type,icon:"🎃",title:"Halloween "+year,desc:"Lễ hội bí ngô đã đến! Hoàn thành chuỗi nhiệm vụ để nhận vĩnh viễn Mèo Bí Ngô và giống Bí Ngô Ma.",itemName:"Kẹo Bí Ngô",theme:"halloween"};
+      }else if(type==="christmas"){
+        start={y:year,m:12,d:20};end={y:year,m:12,d:26};
+        event={id:"christmas-"+year,type,icon:"🎄",title:"Giáng Sinh "+year,desc:"Khu vườn phủ tuyết! Hoàn thành nhiệm vụ để nhận vĩnh viễn Tuần Lộc Nhí và giống Trạng Nguyên Tuyết.",itemName:"Hộp Quà Noel",theme:"christmas"};
+      }else if(type==="tet"){
+        start=getTetDate(year);end=addDays(start,6);
+        event={id:"tet-"+year,type,icon:"🧧",title:"Tết Nguyên Đán "+year,desc:"Mừng năm mới! Chăm mai, thu hoạch và bé ngoan để nhận Mèo Thần Tài cùng Mai Vàng Tài Lộc vĩnh viễn.",itemName:"Bao Lì Xì",theme:"tet"};
+      }else{
+        const easter=getEasterDate(year);start=addDays(easter,-2);end=addDays(easter,1);
+        event={id:"easter-"+year,type,icon:"🐣",title:"Lễ Phục Sinh "+year,desc:"Mùa xuân rực rỡ! Hoàn thành nhiệm vụ để sở hữu Thỏ Phục Sinh và Cà Rốt Cầu Vồng vĩnh viễn.",itemName:"Trứng Phục Sinh",theme:"easter"};
+      }
+      event.start=start;event.end=end;event.startNo=dayNumber(start);event.endNo=dayNumber(end);event.dateText=formatDate(start)+" – "+formatDate(end);
+      event.content=EVENT_CONTENT[type];
+      return event;
+    }
+    function getEventList(today){
+      const list=[];
+      for(let year=today.y-1;year<=today.y+3;year++)["tet","easter","halloween","christmas"].forEach(type=>list.push(makeEvent(type,year)));
+      return list.sort((a,b)=>a.startNo-b.startNo);
     }
 
-    const remaining = Math.max(0, taskRefreshAt - Date.now());
-
-    const minutes = Math.floor(remaining / 60000);
-    const seconds = Math.floor((remaining % 60000) / 1000);
-
-    if (taskTimer) {
-        taskTimer.textContent =
-            "⏳ Làm mới sau " +
-            String(minutes).padStart(2, "0") +
-            ":" +
-            String(seconds).padStart(2, "0");
+    function readEventStore(){
+      try{
+        const saved=JSON.parse(localStorage.getItem(EVENT_STORE_KEY)||"{}");
+        return {
+          claims:saved.claims||{},items:saved.items||{},quests:saved.quests||{},
+          unlocked:saved.unlocked||{events:[]},
+          weekly:saved.weekly||null,weeklyHistory:Array.isArray(saved.weeklyHistory)?saved.weeklyHistory:[]
+        };
+      }catch(error){return {claims:{},items:{},quests:{},unlocked:{events:[]},weekly:null,weeklyHistory:[]};}
     }
-}
+    function saveEventStore(data){localStorage.setItem(EVENT_STORE_KEY,JSON.stringify(data));}
 
-window.addEventListener("storage", function(event) {
-    if (event.key === TASK_REFRESH_KEY && event.newValue) {
-        taskRefreshAt = Number(event.newValue);
+    function registerPermanentEventRewards(type,equipPet,initialSeedCount){
+      const content=EVENT_CONTENT[type];if(!content)return;
+      const crop=content.crop,pet=content.pet;
+      if(!seeds[crop.id])seeds[crop.id]={name:crop.name,icon:crop.icon,cost:0,reward:crop.reward,seconds:crop.seconds,eventOnly:true,eventType:type};
+      if(!cropIcons[crop.id])cropIcons[crop.id]=["🌱","🌿","🍃",crop.icon];
+      if(!Object.prototype.hasOwnProperty.call(state.seeds,crop.id))state.seeds[crop.id]=Number.isFinite(initialSeedCount)?initialSeedCount:3;
+      if(!cropCatalog.some(item=>item.id===crop.id))cropCatalog.push({id:crop.id,name:crop.name,icon:crop.icon,rank:"Độc quyền lễ hội",power:90,bonus:crop.reward});
+      state.collections=state.collections||{};state.collections.crops=state.collections.crops||[];
+      if(!state.collections.crops.includes(crop.id))state.collections.crops.push(crop.id);
+
+      if(!petCatalog.some(item=>item.id===pet.id))petCatalog.push({id:pet.id,name:pet.name,icon:pet.icon,rank:pet.rank,power:pet.power,bonus:pet.bonus,eventOnly:true});
+      state.collections.pets=state.collections.pets||[];
+      if(!state.collections.pets.includes(pet.id))state.collections.pets.push(pet.id);
+      if(equipPet){
+        state.activePet=pet.id;
+        state.pet={...state.pet,name:pet.name,icon:pet.icon,variant:pet.variant,variantName:pet.variantName,bonus:pet.bonus};
+      }
     }
-});
 
-updateTaskTimer();
-setInterval(updateTaskTimer, 1000);
+    function restorePermanentRewards(){
+      const data=readEventStore();
+      (data.unlocked.events||[]).forEach(type=>registerPermanentEventRewards(type,false));
+      save();
+      render();
+    }
+
+    function addEventStyles(){
+      if(document.getElementById("seasonal-event-styles"))return;
+      const style=document.createElement("style");style.id="seasonal-event-styles";
+      style.textContent=`
+        .seasonal-event-panel,.weekly-update-panel{margin:16px 0 20px;padding:18px 20px;overflow:hidden;border:1px solid #e6e8db;background:#fffdf7;border-radius:20px}
+        .seasonal-event-main{display:flex;align-items:center;gap:15px}
+        .seasonal-event-icon{width:66px;height:66px;flex:0 0 66px;display:grid;place-items:center;border-radius:18px;background:#ffffffa8;font-size:36px}
+        .seasonal-event-copy{flex:1;min-width:0}.seasonal-event-kicker{margin:0 0 4px;font-size:10px;font-weight:900;letter-spacing:1.8px;opacity:.72}
+        .seasonal-event-title{margin:0 0 5px;font-size:22px;color:#284b35}.seasonal-event-desc{margin:0;color:#536957;font-size:13px;line-height:1.5}
+        .seasonal-event-date{display:block;margin-top:7px;font-size:11px;color:#607365;font-weight:700}
+        .seasonal-event-status{align-self:flex-start;background:#ffffffb8;border-radius:20px;padding:7px 10px;font-size:10px;font-weight:900;white-space:nowrap}
+        .seasonal-event-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:15px;padding-top:13px;border-top:1px solid #ffffff9c}
+        .seasonal-event-reward b,.seasonal-event-reward small{display:block}.seasonal-event-reward small{margin-top:4px;font-size:11px;color:#5c6d5f}
+        .seasonal-event-claim{border:0;border-radius:11px;padding:11px 15px;background:#28583a;color:#fff;font-weight:900;cursor:pointer}.seasonal-event-claim:disabled{opacity:.48;cursor:not-allowed}
+        .seasonal-event-calendar{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}.seasonal-event-pill{padding:6px 9px;border-radius:9px;background:#ffffffa8;font-size:10px;font-weight:800;color:#4b5e4e}
+        .seasonal-event-panel.theme-halloween{background:linear-gradient(115deg,#fff0dc,#f8d5b4);border-color:#edc39d}.seasonal-event-panel.theme-christmas{background:linear-gradient(115deg,#e9f6f0,#d4eee4);border-color:#c5e2d4}
+        .seasonal-event-panel.theme-tet{background:linear-gradient(115deg,#fff1d5,#f9d9aa);border-color:#edcf9e}.seasonal-event-panel.theme-easter{background:linear-gradient(115deg,#f3efff,#e5f5e8);border-color:#ddd8f2}
+        .seasonal-event-quests{margin-top:16px;padding-top:14px;border-top:1px solid #ffffffa8}.seasonal-event-quests h3,.weekly-update-panel h3{margin:0 0 10px;color:#284b35;font-size:17px}
+        .event-quest-list,.weekly-quest-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:9px}
+        .event-quest,.weekly-quest{background:#ffffffb9;border:1px solid #e8eadf;border-radius:13px;padding:11px 12px;min-width:0}
+        .event-quest b,.weekly-quest b{display:block;font-size:13px;color:#304a37}.event-quest small,.weekly-quest small{display:block;color:#687b6b;font-size:11px;margin-top:4px}
+        .event-quest-bar,.weekly-quest-bar{height:7px;background:#e7ecdf;border-radius:20px;overflow:hidden;margin-top:8px}.event-quest-bar i,.weekly-quest-bar i{display:block;height:100%;background:#63a66f;border-radius:20px}
+        .event-quest.done{border-color:#9bc9a0;background:#f1faef}.event-reward-line{margin-top:11px;padding:10px 12px;border-radius:12px;background:#ffffffb5;color:#405c45;font-size:12px}
+        .weekly-update-panel{background:linear-gradient(120deg,#edf7e9,#fffdf2);border-color:#d9e8d2}.weekly-update-head{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}.weekly-update-head p{margin:4px 0 0;font-size:12px;color:#607365}.weekly-update-bonus{margin-top:12px;font-size:12px;font-weight:800;color:#42634a}
+        .event-pet-use{border:0;border-radius:9px;background:#28583a;color:#fff;padding:7px 10px;font-weight:800;cursor:pointer;margin-top:7px}.event-pet-use:disabled{opacity:.5}
+        @media(max-width:600px){.seasonal-event-panel,.weekly-update-panel{padding:14px}.seasonal-event-main{align-items:flex-start;gap:10px}.seasonal-event-icon{width:50px;height:50px;flex-basis:50px;font-size:28px}.seasonal-event-title{font-size:18px}.seasonal-event-status{display:none}.seasonal-event-bottom{align-items:flex-start;flex-direction:column}.seasonal-event-claim{width:100%}}
+      `;
+      document.head.appendChild(style);
+    }
+
+    function createEventPanel(){
+      let panel=document.getElementById("seasonal-event-panel");if(panel)return panel;
+      addEventStyles();panel=document.createElement("section");panel.id="seasonal-event-panel";panel.className="seasonal-event-panel panel";
+      panel.innerHTML=`
+        <div class="seasonal-event-main"><div class="seasonal-event-icon" id="seasonal-event-icon">🎉</div>
+          <div class="seasonal-event-copy"><p class="seasonal-event-kicker">SỰ KIỆN TỰ ĐỘNG THEO LỊCH VIỆT NAM</p>
+            <h2 class="seasonal-event-title" id="seasonal-event-title">Lễ hội khu vườn</h2><p class="seasonal-event-desc" id="seasonal-event-desc"></p><small class="seasonal-event-date" id="seasonal-event-date"></small>
+          </div><span class="seasonal-event-status" id="seasonal-event-status"></span>
+        </div>
+        <div class="seasonal-event-bottom"><div class="seasonal-event-reward"><b id="seasonal-event-reward-title">🎁 Quà sự kiện mỗi ngày</b><small id="seasonal-event-reward-info"></small></div><button class="seasonal-event-claim" id="seasonal-event-claim" type="button">Nhận quà lễ</button></div>
+        <div class="seasonal-event-quests" id="seasonal-event-quests"></div>
+        <div class="event-reward-line" id="seasonal-event-permanent-reward"></div>
+        <div class="seasonal-event-calendar" id="seasonal-event-calendar"></div>
+      `;
+      const welcome=document.querySelector(".game-wrap .welcome");
+      if(welcome)welcome.insertAdjacentElement("afterend",panel);else document.querySelector(".game-wrap")?.prepend(panel);
+      panel.querySelector("#seasonal-event-claim").addEventListener("click",function(){
+        const today=getVNDate(),todayNo=dayNumber(today),active=getEventList(today).find(e=>e.startNo<=todayNo&&e.endNo>=todayNo);
+        if(!active){notify("Sự kiện chưa mở. Hãy quay lại đúng dịp lễ nhé!");return;}
+        askBeforeFarmAction("Nhận quà sự kiện "+active.title,function(){claimEventGift(active);});
+      });
+      return panel;
+    }
+
+    const WEEKLY_PLANS=[
+      {name:"Tuần gieo mầm",tasks:[{id:"plant",title:"Gieo 5 cây",action:"plant",target:5},{id:"harvest",title:"Thu hoạch 5 cây",action:"harvest",target:5},{id:"book",title:"Trả lời đúng 3 câu hỏi sách",action:"book",target:3}]},
+      {name:"Tuần chăm vườn",tasks:[{id:"water",title:"Dùng 8 bình nước tưới cây",action:"water",target:8},{id:"play",title:"Chơi với pet 4 lần",action:"play",target:4},{id:"deliver",title:"Giao 4 nông sản",action:"deliver",target:4}]},
+      {name:"Tuần bé ngoan",tasks:[{id:"breed",title:"Lai tạo 2 lần",action:"breed",target:2},{id:"research",title:"Khám phá 2 giống mới",action:"research",target:2},{id:"harvest",title:"Thu hoạch 6 cây",action:"harvest",target:6}]},
+      {name:"Tuần giao thương",tasks:[{id:"deliver",title:"Giao 8 nông sản",action:"deliver",target:8},{id:"plant",title:"Gieo 4 cây",action:"plant",target:4},{id:"play",title:"Chơi với pet 3 lần",action:"play",target:3}]},
+      {name:"Tuần học hỏi",tasks:[{id:"book",title:"Trả lời đúng 5 câu hỏi sách",action:"book",target:5},{id:"water",title:"Tưới 6 cây",action:"water",target:6},{id:"research",title:"Khám phá 1 giống mới",action:"research",target:1}]},
+      {name:"Tuần mùa màng",tasks:[{id:"harvest",title:"Thu hoạch 8 cây",action:"harvest",target:8},{id:"breed",title:"Lai tạo 2 lần",action:"breed",target:2},{id:"plant",title:"Gieo 5 cây",action:"plant",target:5}]},
+      {name:"Tuần đồng hành",tasks:[{id:"play",title:"Chơi với pet 5 lần",action:"play",target:5},{id:"deliver",title:"Giao 5 nông sản",action:"deliver",target:5},{id:"book",title:"Trả lời đúng 4 câu hỏi sách",action:"book",target:4}]},
+      {name:"Tuần khám phá",tasks:[{id:"research",title:"Khám phá 2 giống mới",action:"research",target:2},{id:"water",title:"Tưới 8 cây",action:"water",target:8},{id:"harvest",title:"Thu hoạch 6 cây",action:"harvest",target:6}]}
+    ];
+
+    function getWeekInfo(today){
+      const d=new Date(Date.UTC(today.y,today.m-1,today.d,12));
+      const weekday=d.getUTCDay();
+      const monday=addDays(today,-((weekday+6)%7));
+      const key=monday.y+"-"+String(monday.m).padStart(2,"0")+"-"+String(monday.d).padStart(2,"0");
+      const index=((Math.floor(dayNumber(monday)/7)%WEEKLY_PLANS.length)+WEEKLY_PLANS.length)%WEEKLY_PLANS.length;
+      const nextMonday=addDays(monday,7);
+      return {key,index,plan:WEEKLY_PLANS[index],nextMonday};
+    }
+    function ensureWeekly(data,today){
+      const info=getWeekInfo(today);
+      if(!data.weekly||data.weekly.weekKey!==info.key){
+        if(data.weekly&&data.weekly.weekKey){data.weeklyHistory.push({weekKey:data.weekly.weekKey,completed:(data.weekly.completed||[]).slice()});data.weeklyHistory=data.weeklyHistory.slice(-52);}
+        data.weekly={weekKey:info.key,progress:{},completed:[],bonusClaimed:false};
+        saveEventStore(data);
+      }
+      return {info,weekly:data.weekly};
+    }
+    function createWeeklyPanel(){
+      let panel=document.getElementById("weekly-update-panel");if(panel)return panel;
+      addEventStyles();panel=document.createElement("section");panel.id="weekly-update-panel";panel.className="weekly-update-panel panel";
+      panel.innerHTML=`<div class="weekly-update-head"><div><p class="seasonal-event-kicker">CẬP NHẬT NỘI DUNG TỰ ĐỘNG</p><h2 class="seasonal-event-title">🔄 Thử thách tuần mới</h2><p id="weekly-update-date"></p></div><span class="seasonal-event-status" id="weekly-update-status">ĐANG CẬP NHẬT</span></div><div class="weekly-quest-list" id="weekly-quest-list"></div><div class="weekly-update-bonus" id="weekly-update-bonus"></div>`;
+      const eventPanel=createEventPanel();eventPanel.insertAdjacentElement("afterend",panel);return panel;
+    }
+
+    function updateWeeklyPanel(){
+      const panel=createWeeklyPanel(),today=getVNDate(),data=readEventStore(),bundle=ensureWeekly(data,today),tasks=bundle.info.plan.tasks,weekly=bundle.weekly;
+      const nowNo=dayNumber(today),nextNo=dayNumber(bundle.info.nextMonday),days=Math.max(0,nextNo-nowNo);
+      panel.querySelector("#weekly-update-date").textContent=""+bundle.info.plan.name+" · "+formatDate({y:today.y,m:today.m,d:today.d})+" · Làm mới vào thứ Hai hàng tuần";
+      panel.querySelector("#weekly-update-status").textContent=days===1?"NGÀY MAI CÓ TUẦN MỚI":"CÒN "+days+" NGÀY ĐẾN TUẦN MỚI";
+      panel.querySelector("#weekly-quest-list").innerHTML=tasks.map(task=>{
+        const count=Math.min(task.target,Number(weekly.progress[task.id])||0),done=(weekly.completed||[]).includes(task.id),pct=Math.round(count/task.target*100);
+        return '<article class="weekly-quest '+(done?'done':'')+'"><b>'+(done?'✅ ': '⭐ ')+task.title+'</b><small>'+count+'/'+task.target+' · '+(done?'Đã nhận thưởng':'+50 xu và +8 điểm bé ngoan khi hoàn thành')+'</small><div class="weekly-quest-bar"><i style="width:'+pct+'%"></i></div></article>';
+      }).join("");
+      const allDone=tasks.every(task=>(weekly.completed||[]).includes(task.id));
+      panel.querySelector("#weekly-update-bonus").textContent=allDone?"🏆 Đã hoàn thành tuần này! Thưởng thêm +100 xu, +20 điểm bé ngoan và +2 bình nước.":"🎁 Hoàn thành cả 3 thử thách để nhận thêm +100 xu, +20 điểm bé ngoan và +2 bình nước.";
+    }
+
+    function createOrUpdateEventQuests(event,active,data){
+      const host=document.getElementById("seasonal-event-quests");if(!host)return;
+      const progress=data.quests[event.id]||{counts:{},completed:[],finalRewardClaimed:false};
+      const quests=event.content.quests;
+      host.innerHTML='<h3>📜 Nhiệm vụ riêng của '+event.title+'</h3><div class="event-quest-list">'+quests.map(q=>{
+        const count=Math.min(q.target,Number(progress.counts[q.id])||0),done=(progress.completed||[]).includes(q.id),pct=Math.round(count/q.target*100);
+        return '<article class="event-quest '+(done?'done':'')+'"><b>'+(done?'✅ ':'⭐ ')+q.icon+' '+q.title+'</b><small>'+(active?count+'/'+q.target:(done?'Đã hoàn thành':'Mở khi lễ hội bắt đầu'))+' · '+(done?'Đã nhận +25 xu, +5 điểm bé ngoan':'Thưởng khi hoàn thành')+'</small><div class="event-quest-bar"><i style="width:'+pct+'%"></i></div></article>';
+      }).join('')+'</div>';
+      const allDone=quests.every(q=>(progress.completed||[]).includes(q.id));
+      const crop=event.content.crop,pet=event.content.pet;
+      const unlocked=(data.unlocked.events||[]).includes(event.type);
+      document.getElementById("seasonal-event-permanent-reward").textContent=(unlocked||allDone?'🏆 ĐÃ MỞ KHÓA VĨNH VIỄN: ':'🎁 PHẦN THƯỞNG CUỐI CHUỖI: ')+crop.icon+' '+crop.name+' (giống cây) · '+pet.icon+' '+pet.name+' (pet)'+(unlocked?' · Có thể dùng trong các mùa sau.':' · Hoàn thành đủ '+quests.length+' nhiệm vụ để nhận.');
+    }
+
+    function claimEventGift(event){
+      const today=getVNDate(),dateKey=today.y+"-"+String(today.m).padStart(2,"0")+"-"+String(today.d).padStart(2,"0"),data=readEventStore();
+      if(data.claims[event.id]===dateKey){notify("Bạn đã nhận quà sự kiện hôm nay rồi!");updateSeasonalEvent();return;}
+      data.claims[event.id]=dateKey;data.items[event.id]=(Number(data.items[event.id])||0)+1;saveEventStore(data);
+      state.coins+=15;state.researchPoints+=3;state.waterBottles=(state.waterBottles||0)+1;
+      state.labLevel=Math.min(5,Math.max(1,1+Math.floor(state.researchPoints/30)));
+      state.lastAction="Nhận quà "+event.title+": +15 xu, +3 điểm bé ngoan, +1 bình nước";
+      save();render();updateSeasonalEvent();notify("🎉 Nhận quà thành công! +15 xu, +3 điểm bé ngoan, +1 bình nước và 1 "+event.itemName+".");
+    }
+
+    function trackActions(action,detail,amount){
+      const today=getVNDate(),todayNo=dayNumber(today),events=getEventList(today),active=events.find(e=>e.startNo<=todayNo&&e.endNo>=todayNo);
+      const count=Math.max(1,Number(amount)||1),data=readEventStore();let messages=[],shouldRender=false;
+      if(active){
+        const questState=data.quests[active.id]||(data.quests[active.id]={counts:{},completed:[],finalRewardClaimed:false});
+        active.content.quests.forEach(q=>{
+          if(q.action!==action||(questState.completed||[]).includes(q.id))return;
+          questState.counts[q.id]=Math.min(q.target,(Number(questState.counts[q.id])||0)+count);
+          if(questState.counts[q.id]>=q.target){
+            questState.completed.push(q.id);state.coins+=25;state.researchPoints+=5;
+            messages.push('Hoàn thành nhiệm vụ lễ hội: '+q.title+'! +25 xu, +5 điểm bé ngoan.');
+          }
+        });
+        const allDone=active.content.quests.every(q=>(questState.completed||[]).includes(q.id));
+        if(allDone&&!questState.finalRewardClaimed){
+          questState.finalRewardClaimed=true;
+          const already=(data.unlocked.events||[]).includes(active.type);
+          if(!already){
+            data.unlocked.events=data.unlocked.events||[];data.unlocked.events.push(active.type);
+            registerPermanentEventRewards(active.type,true,0);
+            const crop=active.content.crop;
+            state.seeds[crop.id]=(state.seeds[crop.id]||0)+3;
+            state.lastAction='Mở khóa vĩnh viễn pet '+active.content.pet.name+' và giống cây '+crop.name;
+            messages.push('🎊 Đã nhận vĩnh viễn '+active.content.pet.name+' và '+crop.name+'! Có 3 hạt giống trong túi.');
+            shouldRender=true;
+          }else{
+            state.coins+=100;state.researchPoints+=20;
+            messages.push('Bạn đã sở hữu quà mùa này từ trước: nhận thêm +100 xu và +20 điểm bé ngoan.');
+          }
+        }
+      }
+
+      // Nhiệm vụ tuần: ba mục tiêu thay đổi theo tuần, reset vào thứ Hai 00:00 giờ Việt Nam.
+      const bundle=ensureWeekly(data,today),weekly=bundle.weekly;
+      bundle.info.plan.tasks.forEach(task=>{
+        if(task.action!==action||(weekly.completed||[]).includes(task.id))return;
+        weekly.progress[task.id]=Math.min(task.target,(Number(weekly.progress[task.id])||0)+count);
+        if(weekly.progress[task.id]>=task.target){
+          weekly.completed.push(task.id);state.coins+=50;state.researchPoints+=8;
+          messages.push('Hoàn thành thử thách tuần: '+task.title+'! +50 xu, +8 điểm bé ngoan.');
+        }
+      });
+      if(bundle.info.plan.tasks.every(task=>(weekly.completed||[]).includes(task.id))&&!weekly.bonusClaimed){
+        weekly.bonusClaimed=true;state.coins+=100;state.researchPoints+=20;state.waterBottles=(state.waterBottles||0)+2;
+        messages.push('🏆 Hoàn thành toàn bộ thử thách tuần! Thưởng thêm +100 xu, +20 điểm bé ngoan và +2 bình nước.');
+      }
+      state.labLevel=Math.min(5,Math.max(1,1+Math.floor(state.researchPoints/30)));
+      saveEventStore(data);save();
+      if(shouldRender){render();renderCollection();}
+      updateSeasonalEvent();updateWeeklyPanel();renderOwnedEventPets();
+      if(messages.length)setTimeout(()=>notify(messages.join(" ")),700);
+    }
+    trackSeasonalEventAction=trackActions;
+
+    function updateSeasonalEvent(){
+      const panel=createEventPanel(),today=getVNDate(),todayNo=dayNumber(today),events=getEventList(today).filter(e=>e.endNo>=todayNo);
+      const active=events.find(e=>e.startNo<=todayNo&&e.endNo>=todayNo),featured=active||events[0];if(!featured)return;
+      panel.className="seasonal-event-panel panel theme-"+featured.type;
+      panel.querySelector("#seasonal-event-icon").textContent=featured.icon;
+      panel.querySelector("#seasonal-event-title").textContent=active?featured.title:"Sắp diễn ra: "+featured.title;
+      panel.querySelector("#seasonal-event-desc").textContent=featured.desc;
+      panel.querySelector("#seasonal-event-date").textContent="Thời gian: "+featured.dateText;
+      panel.querySelector("#seasonal-event-status").textContent=active?"ĐANG DIỄN RA · CÒN "+(featured.endNo-todayNo)+" NGÀY":"CÒN "+(featured.startNo-todayNo)+" NGÀY NỮA";
+      const store=readEventStore(),dateKey=today.y+"-"+String(today.m).padStart(2,"0")+"-"+String(today.d).padStart(2,"0"),claimed=active&&store.claims[active.id]===dateKey,itemCount=active?(Number(store.items[active.id])||0):0;
+      panel.querySelector("#seasonal-event-reward-title").textContent=active?"🎁 Quà hôm nay · Đã sưu tầm "+itemCount+" "+featured.itemName:"🎁 Quà lễ mỗi ngày";
+      panel.querySelector("#seasonal-event-reward-info").textContent=active?"+15 xu · +3 điểm bé ngoan · +1 bình nước · +1 "+featured.itemName:"Mỗi ngày trong thời gian sự kiện: +15 xu, +3 điểm bé ngoan và +1 bình nước.";
+      const button=panel.querySelector("#seasonal-event-claim");button.disabled=!active||!!claimed;button.textContent=!active?"Chưa mở sự kiện":claimed?"✓ Đã nhận quà hôm nay":"🎁 Nhận quà lễ";
+      createOrUpdateEventQuests(featured,!!active,store);
+      panel.querySelector("#seasonal-event-calendar").innerHTML=events.slice(0,4).map(e=>'<span class="seasonal-event-pill">'+e.icon+' '+e.title+' · '+(active&&e.id===active.id?"ĐANG DIỄN RA":formatDate(e.start))+'</span>').join("");
+    }
+
+    function activateEventPet(type){
+      const pet=EVENT_CONTENT[type]?.pet;if(!pet)return;
+      if(!(state.collections.pets||[]).includes(pet.id)){notify("Bạn chưa mở khóa pet sự kiện này.");return;}
+      state.activePet=pet.id;state.pet={...state.pet,name:pet.name,icon:pet.icon,variant:pet.variant,variantName:pet.variantName,bonus:pet.bonus};
+      save();render();notify("Đã chọn pet "+pet.name+" làm bạn đồng hành!");
+    }
+    function renderOwnedEventPets(){
+      const panel=document.getElementById("weekly-update-panel");if(!panel)return;
+      const owned=Object.keys(EVENT_CONTENT).filter(type=>(state.collections.pets||[]).includes(EVENT_CONTENT[type].pet.id));
+      let host=document.getElementById("event-pet-selector");
+      if(!host){host=document.createElement("div");host.id="event-pet-selector";host.className="event-reward-line";panel.appendChild(host);}
+      host.innerHTML=owned.length?'<b>🐾 Pet lễ hội đã sở hữu vĩnh viễn</b><div class="event-pet-list">'+owned.map(type=>{
+        const pet=EVENT_CONTENT[type].pet,active=state.activePet===pet.id;
+        return '<span>'+pet.icon+' '+pet.name+' <button type="button" class="event-pet-use" data-event-pet="'+type+'" '+(active?'disabled':'')+'>'+(active?'Đang dùng':'Dùng pet')+'</button></span>';
+      }).join(' · ')+'</div>':'🐾 Chưa sở hữu pet lễ hội nào. Hoàn thành chuỗi nhiệm vụ của một dịp lễ để mở khóa.';
+      host.querySelectorAll('[data-event-pet]').forEach(btn=>btn.addEventListener('click',()=>activateEventPet(btn.dataset.eventPet)));
+    }
+
+    function updateAllEventUI(){updateSeasonalEvent();updateWeeklyPanel();renderOwnedEventPets();}
+    restorePermanentRewards();
+    updateAllEventUI();
+    setInterval(updateAllEventUI,60000);
+    window.addEventListener("focus",updateAllEventUI);
+    window.addEventListener("storage",function(event){if(event.key===EVENT_STORE_KEY||event.key===GAME_KEY)updateAllEventUI();});
+    document.addEventListener("visibilitychange",function(){if(!document.hidden)updateAllEventUI();});
+  })();
 
 })();
