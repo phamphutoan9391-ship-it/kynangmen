@@ -192,7 +192,16 @@
     </section>
     <section class="bottom-note panel"><span>📚</span><p><b>Thông điệp khu vườn:</b> Muốn có thành quả, chúng ta cần kiên trì chăm sóc từng ngày. Cũng như việc học tập và làm việc, tiến bộ bắt đầu từ những thay đổi nhỏ.</p></section>
   </main>
-
+<div id="quizSachPopup" class="quiz-sach-popup" aria-hidden="true">
+  <div class="quiz-sach-box" role="dialog" aria-modal="true" aria-labelledby="quizSachTieuDe">
+    <h2 id="quizSachTieuDe">📚 Thử thách tri thức!</h2>
+    <p id="quizSachTienDo"></p>
+    <h3 id="quizSachCauHoi"></h3>
+    <div id="quizSachDapAn"></div>
+    <p id="quizSachKetQua" aria-live="polite"></p>
+    <button id="quizSachDong" type="button" onclick="dongQuizSach()" hidden>Tiếp tục chăm sóc khu vườn</button>
+  </div>
+</div>
   <div class="toast" id="toast" role="status"></div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
