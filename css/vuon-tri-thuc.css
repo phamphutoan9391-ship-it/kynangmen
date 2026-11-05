@@ -13,8 +13,6 @@ button,a{font:inherit}.topbar{height:76px;background:#183b2b;color:#fff;display:
 @media(max-width:800px){.topbar{padding:0 14px}.back-link{font-size:11px}.brand{font-size:12px}.brand small{font-size:7px}.welcome{grid-template-columns:1fr;padding:22px}.hero-art{height:170px}.farm-layout,.pet-layout{grid-template-columns:1fr}.shop-grid{grid-template-columns:repeat(2,1fr)}.plots{gap:8px}.plot{min-height:112px}.inventory-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:480px){.game-wrap{padding:0 12px 30px;margin-top:14px}.topbar{height:65px;gap:8px}.back-link{max-width:88px;line-height:1.2}.wallet{padding:6px 9px}.wallet small{display:none}.stats{gap:6px}.stats div{min-width:0;padding:8px 10px;flex:1}.tabs{gap:2px}.tab{padding:10px;font-size:11px}.shop-grid{gap:8px}.shop-card{padding:12px}.shop-bottom{align-items:flex-start;flex-direction:column}.cart{align-items:flex-start;gap:12px}.section-heading h2{font-size:21px}.tag{font-size:9px}}
 
-
-/* SẢNH THỬ THÁCH - styles scoped to avoid affecting farm UI */
 .challenge-arcade{background:#172638;color:#f4f7ef;border:3px solid #38536a;border-radius:16px;padding:20px;box-shadow:0 7px 0 #10202d}
 .challenge-arcade *{box-sizing:border-box}
 .arcade-intro{display:flex;justify-content:space-between;align-items:center;gap:18px;background:linear-gradient(120deg,#245346,#263b58);border:2px solid #547565;border-radius:12px;padding:20px}
@@ -62,7 +60,6 @@ button,a{font:inherit}.topbar{height:76px;background:#183b2b;color:#fff;display:
 @keyframes arcadePop{from{transform:translateY(9px) scale(.85);opacity:0}to{transform:none;opacity:1}}
 @media(max-width:600px){.challenge-arcade{padding:12px}.arcade-intro{padding:14px}.arcade-score{min-width:95px;font-size:18px}.arcade-tabs{gap:5px}.arcade-tab{flex:1 1 40%;padding:9px 7px;font-size:11px}.arcade-game{padding:13px}.arcade-stats{grid-template-columns:1fr}.chicken-sprite{font-size:43px}.arcade-die{width:67px;height:67px;font-size:40px}}
 
-/* Nong trai 3D */
 .farm3d-wrap{overflow:hidden;border:2px solid #668b5d;border-radius:16px;background:#a8c9d4;box-shadow:0 8px 22px #0003}
 .farm3d-scene{width:100%;height:390px;position:relative;background:linear-gradient(#9bc7d5,#dce6c2);}
 .farm3d-scene canvas{display:block;width:100%;height:100%;}
@@ -71,7 +68,6 @@ button,a{font:inherit}.topbar{height:76px;background:#183b2b;color:#fff;display:
 .farm3d-scoreboard div{display:grid;gap:5px}.farm3d-scoreboard b{color:#fff}.farm3d-scoreboard span{font-size:13px;color:#c8d8df}.farm3d-scoreboard strong{color:#f5cb72;font-size:20px}
 @media(max-width:600px){.farm3d-scene{height:260px}.farm3d-scoreboard{gap:5px;padding:9px}.farm3d-scoreboard b{font-size:12px}.farm3d-scoreboard span{font-size:11px}}
 
-/* TAI KHOAN VA BANG XEP HANG ONLINE */
 .online-profile{margin:14px 0;padding:15px!important}
 .online-profile-row{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-top:12px}
 .online-profile-row label{display:grid;gap:6px;color:#e9f2e9;font-size:12px;font-weight:800;flex:1 1 180px}
@@ -83,3 +79,70 @@ button,a{font:inherit}.topbar{height:76px;background:#183b2b;color:#fff;display:
 .online-board li.me{outline:2px solid #9be7a5}
 .online-board .arcade-secondary{padding:7px 10px}
 @media(max-width:600px){.online-profile-row{align-items:stretch;flex-direction:column}.online-profile-row input{width:100%;box-sizing:border-box}}
+
+.quiz-sach-popup {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 99999;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+}
+
+.quiz-sach-box {
+    background: #fff4d6;
+    border: 5px solid #795126;
+    border-radius: 15px;
+    padding: 22px;
+    width: 100%;
+    max-width: 450px;
+    text-align: center;
+    box-shadow: 0 8px 0 #51351e;
+}
+
+.quiz-sach-box h2 {
+    color: #795126;
+}
+
+#quizSachDapAn {
+    display: grid;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+#quizSachDapAn button {
+    background: #fff;
+    border: 2px solid #a87935;
+    border-radius: 9px;
+    padding: 12px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#quizSachDapAn button:hover {
+    background: #ffe4a3;
+}
+
+#quizSachDapAn button.dung {
+    background: #a8e6a1;
+}
+
+#quizSachDapAn button.sai {
+    background: #ffb5b5;
+}
+
+#quizSachKetQua {
+    font-weight: bold;
+    line-height: 1.6;
+}
+
+#quizSachDong {
+    background: #659b46;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 18px;
+    cursor: pointer;
+}
