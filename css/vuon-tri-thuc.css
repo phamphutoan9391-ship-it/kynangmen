@@ -176,3 +176,28 @@ button,a{font:inherit}.topbar{height:76px;background:#183b2b;color:#fff;display:
 .story-complete{background:#fff4cc;border-color:#ead27a;color:#70551c;font-weight:900}
 .story-chapter [hidden]{display:none!important}
 @media(max-width:600px){.story-chapter{padding:15px}.story-npc{align-items:flex-start}.story-npc-avatar{flex-basis:48px;width:48px;height:48px;font-size:29px}}
+
+
+/* Cua so cau hoi sach truoc moi thao tac nong trai */
+.book-quiz-backdrop{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(9,22,16,.76);backdrop-filter:blur(5px)}
+.book-quiz-backdrop[hidden]{display:none!important}
+.book-quiz-box{position:relative;width:min(100%,560px);max-height:min(88vh,780px);overflow:auto;padding:25px;border:3px solid #d5b66a;border-radius:20px;background:linear-gradient(150deg,#fffdf3,#edf6e8);color:#294d32;box-shadow:0 24px 70px #0008;animation:bookQuizIn .2s ease-out}
+.book-quiz-close{position:absolute;right:13px;top:10px;border:0;background:#e5eddd;color:#315d3c;width:34px;height:34px;border-radius:50%;font-size:23px;cursor:pointer}
+.book-quiz-kicker{font-size:11px;font-weight:900;letter-spacing:1.4px;color:#7d672c}
+.book-quiz-box h2{margin:8px 35px 7px 0;color:#254b30;font-size:23px}
+.book-quiz-desc{margin:0 0 10px;color:#61745d;line-height:1.5;font-size:13px}
+.book-quiz-action{margin:12px 0;padding:9px 12px;border-radius:9px;background:#e6f0dc;color:#315d3c;font-size:12px;font-weight:900}
+.book-quiz-progress{margin:10px 0;color:#7c6a3a;font-size:11px;font-weight:900}
+.book-quiz-box h3{margin:8px 0 14px;font-size:17px;line-height:1.45;color:#253f2b}
+.book-quiz-options{display:grid;gap:9px}
+.book-quiz-option{width:100%;display:flex;gap:9px;align-items:flex-start;text-align:left;padding:12px 14px;border:1px solid #c9d9bd;border-radius:11px;background:#fff;color:#294d32;font:700 13px/1.45 Nunito,sans-serif;cursor:pointer;transition:background .15s,transform .15s}
+.book-quiz-option b{color:#8a6c24;min-width:18px}
+.book-quiz-option:hover{background:#edf7e7;transform:translateY(-1px);border-color:#75a66d}
+.book-quiz-feedback{min-height:0;margin:12px 0 0;padding:11px;border-radius:10px;background:#fff3d6;color:#76531d;font-size:13px;line-height:1.55}
+.book-quiz-feedback:empty{display:none}
+.book-quiz-retry{width:100%;margin-top:10px;border:0;border-radius:10px;padding:12px;background:#315d3c;color:#fff;font:900 13px Nunito,sans-serif;cursor:pointer}
+.book-quiz-reward{display:block;margin-top:13px;color:#71816a;font-size:11px;text-align:center}
+body.book-quiz-open{overflow:hidden}
+@keyframes bookQuizIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+@media(max-width:600px){.book-quiz-box{padding:20px 16px;border-radius:16px}.book-quiz-box h2{font-size:20px}.book-quiz-box h3{font-size:15px}.book-quiz-option{padding:11px}}
+.book-quiz-options[hidden],.book-quiz-retry[hidden]{display:none!important}
