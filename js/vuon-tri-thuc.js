@@ -149,14 +149,174 @@
 
   window.addEventListener("storage",e=>{if(e.key===QUIZ_KEY)renderInventory();});
 })();
+// ===============================
+// THỬ THÁCH SÁCH SỬA ĐỔI LỐI LÀM VIỆC
+// ===============================
+
 var quizSachDangMo = false;
 var quizSachDaTraLoi = false;
 
+// Danh sách câu hỏi
+var cauHoiSach = [
+    {
+        cauHoi: "Tác phẩm Sửa đổi lối làm việc do ai viết?",
+        dapAn: ["Trần Phú", "Hồ Chí Minh", "Võ Nguyên Giáp", "Phạm Văn Đồng"],
+        dapAnDung: 1,
+        giaiThich: "Tác phẩm do Hồ Chí Minh viết."
+    },
+    {
+        cauHoi: "Tác phẩm được viết vào thời gian nào?",
+        dapAn: ["Năm 1930", "Năm 1945", "Tháng 10 năm 1947", "Năm 1954"],
+        dapAnDung: 2,
+        giaiThich: "Tác phẩm được viết vào tháng 10 năm 1947."
+    },
+    {
+        cauHoi: "Tác giả sử dụng bút danh nào?",
+        dapAn: ["Nguyễn Ái Quốc", "X.Y.Z", "T.L", "Văn Ba"],
+        dapAnDung: 1,
+        giaiThich: "Tác phẩm được viết dưới bút danh X.Y.Z."
+    },
+    {
+        cauHoi: "Tác phẩm có bao nhiêu phần chính?",
+        dapAn: ["4 phần", "5 phần", "6 phần", "8 phần"],
+        dapAnDung: 2,
+        giaiThich: "Tác phẩm gồm 6 phần chính."
+    },
+    {
+        cauHoi: "Mục đích chính của tác phẩm là gì?",
+        dapAn: [
+            "Hướng dẫn lập trình",
+            "Sửa chữa khuyết điểm và cải thiện cách làm việc",
+            "Hướng dẫn kinh doanh",
+            "Dạy quản lý tài chính"
+        ],
+        dapAnDung: 1,
+        giaiThich: "Tác phẩm hướng đến việc sửa chữa khuyết điểm và nâng cao chất lượng công tác."
+    },
+    {
+        cauHoi: "Tự phê bình có ý nghĩa gì?",
+        dapAn: [
+            "Nhận ra thiếu sót của bản thân",
+            "Chỉ trích người khác",
+            "Tránh trách nhiệm",
+            "Chứng minh mình luôn đúng"
+        ],
+        dapAnDung: 0,
+        giaiThich: "Tự phê bình giúp mỗi người nhận ra và khắc phục thiếu sót."
+    },
+    {
+        cauHoi: "Khi được góp ý, chúng ta nên làm gì?",
+        dapAn: [
+            "Tức giận",
+            "Không quan tâm",
+            "Lắng nghe và xem xét",
+            "Đổ lỗi cho người khác"
+        ],
+        dapAnDung: 2,
+        giaiThich: "Biết tiếp thu góp ý giúp bản thân tiến bộ."
+    },
+    {
+        cauHoi: "Phê bình người khác nên có thái độ như thế nào?",
+        dapAn: [
+            "Công kích cá nhân",
+            "Chân thành và có tinh thần xây dựng",
+            "Chế giễu",
+            "Nói theo tin đồn"
+        ],
+        dapAnDung: 1,
+        giaiThich: "Phê bình cần trung thực và hướng đến sửa chữa."
+    },
+    {
+        cauHoi: "Trong làm việc nhóm, khi một thành viên mắc lỗi nên làm gì?",
+        dapAn: [
+            "Đổ lỗi cho thành viên đó",
+            "Bỏ mặc công việc",
+            "Cùng phân tích và tìm cách khắc phục",
+            "Xóa tên thành viên"
+        ],
+        dapAnDung: 2,
+        giaiThich: "Cần góp ý xây dựng và cùng nhau sửa lỗi."
+    },
+    {
+        cauHoi: "Theo tinh thần tác phẩm, lời nói cần đi đôi với điều gì?",
+        dapAn: [
+            "Việc làm",
+            "Sự khoe khoang",
+            "Lời hứa suông",
+            "Sự chỉ trích"
+        ],
+        dapAnDung: 0,
+        giaiThich: "Lời nói cần được thể hiện bằng hành động thực tế."
+    },
+    {
+        cauHoi: "Khi phát hiện chương trình bị lỗi, sinh viên CNTT nên làm gì?",
+        dapAn: [
+            "Bỏ qua lỗi",
+            "Đổ lỗi cho máy tính",
+            "Tìm nguyên nhân và sửa lỗi",
+            "Xóa toàn bộ bài làm"
+        ],
+        dapAnDung: 2,
+        giaiThich: "Cần nhận ra thiếu sót và chủ động sửa chữa."
+    },
+    {
+        cauHoi: "Một nhóm thường xuyên mắc cùng một lỗi nên làm gì?",
+        dapAn: [
+            "Tiếp tục làm như cũ",
+            "Tìm nguyên nhân và thay đổi cách làm",
+            "Đổ lỗi cho người mới",
+            "Bỏ dự án"
+        ],
+        dapAnDung: 1,
+        giaiThich: "Tìm nguyên nhân giúp tránh lặp lại sai sót."
+    },
+    {
+        cauHoi: "Điều gì thể hiện tinh thần trách nhiệm?",
+        dapAn: [
+            "Làm qua loa",
+            "Để người khác làm thay",
+            "Hoàn thành nhiệm vụ đúng yêu cầu",
+            "Che giấu lỗi"
+        ],
+        dapAnDung: 2,
+        giaiThich: "Trách nhiệm thể hiện qua hành động và kết quả công việc."
+    },
+    {
+        cauHoi: "Vì sao cần lắng nghe ý kiến tập thể?",
+        dapAn: [
+            "Để tránh làm việc",
+            "Để có thêm góc nhìn và cải thiện công việc",
+            "Để trì hoãn nhiệm vụ",
+            "Để đổ lỗi"
+        ],
+        dapAnDung: 1,
+        giaiThich: "Lắng nghe giúp nhận ra thiếu sót và tìm giải pháp tốt hơn."
+    },
+    {
+        cauHoi: "Bài học quan trọng khi vận dụng tác phẩm là gì?",
+        dapAn: [
+            "Luôn cho rằng mình đúng",
+            "Không cần thay đổi",
+            "Thường xuyên nhìn nhận và sửa đổi bản thân",
+            "Chỉ cần nói hay"
+        ],
+        dapAnDung: 2,
+        giaiThich: "Mỗi người cần thường xuyên tự nhìn nhận và hoàn thiện bản thân."
+    }
+];
+
 function moThuThachSach() {
-  
-    if (Math.random() > 0.65) return;
 
     if (quizSachDangMo) return;
+
+    if (Math.random() > 0.65) return;
+
+    var popup = document.getElementById("quizSachPopup");
+
+    if (!popup) {
+        console.log("Chưa tìm thấy HTML quizSachPopup");
+        return;
+    }
 
     quizSachDangMo = true;
     quizSachDaTraLoi = false;
@@ -164,9 +324,9 @@ function moThuThachSach() {
     var viTri = Math.floor(Math.random() * cauHoiSach.length);
     var cau = cauHoiSach[viTri];
 
-    document.getElementById("quizSachPopup").style.display = "flex";
+    popup.style.display = "flex";
 
-    document.getElementById("quizSachCauHoi").innerHTML =
+    document.getElementById("quizSachCauHoi").textContent =
         cau.cauHoi;
 
     document.getElementById("quizSachKetQua").innerHTML = "";
@@ -186,40 +346,46 @@ function moThuThachSach() {
 }
 
 function traLoiQuizSach(chon, viTri) {
+
     if (quizSachDaTraLoi) return;
 
     quizSachDaTraLoi = true;
 
     var cau = cauHoiSach[viTri];
+
     var cacNut = document.getElementById("quizSachDapAn").children;
 
     if (chon === cau.dapAnDung) {
+
+        state.coins += 10;
+
+        save();
+        render();
+
         document.getElementById("quizSachKetQua").innerHTML =
-            "🎉 Chính xác! +10 xu<br>" + cau.giaiThich;
+            "🎉 Chính xác! Bạn nhận được +10 xu!<br>" +
+            cau.giaiThich;
 
         cacNut[chon].classList.add("dung");
 
-      
-        if (typeof tien === "number") {
-            tien += 10;
-        } else if (typeof xu === "number") {
-            xu += 10;
-        }
-
     } else {
+
         document.getElementById("quizSachKetQua").innerHTML =
-            "❌ Chưa chính xác!<br>Đáp án đúng: " +
-            cau.dapAn[cau.dapAnDung] +
+            "❌ Chưa chính xác!<br>" +
+            "Đáp án đúng: " + cau.dapAn[cau.dapAnDung] +
             "<br>" + cau.giaiThich;
 
         cacNut[chon].classList.add("sai");
         cacNut[cau.dapAnDung].classList.add("dung");
     }
 
-    document.getElementById("quizSachDong").style.display = "inline-block";
+    document.getElementById("quizSachDong").style.display =
+        "inline-block";
 }
 
 function dongQuizSach() {
+
     document.getElementById("quizSachPopup").style.display = "none";
+
     quizSachDangMo = false;
 }
