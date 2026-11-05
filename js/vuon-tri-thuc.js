@@ -59,7 +59,7 @@
   function buySeed(type){
     const seed=seeds[type]; if(!seed)return;
     if(seed.unlockLevel && state.labLevel<seed.unlockLevel){notify("Cần nâng cấp phòng thí nghiệm lên cấp "+seed.unlockLevel+" để mở giống này.");return;}
-    if(state.coins<seed.cost){notify("Bạn chưa đủ xu để mua hạt giống!");return;}
+    if(state.coins<seed.cost){notify("Bạn chưa đủ xu bé ngoan để mua hạt giống!");return;}
     state.coins-=seed.cost;state.seeds[type]=(state.seeds[type]||0)+1;state.totalSpent+=seed.cost;save();render();notify("Đã mua 1 túi hạt "+seed.name+"!");
   }
   function plant(index){
@@ -134,11 +134,11 @@
   }
   function buyWater(){
     const cost=4;
-    if(state.coins<cost){notify("Bạn cần 4 xu để mua bình nước.");return;}
+    if(state.coins<cost){notify("Bạn cần 4 xu bé ngoan để mua bình nước.");return;}
     state.coins-=cost;state.totalSpent+=cost;state.waterBottles=(state.waterBottles||0)+1;state.lastAction="Đã mua 1 bình nước";save();render();notify("Đã mua 1 bình nước! 💧");
   }
   function feedPet(){
-    if(state.coins<5){notify("Bạn cần 5 xu để mua thức ăn cho pet.");return;}
+    if(state.coins<5){notify("Bạn cần 5 xu bé ngoan để mua thức ăn cho pet.");return;}
     if(state.pet.hunger>=100){notify("Pet đã no căng rồi!");return;}
     state.coins-=5;state.totalSpent+=5;state.pet.hunger=Math.min(100,state.pet.hunger+30);state.pet.bond=Math.min(100,state.pet.bond+3);save();render();notify("Mèo Mướp ăn ngon lành! 🍓");
   }
@@ -243,7 +243,7 @@
     if(r<0.30)return {id:"shiny",name:"Shiny",bonus:6};
     return {id:"normal",name:"Thường",bonus:0};
   }
-  function discover(kind,cost,catalog){if((state.researchPoints||0)<cost){notify('Chưa đủ điểm nghiên cứu!');return;}const owned=state.collections[kind]||[];const available=catalog.filter(x=>!owned.includes(x.id));if(!available.length){notify('Bạn đã sưu tầm đủ bộ này rồi!');return;}state.researchPoints-=cost;const item=available[Math.floor(Math.random()*available.length)];owned.push(item.id);state.collections[kind]=owned;if(kind==='crops'){unlockResearchSeed(item);if(state.story&&state.story.chapter2MucDone&&!state.story.chapter2ResearchDone){state.story.chapter2ResearchDone=true;state.coins+=15;state.researchPoints+=5;state.lastAction='Hoàn thành Chương 2: +15 xu, +5 điểm nghiên cứu';}}if(kind==='pets'){state.activePet=item.id;const variant=rollPetVariant();state.pet={...state.pet,name:item.name,icon:item.icon,variant:variant.id,variantName:variant.name,bonus:variant.bonus};}if(kind==='chickens'){state.activeChicken=item.id;}save();render();renderCollection();renderEvolutionLab();$('collection-result').textContent=item.icon+' '+item.name+' · '+item.rank+' · Chỉ số '+item.power+' · Thưởng '+item.bonus+(kind==='pets'?' · '+state.pet.variantName:'');notify('Đã mở khóa '+item.name+(kind==='pets'?' · '+state.pet.variantName:'')+'!');}
+  function discover(kind,cost,catalog){if((state.researchPoints||0)<cost){notify('Chưa đủ điểm bé ngoan!');return;}const owned=state.collections[kind]||[];const available=catalog.filter(x=>!owned.includes(x.id));if(!available.length){notify('Bạn đã sưu tầm đủ bộ này rồi!');return;}state.researchPoints-=cost;const item=available[Math.floor(Math.random()*available.length)];owned.push(item.id);state.collections[kind]=owned;if(kind==='crops'){unlockResearchSeed(item);if(state.story&&state.story.chapter2MucDone&&!state.story.chapter2ResearchDone){state.story.chapter2ResearchDone=true;state.coins+=15;state.researchPoints+=5;state.lastAction='Hoàn thành Chương 2: +15 xu, +5 điểm nghiên cứu';}}if(kind==='pets'){state.activePet=item.id;const variant=rollPetVariant();state.pet={...state.pet,name:item.name,icon:item.icon,variant:variant.id,variantName:variant.name,bonus:variant.bonus};}if(kind==='chickens'){state.activeChicken=item.id;}save();render();renderCollection();renderEvolutionLab();$('collection-result').textContent=item.icon+' '+item.name+' · '+item.rank+' · Chỉ số '+item.power+' · Thưởng '+item.bonus+(kind==='pets'?' · '+state.pet.variantName:'');notify('Đã mở khóa '+item.name+(kind==='pets'?' · '+state.pet.variantName:'')+'!');}
   function renderCollection(){const groups=[['crops',cropCatalog],['research',researchCatalog],['pets',petCatalog],['chickens',chickenCatalog]];groups.forEach(([key,list])=>{const el=$('count-'+key);if(el)el.textContent=(state.collections[key]||[]).length+'/'+list.length;});const all=[...cropCatalog.map(x=>({...x,group:'Cây trồng',key:'crops'})),...researchCatalog.map(x=>({...x,group:'Cây nghiên cứu',key:'research'})),...petCatalog.map(x=>({...x,group:'Pet',key:'pets'})),...chickenCatalog.map(x=>({...x,group:'Giống gà',key:'chickens'}))];$('collection-book').innerHTML=all.filter(x=>(state.collections[x.key]||[]).includes(x.id)).map(x=>'<div class="collection-entry">'+x.icon+' <b>'+x.name+'</b><small>'+x.group+' · '+x.rank+' · Chỉ số '+x.power+' · Bonus '+x.bonus+'</small></div>').join('')||'Chưa có mục sưu tầm nào.';}
   $('collect-crop').addEventListener('click',()=>discover('crops',5,cropCatalog));
   $('research-crop').addEventListener('click',()=>discover('research',5,researchCatalog));
@@ -259,7 +259,7 @@
     $("lab-points").textContent=points;
     $("lab-harvests").textContent=state.harvests;
     $("lab-bonus-seeds").textContent=state.bonusSeeds||0;
-    $("lab-next").textContent=level>=5?"Đã đạt cấp tối đa":"Còn "+next+" điểm nghiên cứu để lên cấp";
+    $("lab-next").textContent=level>=5?"Đã đạt cấp tối đa":"Còn "+next+" điểm bé ngoan để lên cấp";
     $("lab-progress").style.width=progress+"%";
     $("lab-unlocks").textContent=level>=4?"Đã mở khóa toàn bộ giống đặc biệt":level>=2?"Đã mở Việt quất · Cần cấp 4 để mở Hoa ánh trăng":"Cấp 2 mở Việt quất · Cấp 4 mở Hoa ánh trăng";
   }
@@ -329,10 +329,10 @@
     $("inventory-grid").innerHTML='<div class="inventory-group-title">🌱 HẠT GIỐNG TRONG TÚI</div>'+seedItems.map(x=>'<div class="inventory-item seed-in-bag"><span>'+x.icon+'</span><b>'+x.name+'</b><small>Số lượng: <strong>'+x.count+'</strong></small></div>').join("")+'<div class="inventory-group-title">📦 NÔNG SẢN & VẬT PHẨM</div>'+[...produceItems,...items.filter(x=>x.kind==="water"||x.kind==="ticket"||x.kind==="coin")].map(x=>'<div class="inventory-item"><span>'+x.icon+'</span><b>'+x.name+'</b><small>Số lượng: <strong>'+x.count+'</strong></small></div>').join("");
   }
   function startMucQuest(){
-    if(state.story.chapter2MucDone){notify("Bạn đã hoàn thành nhiệm vụ của Mực rồi!");return;}
+    if(state.story.chapter2MucDone){notify("Bạn đã hoàn thành nhiệm vụ của Bình Mực rồi!");return;}
     state.story.chapter2MucAccepted=true;
     save();renderStory();
-    notify("Đã nhận nhiệm vụ chương 2 từ Mực!");
+    notify("Đã nhận nhiệm vụ chương 2 từ  Bình Mực!");
   }
   function answerMucQuest(answer){
     if(!state.story.chapter2MucAccepted||state.story.chapter2MucDone)return;
@@ -344,9 +344,9 @@
     state.coins+=20;
     state.researchPoints=(Number(state.researchPoints)||0)+10;
     state.labLevel=Math.min(5,Math.max(1,1+Math.floor(state.researchPoints/30)));
-    state.lastAction="Hoàn thành nhiệm vụ Mực: +20 xu, +10 điểm nghiên cứu";
+    state.lastAction="Hoàn thành nhiệm vụ Mực: +20 xu bé ngoan, +10 điểm  bé ngoan";
     save();render();renderStory();
-    notify("Chính xác! +20 xu và +10 điểm nghiên cứu.");
+    notify("Chính xác! +20 xu bé ngoan và +10 điểm bé ngoan.");
   }
   function renderStory(){
     const story=state.story||defaultState.story;
@@ -359,7 +359,7 @@
     $("chapter2-progress").textContent=(story.chapter2MucDone?1:0)+(story.chapter2ResearchDone?1:0)+"/2 nhiệm vụ";
     if(story.chapter2MucDone){
       $("muc-dialogue").textContent="“Tốt lắm! Nhận ra khuyết điểm là bước đầu. Bây giờ hãy dùng kiến thức để khám phá một giống cây mới trong phòng thí nghiệm.”";
-      $("muc-feedback").textContent="✅ Đã hoàn thành: Nhìn nhận khuyết điểm và sửa đổi. Phần thưởng: 20 xu và 10 điểm nghiên cứu.";
+      $("muc-feedback").textContent="✅ Đã hoàn thành: Nhìn nhận khuyết điểm và sửa đổi. Phần thưởng: 20 xu bé ngoan và 10 điểm bé ngoan.";
       $("chapter2-next-status").textContent=story.chapter2ResearchDone?"Tiến độ: Đã hoàn thành":"Tiến độ: Chưa hoàn thành – hãy khám phá 1 giống cây trong phòng thí nghiệm.";
     }else if(story.chapter2MucAccepted){
       $("muc-dialogue").textContent="“Hãy suy nghĩ kỹ nhé. Người biết sửa đổi sẽ ngày càng tiến bộ.”";
@@ -409,7 +409,7 @@
     state.labLevel = Math.min(5, Math.max(1, 1 + Math.floor(state.researchPoints / 30)));
     save();
     renderEvolutionLab();
-    notify("Đã cập nhật " + state.researchPoints + " điểm nghiên cứu từ sảnh thử thách!");
+    notify("Đã cập nhật " + state.researchPoints + " điểm bé ngoan từ sảnh thử thách!");
   });
  
   setInterval(()=>{if(state.plots.some(Boolean))renderPlots();},1000);
