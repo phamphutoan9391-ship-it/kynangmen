@@ -12,7 +12,7 @@
   function save(){
     localStorage.setItem(KEY,JSON.stringify(data));
     renderStats();
-    // Điểm từ sảnh thử thách cũng chính là điểm nghiên cứu của phòng thí nghiệm.
+
     window.dispatchEvent(new CustomEvent("ae-research-points",{detail:{points:data.score}}));
   }
   function addPoints(points){data.score+=points;data.games++;save();submitOnlineResult(points);}
@@ -118,7 +118,7 @@
       $("arcade-cards").appendChild(el);
     });
     $("arcade-poker-result").textContent="Bộ bài: "+classify(hand);
-    $("arcade-poker-hint").textContent="Bạn nhận 10 điểm thành tích cho lượt này.";
+    $("arcade-poker-hint").textContent="Bạn nhận 10 điểm bé ngoan cho lượt này.";
     addPoints(10);
   });
 
@@ -126,11 +126,10 @@
   $("arcade-roll").addEventListener("click",()=>{
     const a=1+Math.floor(Math.random()*6),b=1+Math.floor(Math.random()*6),sum=a+b,guess=Number($("arcade-prediction").value);
     $("arcade-die1").textContent=faces[a-1];$("arcade-die2").textContent=faces[b-1];
-    if(sum===guess){$("arcade-dice-result").textContent="Chính xác! Tổng là "+sum+". +5 điểm thành tích!";addPoints(5);}
+    if(sum===guess){$("arcade-dice-result").textContent="Chính xác! Tổng là "+sum+". +5 điểm bé ngoan!";addPoints(5);}
     else{$("arcade-dice-result").textContent="Tổng là "+sum+". Bạn dự đoán "+guess+"; thử lại nhé!";countGame();}
   });
 
-  // Hội thi gà 2D dạng pixel: chạy đua và vượt chướng ngại vật, không có cảnh đánh nhau.
   const chickenArena = $("farm3d-scene");
   if (chickenArena) {
     chickenArena.innerHTML = `
@@ -172,8 +171,8 @@
     renderChicken();
     if(playerHp<=0||enemyHp<=0||round>=5){
       matchOver=true;document.querySelectorAll(".arcade-skill").forEach(b=>b.disabled=true);
-      if(enemyHp<playerHp){msg+=" Gà Cây Khế thắng hội thi! +15 điểm nghiên cứu.";addPoints(15);$("farm3d-status").textContent="🏆 Gà Cây Khế vô địch!";}
-      else if(enemyHp===playerHp){msg+=" Hai chú gà hòa điểm! +5 điểm tham gia.";addPoints(5);$("farm3d-status").textContent="🤝 Hội thi hòa điểm!";}
+      if(enemyHp<playerHp){msg+=" Gà Cây Khế thắng hội thi! +15 điểm bé ngoan.";addPoints(15);$("farm3d-status").textContent="🏆 Gà Cây Khế vô địch!";}
+      else if(enemyHp===playerHp){msg+=" Hai chú gà hòa điểm! +5 điểm bé ngoan.";addPoints(5);$("farm3d-status").textContent="🤝 Hội thi hòa điểm!";}
       else{msg+=" Gà bạn thắng phần thi này. Hẹn lần sau nhé!";countGame();$("farm3d-status").textContent="🏁 Hội thi kết thúc";}
       msg+=" Nhấn ‘Hội thi mới’ để chơi tiếp.";
     }
