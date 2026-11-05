@@ -386,7 +386,10 @@
       console.log("BroadcastChannel không khả dụng.");
     }
 
-    notify("Đổi thành công 1 phiếu Quiz! Phiếu đã được lưu.");
+    notify("Đổi thành công 1 phiếu Quiz! Đang trở về website...");
+    setTimeout(() => {
+    window.location.href = "index.html";
+}, 1500);
   }
 
  
