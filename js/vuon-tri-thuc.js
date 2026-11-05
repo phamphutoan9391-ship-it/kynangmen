@@ -42,6 +42,7 @@
     const seed=seeds[type]; if(!seed)return;
     if(state.coins<seed.cost){notify("Bạn chưa đủ xu để mua hạt giống!");return;}
     state.coins-=seed.cost;state.seeds[type]=(state.seeds[type]||0)+1;state.totalSpent+=seed.cost;save();render();notify("Đã mua 1 túi hạt "+seed.name+"!");
+    moThuThachSach();
   }
   function plant(index){
     if(state.plots[index]){harvest(index);return;}
@@ -49,6 +50,7 @@
     if(!seed || (state.seeds[type]||0)<=0){notify("Bạn đã hết hạt giống này. Hãy mua thêm trong cửa hàng.");return;}
     state.seeds[type]--;state.plots[index]={type,plantedAt:Date.now(),watered:false};
     state.tasks.plant=true;save();render();notify("Đã gieo "+seed.name+"! Cây sẽ lớn dần.");
+    moThuThachSach();
   }
   function progress(plot){
     if(!plot)return 0;
@@ -63,24 +65,28 @@
     if(progress(plot)<1){notify("Cây chưa chín đâu! Hãy chờ thêm một chút.");return;}
     const seed=seeds[plot.type];state.coins+=seed.reward;state.harvests++;state.plots[index]=null;state.tasks.harvest=true;
     state.level=1+Math.floor(state.harvests/5);save();render();notify("Thu hoạch thành công! +"+seed.reward+" xu.");
+    moThuThachSach();
   }
   function waterAll(){
     const growing=state.plots.filter(Boolean);if(!growing.length){notify("Vườn chưa có cây để tưới.");return;}
     growing.forEach(p=>p.watered=true);state.tasks.water=true;save();render();notify("Đã tưới nước cho khu vườn! 💧");
+    moThuThachSach();
   }
   function feedPet(){
     if(state.coins<5){notify("Bạn cần 5 xu để mua thức ăn cho pet.");return;}
     if(state.pet.hunger>=100){notify("Pet đã no căng rồi!");return;}
     state.coins-=5;state.totalSpent+=5;state.pet.hunger=Math.min(100,state.pet.hunger+30);state.pet.bond=Math.min(100,state.pet.bond+3);save();render();notify("Mèo Mướp ăn ngon lành! 🍓");
+    moThuThachSach();
   }
   function playPet(){
     state.pet.bond=Math.min(100,state.pet.bond+10);state.pet.hunger=Math.max(0,state.pet.hunger-5);state.tasks.play=true;save();render();notify("Pet rất vui khi được chơi cùng bạn! 💚");
+    moThuThachSach();
   }
   function buyTicket(){
     const cost=25;if(state.coins<cost){notify("Bạn cần 25 xu để đổi 1 phiếu Quiz.");return;}
     const current=quizTickets();localStorage.setItem(QUIZ_KEY,String(current+1));
     state.coins-=cost;state.totalSpent+=cost;state.lastAction="Đã đổi 1 phiếu Quiz";save();render();
-    // Báo cho tab website chính đang mở để ví Quiz cập nhật ngay.
+
     try{const channel=new BroadcastChannel("ae-cay-khe-quiz-wallet");channel.postMessage({type:"QUIZ_TICKETS_UPDATED",tickets:current+1});channel.close();}catch(e){}
     notify("Đổi thành công 1 phiếu Quiz! Phiếu đã được lưu.");
   }
