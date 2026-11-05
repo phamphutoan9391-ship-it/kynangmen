@@ -487,6 +487,7 @@ font-size: 90px;
             visibility: hidden;
         }
 
+
 .ticket-wallet, .quiz-ticket-wallet {
     display: flex;
     flex-wrap: wrap;

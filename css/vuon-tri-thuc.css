@@ -122,6 +122,7 @@ button,a{font:inherit}.topbar{height:76px;background:#183b2b;color:#fff;display:
 @keyframes pixelRun{0%,100%{transform:translateY(0) scaleX(1)}50%{transform:translateY(-12px) scaleX(1.08)}}
 @media(max-width:600px){.inventory-grid{grid-template-columns:repeat(2,1fr)}.race-lane{height:84px}.pixel-chicken{font-size:36px;top:28px}}
 
+
 .water-supplies{margin-top:14px;padding:12px;background:#eef7ff;border:1px solid #c9e1f4;border-radius:12px}
 .water-supplies b{color:#28618a;font-size:13px}
 .water-supplies .hint{margin:5px 0 8px}
@@ -180,6 +181,7 @@ body.book-quiz-open{overflow:hidden}
 @media(max-width:600px){.book-quiz-box{padding:20px 16px;border-radius:16px}.book-quiz-box h2{font-size:20px}.book-quiz-box h3{font-size:15px}.book-quiz-option{padding:11px}}
 .book-quiz-options[hidden],.book-quiz-retry[hidden]{display:none!important}
 
+
 .daily-plant-panel{margin:12px 0 16px;padding:15px 17px;border:1px solid #cfe3c4;border-radius:16px;background:linear-gradient(115deg,#f0f8e9,#fffdf1);box-shadow:0 8px 20px rgba(54,91,49,.07)}
 .daily-plant-head{display:flex;align-items:center;gap:13px;min-width:0}
 .daily-plant-icon{display:grid;place-items:center;flex:0 0 62px;width:62px;height:62px;border-radius:15px;background:#e2f0d9;font-size:34px;box-shadow:inset 0 -4px rgba(55,104,55,.08)}
@@ -192,3 +194,30 @@ body.book-quiz-open{overflow:hidden}
 .daily-plant-button{flex:0 0 auto;border:0;border-radius:10px;padding:10px 14px;background:#315f3d;color:#fff;font:900 12px Nunito,sans-serif;cursor:pointer}
 .daily-plant-button:disabled{background:#dfe9d9;color:#668068;cursor:default}
 @media(max-width:600px){.daily-plant-panel{padding:13px}.daily-plant-icon{flex-basis:52px;width:52px;height:52px;font-size:29px}.daily-plant-bottom{align-items:stretch;flex-direction:column}.daily-plant-button{width:100%}}
+
+.farm-weather-panel{margin:16px 0 20px;padding:18px 20px;border:1px solid #d5e3d3;border-radius:20px;background:linear-gradient(135deg,#f2f8f1,#fffdf4);box-shadow:0 8px 22px rgba(45,83,54,.07)}
+.weather-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:13px}
+.weather-heading h2{margin:2px 0 0;color:#294d32;font-size:21px}.weather-kicker{margin:0;color:#71866f;font-size:10px;font-weight:900;letter-spacing:1.4px}
+.weather-live-tag{padding:7px 10px;border-radius:30px;background:#e3f1df;color:#346642;font-size:10px;font-weight:900}
+.weather-main{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(220px,.8fr);gap:10px}
+.weather-current{display:flex;gap:13px;align-items:center;min-width:0;padding:15px;border:1px solid #e5e7db;border-radius:15px;background:#fff}
+.weather-icon{display:grid;place-items:center;flex:0 0 62px;width:62px;height:62px;border-radius:15px;background:#f1f5e9;font-size:35px}
+.weather-copy{min-width:0}.weather-copy small,.weather-forecast small{display:block;color:#73816f;font-size:9px;font-weight:900;letter-spacing:1px}
+.weather-copy h3{margin:3px 0 4px;color:#294d32;font-size:18px}.weather-copy p,.weather-copy b{display:block;margin:3px 0;color:#5e705d;font-size:11px;line-height:1.5}.weather-copy b{color:#315d3c}
+.weather-sun{background:#fff7df;border-color:#f0dfaa}.weather-cloud{background:#f4f6f6}.weather-rain{background:#eaf5ff;border-color:#cee2f5}.weather-hot,.weather-dry{background:#fff0df;border-color:#f0d0a8}.weather-storm,.weather-wind,.weather-hail{background:#eef0f8;border-color:#d9dced}.weather-cold,.weather-frost{background:#edf6fb;border-color:#d4e8f3}
+.weather-forecast{display:flex;justify-content:space-between;gap:12px;padding:14px;border:1px solid #dce8d8;border-radius:15px;background:#f8fbf5}
+.weather-forecast strong{display:block;margin-top:5px;color:#315d3c;font-size:14px}.weather-forecast p{margin:5px 0 0;color:#687968;font-size:11px;line-height:1.45}
+.weather-count{min-width:85px;text-align:right}.weather-count strong{font-variant-numeric:tabular-nums;white-space:nowrap}
+.weather-simulation-note{margin:9px 0 0;color:#788374;font-size:10px;line-height:1.5}
+.weather-tools-wrap{margin-top:17px;padding-top:14px;border-top:1px solid #dce8d8}.weather-tools-wrap h3{margin:0 0 5px;color:#315d3c;font-size:15px}.weather-note{margin:0 0 11px;color:#71806d;font-size:11px;line-height:1.5}
+.weather-tools-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.weather-tool{display:flex;align-items:center;gap:10px;min-width:0;padding:11px;border:1px solid #e0e8da;border-radius:13px;background:#fff}
+.weather-tool-icon{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border-radius:11px;background:#eef5e8;font-size:23px}
+.weather-tool-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}.weather-tool-copy b{color:#31563a;font-size:12px}.weather-tool-copy small{color:#71806f;font-size:10px;line-height:1.4}
+.weather-upgrade-button{flex:0 0 auto;border:0;border-radius:9px;padding:8px 10px;background:#315d3c;color:#fff;font:800 10px Nunito,sans-serif;cursor:pointer}.weather-upgrade-button:disabled{background:#e2eee0;color:#4d7854;cursor:default}
+@media(max-width:680px){.farm-weather-panel{padding:14px}.weather-main{grid-template-columns:1fr}.weather-tools-grid{grid-template-columns:1fr}.weather-current{align-items:flex-start}.weather-forecast{align-items:flex-start}.weather-tool{flex-wrap:wrap}.weather-upgrade-button{margin-left:auto}}
+
+.farm-science-panel{margin:18px 0 22px;padding:18px;border:1px solid #d5e2cf;border-radius:20px;background:linear-gradient(145deg,#f5faef,#fffdf6);box-shadow:0 8px 24px rgba(39,76,47,.07)}
+.science-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}.science-head h2{margin:2px 0 5px;color:#294d32}.science-head p:not(.eyebrow){margin:0;color:#6d7b68;font-size:12px;line-height:1.5}.science-tag{padding:7px 10px;border-radius:20px;background:#e4f1dd;color:#3d6c42;font-size:10px;font-weight:900}
+.science-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.science-card{min-width:0;padding:15px;border:1px solid #dce7d7;border-radius:15px;background:#fff;box-shadow:0 3px 10px rgba(40,74,44,.04)}.science-card h3{margin:0 0 6px;color:#31563a;font-size:15px}.science-desc{margin:0 0 12px;color:#71806f;font-size:11px;line-height:1.5}.science-label,.science-market-form label{display:grid;gap:5px;color:#53674f;font-size:11px;font-weight:900}.science-card select,.science-card input{width:100%;min-width:0;padding:9px;border:1px solid #d3e0cb;border-radius:9px;background:#fbfdf8;color:#294d32;font:700 12px Nunito,sans-serif}.science-stat{margin:10px 0;padding:11px;border-radius:11px;background:#f1f7ec}.science-stat>b{display:block;color:#315d3c}.science-stat small{display:block;margin:6px 0;color:#6b7d66;font-size:10px}.science-meter,.science-climate-bar i{display:block;height:8px;overflow:hidden;border-radius:20px;background:#e1e9dc}.science-meter i,.science-climate-bar b{display:block;height:100%;border-radius:20px;background:linear-gradient(90deg,#9acb78,#477f4e)}.science-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.science-actions button,.science-market-form button{border:0;border-radius:9px;padding:9px 10px;background:#315d3c;color:#fff;font:800 10px Nunito,sans-serif;cursor:pointer}.science-actions button:hover,.science-market-form button:hover{filter:brightness(1.08)}.science-life-row,.science-market-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #edf1e9;font-size:10px}.science-life-row b{color:#456443}.science-life-row span{color:#6f7b6b;text-align:right}.science-livestock-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.science-livestock-grid span{padding:8px;border-radius:9px;background:#f2f7ee;color:#5b6c55;font-size:11px}.science-livestock-grid b{color:#315d3c}.science-hint{margin:8px 0 0;color:#788373;font-size:10px;line-height:1.5}.science-market-row span{flex:1;color:#50644b}.science-market-row b{white-space:nowrap;color:#2f713f}.science-market-row small{white-space:nowrap;color:#81907c}.science-market-form{display:grid;grid-template-columns:minmax(0,1fr) 90px;gap:8px;margin-top:12px;align-items:end}.science-market-form button{grid-column:1/-1;padding:11px}.science-climate-number{font-size:32px;font-weight:1000;color:#bd7130}.science-climate-status{color:#4f6149}.science-card #science-climate-status p{font-size:11px;color:#71806f}.science-climate-bar{display:grid;grid-template-columns:105px 1fr;gap:9px;align-items:center;margin-top:10px;color:#687968;font-size:10px}.science-climate-bar i{height:9px}.science-climate-bar b{background:linear-gradient(90deg,#a3ce78,#e5b451)}
+@media(max-width:720px){.science-grid{grid-template-columns:1fr}.farm-science-panel{padding:13px}.science-card{padding:13px}.science-market-form{grid-template-columns:minmax(0,1fr) 80px}}

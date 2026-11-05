@@ -358,6 +358,7 @@
 
     .footer span:last-child { color: var(--cream); }
 
+   
     .candy-cursor {
       position: fixed;
       z-index: 1000;
