@@ -358,7 +358,6 @@
 
     .footer span:last-child { color: var(--cream); }
 
-    /* Con trỏ hình viên kẹo gói giấy */
     .candy-cursor {
       position: fixed;
       z-index: 1000;
@@ -513,7 +512,6 @@
     }
 
 
-    /* ===== Không khí Halloween và giao diện trò chơi ===== */
     .atmosphere {
       position: fixed;
       inset: 0;
