@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const GAME_KEY = "aeCayKheVuonTriThuc_v1";
-  const QUIZ_KEY = "soPhieuQuiz"; // Khóa phiếu Quiz dùng chung với website chính
+  const QUIZ_KEY = "soPhieuQuiz"; 
   const seeds = {
     sunflower: {name:"Hướng dương", icon:"🌻", cost:4, reward:12, seconds:25, amount:0},
     carrot: {name:"Cà rốt", icon:"🥕", cost:6, reward:18, seconds:40, amount:0},
@@ -19,7 +19,7 @@
     lastCare:Date.now(), lastAction:"Chào mừng bạn đến với khu vườn!"
   };
   let state = loadState();
-  // Giữ lại điểm nghiên cứu đã có; điểm thành tích ở sảnh thử thách được tính chung vào đây.
+  
   try {
     const arcadeData = JSON.parse(localStorage.getItem("aeCayKhe_thanhTichSanThuThach") || "{}");
     state.researchPoints = Math.max(Number(state.researchPoints)||0, Number(arcadeData.score)||0);
@@ -152,10 +152,9 @@
       return;
     }
 
-    // Lưu phiếu vào cùng kho localStorage với website chính.
     const current=quizTickets();
     const totalTickets=current+1;
-    // Ghi phiếu vào localStorage của cùng website (cùng domain GitHub Pages).
+   
     localStorage.setItem(QUIZ_KEY,String(totalTickets));
     state.coins-=cost;
     state.totalSpent+=cost;
@@ -168,7 +167,7 @@
       channel.close();
     }catch(e){}
     notify("Đã lưu phiếu Quiz. Đang về website chính...");
-    // Dùng đường dẫn tuyệt đối theo thư mục dự án, không phụ thuộc URL hiện tại.
+   
     const mainUrl=new URL("./index.html",document.baseURI);
     setTimeout(()=>{window.location.assign(mainUrl.href);},700);
   }
@@ -209,7 +208,7 @@
   const researchCatalog=makeCatalog(['Lan','Sen','Cúc','Hồng','Tulip','Phong lan','Dạ yến thảo','Mộc lan','Anh đào','Thược dược'],['biến dị','phát sáng','kháng hạn','siêu sinh trưởng','thích nghi','di truyền','ánh trăng','cầu vồng','bất tử','ngân hà'],['🌸','🪷','🌼','🌹','🌷','💠','🌺','🌻','🌸','💐'],100,'gene');
   const petCatalog=makeCatalog(['Mèo','Chó','Thỏ','Cáo','Gấu trúc','Rái cá','Sóc','Nhím'],['mây','đốm','tuyết','kẹo','lá non'],['🐱','🐶','🐰','🦊','🐼','🦦','🐿️','🦔'],40,'pet');
   const chickenCatalog=makeCatalog(['Gà tre','Gà ri','Gà hồ','Gà ác','Gà lông xù','Gà sao','Gà rừng','Gà vàng'],['mơ','đốm','tuyết','lửa','mây'],['🐓','🐔','🐣','🐤'],40,'chicken');
-  // Khôi phục các giống nghiên cứu đã mở khóa từ những lần chơi trước.
+
   (state.unlockedResearchSeeds||[]).forEach(id=>{
     const item=cropCatalog.find(x=>x.id===id);
     if(item){
@@ -399,11 +398,11 @@
   $("delivery-button").addEventListener("click",deliverProduce);$("feed-pet").addEventListener("click",feedPet);$("play-pet").addEventListener("click",playPet);$("buy-ticket").addEventListener("click",buyTicket);
   document.querySelectorAll(".buy-seed").forEach(b=>b.addEventListener("click",()=>buySeed(b.dataset.seed)));
   document.querySelectorAll(".task-btn").forEach(b=>b.addEventListener("click",()=>claimTask(b.dataset.task)));
-  // Giảm độ no từ từ khi người chơi quay lại; không dùng bộ đếm nền.
+ 
   const elapsed=Math.floor((Date.now()-(state.lastCare||Date.now()))/60000);
   if(elapsed>0){state.pet.hunger=Math.max(0,state.pet.hunger-Math.min(25,elapsed));state.lastCare=Date.now();save();}
   render();
-  // Nhận điểm nghiên cứu mới từ sảnh thử thách trong cùng trang.
+  
   window.addEventListener("ae-research-points", function(event){
     const points = Math.max(0, Number(event.detail && event.detail.points) || 0);
     state.researchPoints = Math.max(Number(state.researchPoints)||0, points);
@@ -412,8 +411,8 @@
     renderEvolutionLab();
     notify("Đã cập nhật " + state.researchPoints + " điểm nghiên cứu từ sảnh thử thách!");
   });
-  // Cập nhật thời gian cây trồng mỗi giây.
+ 
   setInterval(()=>{if(state.plots.some(Boolean))renderPlots();},1000);
-  // Đồng bộ phiếu nếu trang chính và game đang mở ở hai tab.
+ 
   window.addEventListener("storage",e=>{if(e.key===QUIZ_KEY)renderInventory();});
 })();
