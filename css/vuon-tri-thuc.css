@@ -13,8 +13,6 @@ button,a{font:inherit}.topbar{height:76px;background:#183b2b;color:#fff;display:
 @media(max-width:800px){.topbar{padding:0 14px}.back-link{font-size:11px}.brand{font-size:12px}.brand small{font-size:7px}.welcome{grid-template-columns:1fr;padding:22px}.hero-art{height:170px}.farm-layout,.pet-layout{grid-template-columns:1fr}.shop-grid{grid-template-columns:repeat(2,1fr)}.plots{gap:8px}.plot{min-height:112px}.inventory-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:480px){.game-wrap{padding:0 12px 30px;margin-top:14px}.topbar{height:65px;gap:8px}.back-link{max-width:88px;line-height:1.2}.wallet{padding:6px 9px}.wallet small{display:none}.stats{gap:6px}.stats div{min-width:0;padding:8px 10px;flex:1}.tabs{gap:2px}.tab{padding:10px;font-size:11px}.shop-grid{gap:8px}.shop-card{padding:12px}.shop-bottom{align-items:flex-start;flex-direction:column}.cart{align-items:flex-start;gap:12px}.section-heading h2{font-size:21px}.tag{font-size:9px}}
 
-
-/* SẢNH THỬ THÁCH - styles scoped to avoid affecting farm UI */
 .challenge-arcade{background:#172638;color:#f4f7ef;border:3px solid #38536a;border-radius:16px;padding:20px;box-shadow:0 7px 0 #10202d}
 .challenge-arcade *{box-sizing:border-box}
 .arcade-intro{display:flex;justify-content:space-between;align-items:center;gap:18px;background:linear-gradient(120deg,#245346,#263b58);border:2px solid #547565;border-radius:12px;padding:20px}
@@ -62,7 +60,6 @@ button,a{font:inherit}.topbar{height:76px;background:#183b2b;color:#fff;display:
 @keyframes arcadePop{from{transform:translateY(9px) scale(.85);opacity:0}to{transform:none;opacity:1}}
 @media(max-width:600px){.challenge-arcade{padding:12px}.arcade-intro{padding:14px}.arcade-score{min-width:95px;font-size:18px}.arcade-tabs{gap:5px}.arcade-tab{flex:1 1 40%;padding:9px 7px;font-size:11px}.arcade-game{padding:13px}.arcade-stats{grid-template-columns:1fr}.chicken-sprite{font-size:43px}.arcade-die{width:67px;height:67px;font-size:40px}}
 
-/* Nong trai 3D */
 .farm3d-wrap{overflow:hidden;border:2px solid #668b5d;border-radius:16px;background:#a8c9d4;box-shadow:0 8px 22px #0003}
 .farm3d-scene{width:100%;height:390px;position:relative;background:linear-gradient(#9bc7d5,#dce6c2);}
 .farm3d-scene canvas{display:block;width:100%;height:100%;}
@@ -71,20 +68,6 @@ button,a{font:inherit}.topbar{height:76px;background:#183b2b;color:#fff;display:
 .farm3d-scoreboard div{display:grid;gap:5px}.farm3d-scoreboard b{color:#fff}.farm3d-scoreboard span{font-size:13px;color:#c8d8df}.farm3d-scoreboard strong{color:#f5cb72;font-size:20px}
 @media(max-width:600px){.farm3d-scene{height:260px}.farm3d-scoreboard{gap:5px;padding:9px}.farm3d-scoreboard b{font-size:12px}.farm3d-scoreboard span{font-size:11px}}
 
-/* TAI KHOAN VA BANG XEP HANG ONLINE */
-.online-profile{margin:14px 0;padding:15px!important}
-.online-profile-row{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-top:12px}
-.online-profile-row label{display:grid;gap:6px;color:#e9f2e9;font-size:12px;font-weight:800;flex:1 1 180px}
-.online-profile-row input{min-width:180px;padding:11px;border:2px solid #55738b;border-radius:8px;background:#f7f7ed;color:#17202b;font:700 14px Nunito,sans-serif}
-.online-board-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.online-board ol{padding-left:28px;margin:12px 0}
-.online-board li{padding:9px 8px;margin:5px 0;background:#263d55;border-radius:7px;color:#f7f7ed}
-.online-board li b{float:right;color:#ffda78}
-.online-board li.me{outline:2px solid #9be7a5}
-.online-board .arcade-secondary{padding:7px 10px}
-@media(max-width:600px){.online-profile-row{align-items:stretch;flex-direction:column}.online-profile-row input{width:100%;box-sizing:border-box}}
-
-/* Khu thí nghiệm tiến hóa cây trồng */
 .evolution-lab-hero{
   display:flex;align-items:center;gap:18px;padding:20px;margin:16px 0;
   border:1px solid #78c98b;border-radius:18px;
@@ -114,7 +97,6 @@ button,a{font:inherit}.topbar{height:76px;background:#183b2b;color:#fff;display:
 
 .collection-lab{margin-top:16px;padding:18px;background:#f4f8ed;border:2px solid #c8d9bd;border-radius:16px;color:#294b32}.collection-lab h3{margin:0 0 6px}.collection-lab p{font-size:12px;line-height:1.5}.collection-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0}.collection-stats div{background:#fff;padding:10px;border-radius:10px;font-size:11px;display:grid;gap:5px}.collection-stats b{font-size:17px;color:#39774a}.gacha-actions{display:flex;gap:8px;flex-wrap:wrap}.collection-book{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px;margin-top:12px;max-height:260px;overflow:auto}.collection-entry{background:#fff;border:1px solid #dce8d5;border-radius:9px;padding:8px;font-size:11px}.collection-entry b{display:block}.collection-entry small{color:#6d806d}@media(max-width:650px){.collection-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.gacha-actions button{width:100%}}
 
-/* Khu lai tao va giao hang */
 .feature-panel{padding:22px;margin-bottom:22px}
 .feature-panel>p{color:#68796a;line-height:1.65}
 .feature-controls{display:flex;flex-wrap:wrap;gap:14px;align-items:end;margin:18px 0}
@@ -126,11 +108,10 @@ button,a{font:inherit}.topbar{height:76px;background:#183b2b;color:#fff;display:
 .delivery-stats b{background:#f1f6eb;border-radius:12px;padding:12px;color:#315d3c}
 @media(max-width:600px){.feature-panel{padding:16px}.feature-controls{display:grid}.feature-controls label,.feature-controls select,.feature-controls input{width:100%;min-width:0}.feature-controls button{width:100%}}
 
-/* Túi đồ: phân nhóm hạt giống và vật phẩm */
 .inventory-group-title{grid-column:1/-1;padding:10px 12px;background:#e7f0df;border-left:4px solid #57905b;border-radius:8px;color:#315a3a;font-size:12px;font-weight:900;letter-spacing:.4px}
 .seed-in-bag{border:1px solid #cfe0c5}
 .seed-in-bag small strong{color:#285e35;font-size:14px}
-/* Sân hội thi gà 2D pixel */
+
 .chicken2d-sky{height:78px;position:relative;background:linear-gradient(#8ed0e8,#c5e8e8);overflow:hidden}
 .pixel-cloud{position:absolute;font-size:30px;image-rendering:pixelated}.cloud-a{left:18%;top:8px}.cloud-b{right:18%;top:26px}
 .chicken2d-track{padding:12px 14px 16px;background:repeating-linear-gradient(0deg,#8bb65b 0 18px,#7aa34d 18px 36px)}
@@ -141,7 +122,6 @@ button,a{font:inherit}.topbar{height:76px;background:#183b2b;color:#fff;display:
 @keyframes pixelRun{0%,100%{transform:translateY(0) scaleX(1)}50%{transform:translateY(-12px) scaleX(1.08)}}
 @media(max-width:600px){.inventory-grid{grid-template-columns:repeat(2,1fr)}.race-lane{height:84px}.pixel-chicken{font-size:36px;top:28px}}
 
-/* Nâng cấp vật phẩm nước, hạt giống nghiên cứu và biến thể pet */
 .water-supplies{margin-top:14px;padding:12px;background:#eef7ff;border:1px solid #c9e1f4;border-radius:12px}
 .water-supplies b{color:#28618a;font-size:13px}
 .water-supplies .hint{margin:5px 0 8px}
@@ -156,7 +136,6 @@ button,a{font:inherit}.topbar{height:76px;background:#183b2b;color:#fff;display:
 .pet-galaxy .pet-name,.pet-galaxy p{color:#fff!important}
 @media(max-width:600px){.water-shop-card{max-width:none}.research-seed-shop{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
-/* Cốt truyện Chương 2 - Thư viện của người ham học */
 .story-chapter{margin-top:20px;padding:20px;border:2px solid #c8d9bd;background:linear-gradient(145deg,#fffdf2,#f1f8e9)}
 .story-topline{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .story-badge{display:inline-flex;padding:6px 10px;border-radius:20px;background:#315d3c;color:#fff;font-size:11px;font-weight:900;letter-spacing:.6px}
@@ -178,7 +157,6 @@ button,a{font:inherit}.topbar{height:76px;background:#183b2b;color:#fff;display:
 @media(max-width:600px){.story-chapter{padding:15px}.story-npc{align-items:flex-start}.story-npc-avatar{flex-basis:48px;width:48px;height:48px;font-size:29px}}
 
 
-/* Cua so cau hoi sach truoc moi thao tac nong trai */
 .book-quiz-backdrop{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(9,22,16,.76);backdrop-filter:blur(5px)}
 .book-quiz-backdrop[hidden]{display:none!important}
 .book-quiz-box{position:relative;width:min(100%,560px);max-height:min(88vh,780px);overflow:auto;padding:25px;border:3px solid #d5b66a;border-radius:20px;background:linear-gradient(150deg,#fffdf3,#edf6e8);color:#294d32;box-shadow:0 24px 70px #0008;animation:bookQuizIn .2s ease-out}
