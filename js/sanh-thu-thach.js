@@ -80,9 +80,9 @@
   function renderStats(){
     $("arcade-total-score").textContent=data.score;
     $("arcade-rank-score").textContent=data.score;
-    $("arcade-rank-points").textContent=data.score+" điểm nghiên cứu";
+    $("arcade-rank-points").textContent=data.score+" điểm bé ngoan";
     $("arcade-games-played").textContent=data.games;
-    $("arcade-badge").textContent=data.score>=100?"Nhà nghiên cứu cấp cao":data.score>=50?"Nhà nghiên cứu":data.score>=20?"Thực tập sinh":"Tân thủ";
+    $("arcade-badge").textContent=data.score>=100?"Nhà bé ngoan cấp cao":data.score>=50?"Nhà bé ngoan":data.score>=20?"Thực tập sinh":"Tân thủ";
   }
   document.querySelectorAll(".arcade-tab").forEach(btn=>btn.addEventListener("click",()=>{
     document.querySelectorAll(".arcade-tab").forEach(x=>x.classList.toggle("active",x===btn));
