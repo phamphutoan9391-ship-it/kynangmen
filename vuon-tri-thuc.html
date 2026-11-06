@@ -35,16 +35,53 @@
       </div>
     </section>
 
-    <nav class="tabs panel" aria-label="Khu vực trò chơi">
-      <button class="tab active" data-tab="farm">🌻 Nông trại</button>
-      <button class="tab" data-tab="pets">🐾 Thú cưng</button>
-      <button class="tab" data-tab="breeding">🧬 Lai tạo</button>
-      <button class="tab" data-tab="delivery">🚚 Giao hàng</button>
-      <button class="tab" data-tab="shop">🛒 Cửa hàng</button>
-      <button class="tab" data-tab="inventory">🎒 Túi đồ</button>
-      <button class="tab" data-tab="tasks">📜 Nhiệm vụ</button>
-      <button class="tab" data-tab="challenges">🎮 Sảnh thử thách</button>
-    </nav>
+    <section class="hub-nav panel" aria-label="Trung tâm điều khiển nông trại">
+      <div class="hub-nav-head">
+        <div>
+          <p class="eyebrow">TRUNG TÂM ĐIỀU KHIỂN</p>
+          <h2>Hub nông trại</h2>
+          <p class="hub-nav-subtitle">Chọn nhanh khu vực muốn quản lý.</p>
+        </div>
+        <div class="hub-active-box"><small>ĐANG MỞ</small><strong id="hub-active-label">🌻 Nông trại</strong></div>
+      </div>
+      <div class="hub-groups">
+        <section class="hub-group" aria-label="Chăm sóc">
+          <div class="hub-group-title"><span>🌱</span><b>Chăm sóc</b></div>
+          <div class="hub-group-items">
+            <button class="tab active" data-tab="farm"><span class="hub-icon">🌻</span><span>Nông trại</span></button>
+            <button class="tab" data-tab="pets"><span class="hub-icon">🐾</span><span>Thú cưng</span></button>
+            <button class="tab" data-tab="breeding"><span class="hub-icon">🧬</span><span>Lai tạo</span></button>
+          </div>
+        </section>
+        <section class="hub-group" aria-label="Kinh doanh">
+          <div class="hub-group-title"><span>🪙</span><b>Kinh doanh</b></div>
+          <div class="hub-group-items">
+            <button class="tab" data-tab="delivery"><span class="hub-icon">🚚</span><span>Giao hàng</span></button>
+            <button class="tab" data-tab="shop"><span class="hub-icon">🛒</span><span>Cửa hàng</span></button>
+            <button class="tab" data-tab="inventory"><span class="hub-icon">🎒</span><span>Túi đồ</span></button>
+          </div>
+        </section>
+        <section class="hub-group" aria-label="Tài sản và bộ sưu tập">
+          <div class="hub-group-title"><span>🏡</span><b>Tài sản & sưu tập</b></div>
+          <div class="hub-group-items">
+            <button class="tab" data-tab="estate"><span class="hub-icon">🏡</span><span>Nhà & đất</span></button>
+            <button class="tab" data-tab="petgear"><span class="hub-icon">🎒</span><span>Kho trang bị pet</span></button>
+            <button class="tab" data-tab="index"><span class="hub-icon">📚</span><span>Index</span></button>
+            <button class="tab" data-tab="potsbugs"><span class="hub-icon">🪴</span><span>Chậu & côn trùng</span></button>
+            <button class="tab" data-tab="greenhouse"><span class="hub-icon">🏡</span><span>Nhà kính & Chợ đêm</span></button>
+          </div>
+        </section>
+        <section class="hub-group" aria-label="Khám phá và học tập">
+          <div class="hub-group-title"><span>🧭</span><b>Khám phá & học tập</b></div>
+          <div class="hub-group-items">
+            <button class="tab" data-tab="climate"><span class="hub-icon">🌍</span><span>Quốc gia & thời tiết</span></button>
+            <button class="tab" data-tab="advanced"><span class="hub-icon">🏗️</span><span>Kinh tế & thám hiểm</span></button>
+            <button class="tab" data-tab="tasks"><span class="hub-icon">📜</span><span>Nhiệm vụ</span></button>
+            <button class="tab" data-tab="challenges"><span class="hub-icon">🎮</span><span>Sảnh thử thách</span></button>
+          </div>
+        </section>
+      </div>
+    </section>
 
     <section class="tab-page active" id="page-farm">
       <div class="section-heading"><div><p class="eyebrow">GIEO HẠT VÀ THU HOẠCH</p><h2>Mảnh vườn của bạn</h2></div><span class="tag">🌤️ Một ngày xanh</span></div>
@@ -84,6 +121,11 @@
       <div class="feature-panel panel">
         <p>Thu hoạch nông sản để tích kho, sau đó chọn khu phố và loại hàng để giao. Giao hàng thành công nhận xu và điểm bé ngoan.</p>
         <div class="delivery-stats"><b>📦 Kho nông sản: <span id="produce-total">0</span></b><b>🛵 Đơn đã giao: <span id="delivery-total">0</span></b></div>
+        <div class="farm-delivery-animation" id="farm-delivery-animation" hidden aria-live="polite">
+          <div class="delivery-scene-label">🚜 ĐƯỜNG GIAO HÀNG NÔNG TRẠI</div>
+          <div class="delivery-road"><span class="delivery-home">🏡</span><span class="delivery-cart">🚚<i>📦</i></span><span class="delivery-town">🏘️</span></div>
+          <b class="delivery-status" id="farm-delivery-status">Xe đang chờ đơn hàng...</b>
+        </div>
         <div class="feature-controls">
           <label>Khu phố <select id="delivery-district"><option>Khu dân cư</option><option>Phố ẩm thực</option><option>Khu thương mại</option><option>Công viên xanh</option><option>Trung tâm thành phố</option></select></label>
           <label>Nông sản <select id="delivery-crop"></select></label>
@@ -131,29 +173,46 @@
     </section>
 
     <section class="tab-page" id="page-tasks">
-      <div class="section-heading"><div><p class="eyebrow">MỖI NGÀY MỘT VIỆC TỐT</p><h2>Nhiệm vụ</h2></div><div class="daily-task-clock"><small id="daily-task-date">Nhiệm vụ hôm nay</small><b>⏳ Làm mới sau <span id="daily-task-countdown">--:--:--</span></b></div></div>
+      <div class="section-heading"><div><p class="eyebrow">MỖI NGÀY MỘT VIỆC TỐT</p><h2>Nhiệm vụ</h2></div></div>
+      <div class="daily-task-clock panel-soft"><span>⏳</span><b id="daily-task-countdown">Nhiệm vụ làm mới sau --:--:-- (00:00 giờ Việt Nam)</b></div>
       <div class="tasks panel">
         <div class="task"><span>🌱</span><div><b>Gieo một hạt giống</b><small>Trồng ít nhất một cây trong vườn.</small></div><button class="secondary task-btn" data-task="plant">Nhận 5 xu</button></div>
         <div class="task"><span>💧</span><div><b>Chăm sóc khu vườn</b><small>Tưới cây ít nhất một lần.</small></div><button class="secondary task-btn" data-task="water">Nhận 5 xu</button></div>
         <div class="task"><span>🐾</span><div><b>Kết bạn với thú cưng</b><small>Chơi cùng pet một lần.</small></div><button class="secondary task-btn" data-task="play">Nhận 5 xu</button></div>
         <div class="task"><span>🍃</span><div><b>Thu hoạch thành quả</b><small>Thu hoạch ít nhất một cây.</small></div><button class="secondary task-btn" data-task="harvest">Nhận 10 xu</button></div>
       </div>
-      <section class="story-chapter panel" id="muc-ten-chuong-story">
-        <div class="story-topline"><span class="story-badge" id="muc-story-badge">📖 CHƯƠNG 1 / 10</span><span class="story-progress" id="chapter2-progress">0/10 chương hoàn thành</span></div>
-        <h2>📚 Hành trình 10 chương cùng Mực</h2>
-        <p class="story-intro">Cùng Mực khám phá những bài học từ cuốn <b>Sửa đổi lối làm việc</b> và rèn luyện kỹ năng tự nhận thức, học tập, lập kế hoạch, trách nhiệm, giao tiếp, phối hợp và cải tiến công việc.</p>
+      <section class="story-chapter panel" id="chapter2-story" hidden>
+        <div class="story-topline"><span class="story-badge">📖 CHƯƠNG 2</span><span class="story-progress" id="chapter2-progress">0/2 nhiệm vụ</span></div>
+        <h2>Thư viện của người ham học</h2>
+        <p class="story-intro">Thư viện cũ đã mở cửa, nhưng những trang sách quan trọng vẫn đang bị thất lạc. Hãy trò chuyện với Mực để bắt đầu hành trình tìm lại tri thức.</p>
         <div class="story-npc">
           <div class="story-npc-avatar" aria-hidden="true">🐈‍⬛</div>
-          <div class="story-npc-dialogue"><b>Mực – Thủ thư</b><p id="muc-dialogue">Chào người chăm vườn! Ta sẽ cùng nhau tìm lại mười trang sách và biến từng bài học thành hành động.</p></div>
+          <div class="story-npc-dialogue">
+            <b>Mực – Thủ thư</b>
+            <p id="muc-dialogue">“Chào người chăm vườn! Một người làm việc tốt có cần nhìn nhận những khuyết điểm của mình không?”</p>
+          </div>
         </div>
-        <div class="story-actions" id="muc-start-area"><button class="primary" id="muc-start-quest" type="button">💬 Nhận nhiệm vụ từ Mực</button></div>
-        <div id="muc-answer-area" class="story-answers" hidden>
-          <p class="story-question" id="muc-story-question"></p>
+        <div class="story-actions" id="muc-start-area">
+          <button class="primary" id="muc-start-quest">💬 Nhận nhiệm vụ từ Mực</button>
         </div>
-        <p class="story-feedback" id="muc-feedback" aria-live="polite">Nhận nhiệm vụ, trả lời câu hỏi và thực hiện thử thách thực tế để hoàn thành từng chương.</p>
-        <div class="story-next-step"><b>🎯 Thử thách thực tế</b><p id="muc-story-task">Trả lời câu hỏi để mở nhiệm vụ đầu tiên.</p><button class="primary" id="muc-next-chapter" type="button" hidden>📖 Nhận Chương tiếp theo →</button></div>
-        <div class="muc-chapter-list" id="muc-chapter-list" aria-label="Tiến độ 10 chương"></div>
-        <div class="story-complete" id="muc-story-finale" hidden>🏆 Hoàn thành 10 chương! Bạn đã khôi phục Cây Tri Thức bằng những kỹ năng được rèn luyện qua từng nhiệm vụ.</div>
+        <div class="story-answers" id="muc-answer-area" hidden>
+          <p class="story-question"><b>Câu hỏi của Mực:</b> Một người làm việc tốt có cần nhìn nhận những khuyết điểm của mình không?</p>
+          <button class="story-answer" data-muc-answer="a">A. Có, để nhận ra sai sót và sửa đổi.</button>
+          <button class="story-answer" data-muc-answer="b">B. Không, chỉ cần quan tâm đến kết quả.</button>
+          <button class="story-answer" data-muc-answer="c">C. Không cần học hỏi thêm.</button>
+        </div>
+        <p class="story-feedback" id="muc-feedback" aria-live="polite">Nhiệm vụ chính: Trò chuyện với Mực và trả lời câu hỏi trong sách.</p>
+        <div class="story-next-step" id="chapter2-next-step" hidden>
+          <b>🔎 Nhiệm vụ tiếp theo: Khám phá tri thức mới</b>
+          <p>Dùng ít nhất 5 điểm bé ngoan để mở khóa một giống cây trong phòng thí nghiệm.</p>
+          <span id="chapter2-next-status">Tiến độ: Chưa hoàn thành</span>
+        </div>
+        <div class="story-complete" id="chapter2-complete" hidden>🏅 Chương 2 hoàn thành! Bạn đã chứng minh rằng học hỏi và sửa đổi phải đi cùng hành động.</div>
+      </section>
+      <section class="muc-journey panel" id="muc-journey">
+        <div class="muc-journey-head"><div class="muc-avatar">🐈‍⬛</div><div><p class="eyebrow" id="muc-journey-kicker">CỐT TRUYỆN GIÁO DỤC · 20 CHƯƠNG · 80 MỤC TIÊU</p><h2>Hành trình sửa đổi cùng Mực</h2><p>những nhiệm vụ của mực được xây dựng dựa trên những kiến thức đúc kết từ việc học môn kỹ năng mền của cô hương.</p></div></div>
+        <div class="muc-journey-progress"><div><b id="muc-journey-count">0/20 chương hoàn thành</b><span id="muc-journey-percent">0%</span></div><i><b id="muc-journey-bar"></b></i></div>
+        <div class="muc-journey-layout"><div class="muc-chapter-list" id="muc-chapter-list"></div><article class="muc-chapter-detail" id="muc-chapter-detail"><p>Chọn chương đầu tiên để bắt đầu hành trình.</p></article></div>
       </section>
     </section>
 
@@ -172,56 +231,57 @@
           <div class="arcade-score">🏆 <span id="arcade-total-score">0</span><small>điểm bé ngoan</small></div>
         </div>
         <nav class="arcade-tabs" aria-label="Chọn trò chơi">
-          <button class="arcade-tab active" data-arcade-tab="poker">🃏 Poker</button>
-          <button class="arcade-tab" data-arcade-tab="dice">🎲 Xúc xắc</button>
-          <button class="arcade-tab" data-arcade-tab="chicken">🐓 Đấu gà</button>
+          <button class="arcade-tab active" data-arcade-tab="poker">🃏 So tài bài</button>
+          <button class="arcade-tab" data-arcade-tab="dice">🎲 Đấu xúc xắc</button>
+          <button class="arcade-tab" data-arcade-tab="chicken">🐓 Đua gà</button>
           <button class="arcade-tab" data-arcade-tab="rank">🧪 Thí nghiệm cây trồng</button>
         </nav>
 
         <section class="arcade-game active" id="arcade-poker">
-          <div class="arcade-section-head"><div><p class="arcade-eyebrow">TRÒ CHƠI 01</p><h3>🃏 Poker giải trí</h3><p>Chia 5 lá bài và xem bộ bài của bạn. Không đặt cược.</p></div><span class="arcade-reward">+10 điểm / lượt</span></div>
+          <div class="arcade-section-head"><div><p class="arcade-eyebrow">TRÒ CHƠI 01 · ĐẤU VỚI MÁY</p><h3>🃏 So tài bộ bài</h3><p>Bạn và máy cùng nhận 5 lá bài. So sánh bộ bài để tìm người thắng; không đặt cược, không mất xu.</p></div><span class="arcade-reward">Thắng +10 · Hòa +5 · Tham gia +2</span></div>
           <div class="poker-table">
-            <div class="table-caption">BÀI CỦA BẠN</div>
+            <div class="table-caption">🤖 BỘ BÀI CỦA MÁY</div>
+            <div id="arcade-cpu-cards" class="arcade-cards cpu-cards"><div class="card-placeholder">Máy đang chờ chia bài</div></div>
+            <div id="arcade-cpu-result" class="poker-hand-label">Đối thủ máy</div>
+            <div class="table-divider"></div>
+            <div class="table-caption">🙋 BỘ BÀI CỦA BẠN</div>
             <div id="arcade-cards" class="arcade-cards"><div class="card-placeholder">Nhấn “Chia bài” để bắt đầu</div></div>
             <h3 id="arcade-poker-result">Sẵn sàng chưa?</h3>
-            <p id="arcade-poker-hint">Mỗi lượt chia bài hợp lệ nhận 10 điểm bé ngoan.</p>
+            <p id="arcade-poker-hint">Mỗi ván đều đấu với đối thủ máy.</p>
           </div>
-          <div class="arcade-center"><button id="arcade-deal" class="arcade-primary">🃏 Chia bài</button></div>
+          <div class="arcade-center"><button id="arcade-deal" class="arcade-primary">🃏 Chia bài đấu máy</button></div>
         </section>
 
         <section class="arcade-game" id="arcade-dice">
-          <div class="arcade-section-head"><div><p class="arcade-eyebrow">TRÒ CHƠI 02</p><h3>🎲 Thử thách xúc xắc</h3><p>Chọn dự đoán tổng điểm của 2 viên xúc xắc.</p></div><span class="arcade-reward">+5 điểm nếu đúng</span></div>
-          <div class="arcade-dice-area"><div class="arcade-die" id="arcade-die1">⚀</div><div class="arcade-die" id="arcade-die2">⚀</div></div>
-          <div class="arcade-predict">
-            <label for="arcade-prediction">Dự đoán tổng (2–12)</label>
-            <select id="arcade-prediction">
-              <option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option selected>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option>
-            </select>
-            <button id="arcade-roll" class="arcade-primary">🎲 Gieo xúc xắc</button>
+          <div class="arcade-section-head"><div><p class="arcade-eyebrow">TRÒ CHƠI 02 · ĐẤU VỚI MÁY</p><h3>🎲 Đấu xúc xắc</h3><p>Bạn và đối thủ máy cùng gieo hai viên xúc xắc. Tổng điểm cao hơn sẽ thắng.</p></div><span class="arcade-reward">Thắng +5 · Hòa +3 · Tham gia +1</span></div>
+          <div class="dice-duel-grid">
+            <article class="dice-duel-side"><b>🙋 BẠN</b><div class="arcade-dice-area"><div class="arcade-die" id="arcade-die1">⚀</div><div class="arcade-die" id="arcade-die2">⚀</div></div><span id="arcade-player-dice-total">Tổng: —</span></article>
+            <article class="dice-duel-side cpu"><b>🤖 ĐỐI THỦ MÁY</b><div class="arcade-dice-area"><div class="arcade-die" id="arcade-cpu-die1">⚀</div><div class="arcade-die" id="arcade-cpu-die2">⚀</div></div><span id="arcade-cpu-dice-total">Tổng: —</span></article>
           </div>
-          <h3 id="arcade-dice-result" class="arcade-center">Chọn một con số rồi thử nhé!</h3>
-          <p class="arcade-muted arcade-center">Không có cược, không mất xu hay điểm khi dự đoán sai.</p>
+          <div class="arcade-center"><button id="arcade-roll" class="arcade-primary">🎲 Gieo xúc xắc đấu máy</button></div>
+          <h3 id="arcade-dice-result" class="arcade-center">Sẵn sàng so tài với máy!</h3>
+          <p class="arcade-muted arcade-center">Trò chơi chỉ tính điểm vui; không có cược và không trừ xu.</p>
         </section>
 
         <section class="arcade-game" id="arcade-chicken">
-          <div class="arcade-section-head"><div><p class="arcade-eyebrow">TRÒ CHƠI 03 · PIXEL 2D</p><h3>🐓 Hội thi gà 2D</h3><p>Hai chú gà thi chạy nhanh, giữ thăng bằng và phản xạ trong sân nông trại.</p></div><span class="arcade-reward">Thắng +15 điểm bé ngoan</span></div>
+          <div class="arcade-section-head"><div><p class="arcade-eyebrow">TRÒ CHƠI 03 · PIXEL 2D</p><h3>🐓 Đua gà vượt chướng ngại 2D</h3><p>Bạn điều khiển gà của mình thi chạy với gà máy qua các chặng tốc độ, thăng bằng và né chướng ngại.</p></div><span class="arcade-reward">Thắng +15 · Hòa +7 · Tham gia +3</span></div>
           <div class="farm3d-wrap">
-            <div id="farm3d-scene" class="farm3d-scene" aria-label="Sân hội thi gà hoạt hình 2D pixel"></div>
-            <div class="farm3d-caption"><span>🌾 NÔNG TRẠI AE CÂY KHẾ</span><span id="farm3d-status">Sẵn sàng vào hội thi</span></div>
+            <div id="farm3d-scene" class="farm3d-scene" aria-label="Sân đua gà 2D pixel với đối thủ máy"></div>
+            <div class="farm3d-caption"><span>🌾 NÔNG TRẠI AE CÂY KHẾ</span><span id="farm3d-status">Sẵn sàng vào cuộc đua với máy</span></div>
           </div>
           <div class="farm3d-scoreboard">
-            <div><b>🐓 Gà Cây Khế</b><span id="arcade-player-hp">Thể lực: 3</span></div>
+            <div><b>🐓 Gà Cây Khế</b><span id="arcade-player-hp">Tiến độ: 0/10</span></div>
             <strong>VS</strong>
-            <div><b>🐔 Gà Đối Thủ</b><span id="arcade-enemy-hp">Thể lực: 3</span></div>
+            <div><b>🤖 Gà máy</b><span id="arcade-enemy-hp">Tiến độ: 0/10</span></div>
           </div>
-          <p id="arcade-chicken-log" class="arcade-center">Chọn kỹ năng để bắt đầu phần thi!</p>
+          <p id="arcade-chicken-log" class="arcade-center">Chọn kỹ năng để vượt từng chặng với máy!</p>
           <div class="arcade-skills">
             <button class="arcade-skill" data-arcade-skill="speed">💨 Chạy nước rút</button>
             <button class="arcade-skill" data-arcade-skill="focus">🎯 Giữ thăng bằng</button>
             <button class="arcade-skill" data-arcade-skill="guard">🛡️ Né chướng ngại</button>
           </div>
           <div class="arcade-center"><button id="arcade-new-match" class="arcade-secondary">🔄 Hội thi mới</button></div>
-          <p class="arcade-muted arcade-small">Hội thi hoạt hình 2D pixel: chạy đua, giữ thăng bằng và vượt chướng ngại vật.</p>
+          <p class="arcade-muted arcade-small">Đối thủ máy tự chọn kỹ năng mỗi lượt. Không có chiến đấu hay cá cược; đây là cuộc đua vượt chướng ngại vật.</p>
         </section>
 
         <section class="arcade-game" id="arcade-rank">
@@ -281,11 +341,108 @@
         </section>
       </div>
     </section>
+
+    <section class="tab-page" id="page-estate">
+      <div class="section-heading"><div><p class="eyebrow">MỞ RỘNG TÀI SẢN</p><h2>🏡 Nhà cửa & đất nông trại</h2></div><span class="tag">Mua bằng xu trong game</span></div>
+      <div class="feature-panel panel"><p>Mua thêm đất để mở rộng số ô trồng. Nâng cấp nhà để mở thêm tiện ích.</p><div id="estate-summary" class="feature-result"></div><div id="estate-shop" class="expansion-grid"></div></div>
+    </section>
+    <section class="tab-page" id="page-petgear">
+      <div class="section-heading"><div><p class="eyebrow">TÙY CHỈNH THÚ CƯNG</p><h2>🎒 Kho trang bị pet</h2></div><span class="tag">Trang bị có thể tháo / đổi</span></div>
+      <div class="feature-panel panel pet-inventory-panel">
+        <div class="pet-inventory-heading"><div><h3>🐾 Kho thú cưng</h3><p>Chọn pet đã sở hữu để đưa ra đồng hành. Pet chưa mở khóa sẽ được hiển thị mờ.</p></div><span id="pet-inventory-count" class="pet-inventory-count">Đang tải bộ sưu tập…</span></div>
+        <div class="pet-inventory-toolbar"><label for="pet-inventory-search">Tìm thú cưng</label><input id="pet-inventory-search" type="search" placeholder="Tìm theo tên, loài hoặc độ hiếm…"></div>
+        <div id="pet-inventory-grid" class="pet-inventory-grid"></div>
+      </div>
+      <div class="feature-panel panel"><div id="petgear-active" class="feature-result"></div><h3>🎀 Kho phụ kiện & trang bị</h3><p class="hint">Trang bị đầu, thân và phụ kiện để thay đổi diện mạo và bonus của pet.</p><div id="petgear-list" class="expansion-grid"></div></div>
+    </section>
+    <section class="tab-page" id="page-index">
+      <div class="section-heading"><div><p class="eyebrow">BÁCH KHOA NÔNG TRẠI</p><h2>📚 Index – Sổ khám phá</h2></div><span class="tag">Theo dõi tiến độ sưu tập</span></div>
+      <div class="feature-panel panel"><div class="index-stats" id="index-stats"></div><h3>🌱 Cây trồng</h3><div id="index-crops" class="index-grid"></div><h3>🐾 Thú cưng</h3><div id="index-pets" class="index-grid"></div><h3>🦋 Côn trùng</h3><div id="index-bugs" class="index-grid"></div></div>
+    </section>
+    <section class="tab-page" id="page-climate">
+      <div class="section-heading"><div><p class="eyebrow">THẾ GIỚI CỦA BẠN</p><h2>🌍 Chọn quốc gia & thời tiết</h2></div><span class="tag">Dữ liệu thời tiết trực tuyến</span></div>
+      <div class="feature-panel panel"><p>Khu vực đã chọn sẽ quyết định dữ liệu khí hậu thực tế của nông trại. Bạn có thể đổi quốc gia hoặc thành phố bất cứ lúc nào.</p><div id="region-current" class="region-current">Chưa chọn khu vực bắt đầu.</div><div class="feature-controls"><label>Quốc gia<select id="world-country"></select></label><label>Thành phố / khu vực<input id="world-city" placeholder="Ví dụ: Cần Thơ"></label><button class="primary" id="world-weather-btn">🌦️ Cập nhật thời tiết</button><button class="secondary" id="world-change-location">🌍 Chọn lại nơi bắt đầu</button></div><div id="world-weather-result" class="feature-result">Chưa chọn địa điểm. Dữ liệu thời tiết sẽ được lấy khi bạn chọn khu vực.</div><p class="hint" id="world-weather-effect">Khí hậu khu vực sẽ ảnh hưởng đến tốc độ sinh trưởng của cây mới gieo.</p></div>
+    </section>
+    <section class="tab-page" id="page-greenhouse">
+      <div class="section-heading"><div><p class="eyebrow">KHU CANH TÁC RIÊNG BIỆT</p><h2>🏡 Nhà kính & Chợ Đêm Thực Vật Huyền Bí</h2></div><span class="tag">Chậu là vị trí trồng riêng</span></div>
+      <section class="greenhouse-build-panel panel">
+        <div class="greenhouse-build-copy"><p class="eyebrow">CÔNG TRÌNH NHIỀU GIAI ĐOẠN</p><h3>🏗️ Xây dựng nhà kính</h3><p>Nhà kính là khu vực riêng. Mỗi chậu chiếm một vị trí trồng; chậu không còn nâng cấp các luống ngoài trời.</p><div id="greenhouse-build-status" class="feature-result">Đang kiểm tra công trình...</div><div id="greenhouse-build-progress" class="greenhouse-build-progress" hidden><div class="greenhouse-build-progress-track"><span id="greenhouse-build-fill"></span></div><small id="greenhouse-build-stage">Chuẩn bị mặt bằng</small></div><button class="primary" id="greenhouse-build-button">🏗️ Xây nhà kính · 420 xu</button></div>
+        <div class="greenhouse-build-scene" id="greenhouse-build-scene"><span class="gh-cloud gh-cloud-a">☁️</span><span class="gh-sun">☀️</span><span class="gh-frame">🏗️</span><span class="gh-worker">🧑‍🔧</span><span class="gh-plants">🌱 🌿 🪴</span><span class="gh-ground"></span></div>
+      </section>
+      <section class="greenhouse-area panel" id="greenhouse-area" hidden>
+        <div class="greenhouse-scene"><div class="greenhouse-glass-roof"></div><span class="gh-vine gh-vine-one">🌿</span><span class="gh-vine gh-vine-two">🍃</span><span class="gh-but-fly">🦋</span><span class="gh-fireflies">✨ ✨</span><div class="greenhouse-scene-title"><b>🌱 Nhà kính AE Cây Khế</b><small>Chậu cây · Giống huyền bí · Môi trường ổn định</small></div></div>
+        <div class="greenhouse-inventory-line"><b>🪴 Chậu trong kho: <span id="greenhouse-pot-stock">0</span></b><b>🌱 Hạt huyền bí: <span id="greenhouse-seed-stock">0</span></b><b>🧺 Vị trí đã dùng: <span id="greenhouse-slot-count">0/8</span></b></div>
+        <h3>🪴 Cửa hàng chậu cây</h3><p>Mỗi chậu được đặt thành một vị trí trồng riêng trong nhà kính. Chậu cấp cao tăng tốc độ phát triển; không còn nâng cấp luống ngoài trời.</p><div id="pot-shop" class="expansion-grid"></div>
+        <div class="greenhouse-pot-controls"><label>Chọn chậu để đặt<select id="pot-selected"></select></label><label>Chọn hạt giống huyền bí<select id="greenhouse-seed-select"></select></label></div>
+        <div id="greenhouse-slots" class="greenhouse-slots"></div>
+      </section>
+      <section class="night-market-panel panel">
+        <div class="night-market-scene"><div class="night-market-moon">🌙</div><span class="night-market-lantern lantern-a">🏮</span><span class="night-market-lantern lantern-b">🏮</span><span class="night-market-vendor">🧙‍♂️</span><span class="night-market-walker">🧑‍🌾</span><span class="night-market-spark spark-a">✨</span><span class="night-market-spark spark-b">💫</span><div class="night-market-sign">CHỢ ĐÊM THỰC VẬT HUYỀN BÍ</div><div class="night-market-ground"></div></div>
+        <div class="section-heading"><div><p class="eyebrow">5.500 GIỐNG TẠO SINH THEO CÔNG THỨC</p><h3>🌌 Chợ Đêm Thực Vật Huyền Bí</h3><p>Khám phá các loài cây giả tưởng với ánh sáng, màu sắc và hiệu ứng môi trường riêng. Không liên quan đến cây hoặc chất gây nghiện.</p></div><span id="night-market-count" class="tag">5.500 giống trong Index</span></div>
+        <div id="night-market-offers" class="night-market-offers"></div>
+        <div class="magic-index-toolbar"><label for="magic-plant-search">Tìm giống cây<input id="magic-plant-search" type="search" placeholder="Tên cây, hiệu ứng, độ hiếm..."></label><label for="magic-plant-rarity">Độ hiếm<select id="magic-plant-rarity"><option value="all">Tất cả</option><option value="Thường">Thường</option><option value="Hiếm">Hiếm</option><option value="Sử thi">Sử thi</option><option value="Huyền thoại">Huyền thoại</option><option value="Thần thoại">Thần thoại</option></select></label></div>
+        <div id="magic-plant-index" class="magic-plant-index"></div>
+        <div class="magic-index-pagination"><button class="secondary" id="magic-prev">← Trang trước</button><span id="magic-page-label">Trang 1 / 220</span><button class="secondary" id="magic-next">Trang sau →</button></div>
+      </section>
+    </section>
+
+    <section class="tab-page" id="page-potsbugs">
+      <div class="section-heading"><div><p class="eyebrow">CHĂM SÓC & SINH THÁI</p><h2>🪴 Chậu cây và côn trùng</h2></div><span class="tag">Nâng cấp vườn</span></div>
+      <div class="feature-panel panel"><h3>🦋 Quan sát côn trùng</h3><p>Côn trùng xuất hiện ngẫu nhiên theo thời gian. Bấm khám phá để ghi nhận vào Index. Một số loài có ích cho khu vườn.</p><div id="bug-habitat" class="bug-habitat" aria-label="Hoạt cảnh sinh vật trong vườn"><span class="habitat-flower flower-one">🌼</span><span class="habitat-flower flower-two">🌷</span><span class="habitat-bug habitat-bee">🐝</span><span class="habitat-bug habitat-butterfly">🦋</span><span class="habitat-bug habitat-ladybug">🐞</span><span class="habitat-leaf">🌿</span></div><div id="bug-encounter" class="feature-result">Đang quan sát khu vườn...</div><div class="bug-kit-toolbar"><div id="bug-kit-stock" class="bug-kit-stock">🔎 Bộ quan sát đang có: 0</div><div class="bug-kit-actions"><button class="primary" id="bug-kit-buy">Mua 1 bộ quan sát · 8 xu</button><button class="primary" id="bug-search">🔎 Quan sát côn trùng · tiêu hao 1 bộ</button></div></div><div id="bug-collection" class="index-grid"></div></div>
+    </section>
+
+
+    <section class="tab-page" id="page-advanced">
+      <div class="section-heading"><div><p class="eyebrow">QUẢN LÝ NÔNG TRẠI NÂNG CAO</p><h2>🏗️ Kinh tế, cộng đồng & thám hiểm</h2></div><span class="tag">Tiến trình lưu trên thiết bị</span></div>
+      <section class="economy-world-scene panel" aria-label="Hoạt cảnh kinh tế nông trại">
+        <div class="economy-scene-sky"><span class="economy-sun">☀️</span><span class="economy-cloud eco-cloud-one">☁️</span><span class="economy-cloud eco-cloud-two">☁️</span></div>
+        <div class="economy-scene-title"><b>🏘️ Nhịp sống nông trại</b><small>Chợ mở cửa · Khách ghé thăm · Đơn hàng đang chờ</small></div>
+        <div class="economy-market-stall"><span>🏪</span><b>CHỢ XANH</b><small>🌽 🥕 🍓</small></div>
+        <div class="economy-market-npc">🧑‍🌾<small>Khách mua hàng</small></div>
+        <div class="economy-delivery-van">🚚<span>📦</span></div>
+        <div class="economy-floating-coins"><i>🪙</i><i>🪙</i><i>✨</i></div>
+        <div class="economy-scene-ground"></div>
+        <div class="economy-scene-stats"><span>📦 Kho: <b id="economy-scene-stock">0</b></span><span>🚚 Đơn đã giao: <b id="economy-scene-orders">0</b></span><span>⭐ Danh vọng: <b id="economy-scene-rep">0</b></span></div>
+      </section>
+      <div class="advanced-grid">
+        <article class="feature-panel panel"><h3>🎒 Nhà kho giới hạn</h3><div id="adv-warehouse"></div></article>
+        <article class="feature-panel panel"><h3>🚚 Bảng đơn hàng NPC</h3><div id="adv-order"></div></article>
+        <article class="feature-panel panel"><h3>👥 Khách vãng lai</h3><div id="adv-visitor"></div></article>
+        <article class="feature-panel panel"><h3>🪴 Đúc chậu & ép sao</h3><div id="adv-pot"></div></article>
+        <article class="feature-panel panel"><h3>☁️ Khí thủy & tầng mây</h3><div id="adv-cloud"></div></article>
+        <article class="feature-panel panel"><h3>🐉 Thần hộ mệnh</h3><div id="adv-guardian"></div></article>
+        <article class="feature-panel panel"><h3>🛍️ Chợ trời – hoạt ảnh</h3><div id="adv-market"></div></article>
+        <article class="feature-panel panel"><h3>📜 Giao kèo với NPC</h3><div id="adv-contract"></div></article>
+        <article class="feature-panel panel"><h3>🧭 Thám hiểm Vườn Bí Ẩn</h3><div id="adv-expedition-map"></div></article>
+      </div>
+      <p class="hint">Chợ trời là khu vực hoạt cảnh trang trí; các tính năng mua bán nông sản vẫn nằm riêng trong hệ thống kinh tế của nông trại.</p>
+    </section>
+
     <section class="bottom-note panel"><span>📚</span><p><b>Thông điệp khu vườn:</b> Muốn có thành quả, chúng ta cần kiên trì chăm sóc từng ngày. Cũng như việc học tập và làm việc, tiến bộ bắt đầu từ những thay đổi nhỏ.</p></section>
   </main>
 
+  <div class="region-onboarding" id="region-onboarding" hidden>
+    <div class="region-onboarding-card" role="dialog" aria-modal="true" aria-labelledby="region-onboarding-title">
+      <div class="region-onboarding-art">🌍</div>
+      <p class="eyebrow">BƯỚC KHỞI ĐẦU</p>
+      <h2 id="region-onboarding-title">Chọn vùng đất để lập nông trại</h2>
+      <p>Mỗi khu vực có điều kiện khí hậu khác nhau. Hãy chọn quốc gia và thành phố nơi bạn muốn bắt đầu; thời tiết thực tế sẽ ảnh hưởng đến cây trồng.</p>
+      <div class="region-onboarding-fields">
+        <label>Quốc gia / vùng lãnh thổ<select id="start-country"></select></label>
+        <label>Thành phố / khu vực<input id="start-city" value="Cần Thơ" placeholder="Ví dụ: Cần Thơ, Việt Nam"></label>
+      </div>
+      <div id="start-region-status" class="region-start-status" aria-live="polite">Chọn nơi bắt đầu để lấy dữ liệu thời tiết hiện tại.</div>
+      <button class="primary region-start-button" id="start-farm-region">🌱 Bắt đầu trồng trọt tại khu vực này</button>
+      <button class="secondary region-start-button" id="start-farm-offline" hidden>Tiếp tục với thời tiết mô phỏng</button>
+      <small class="region-start-footnote">Có thể thay đổi khu vực sau này trong mục “Quốc gia & thời tiết”.</small>
+    </div>
+  </div>
   <div class="toast" id="toast" role="status"></div>
   <script src="./js/vuon-tri-thuc.js"></script>
+  <script src="./js/vuon-mo-rong.js"></script>
+  <script src="./js/vuon-nha-kinh.js"></script>
+  <script src="./js/vuon-he-thong-nang-cao.js"></script>
+  <script src="./js/vuon-cot-truyen-muc.js"></script>
   <script src="./js/sanh-thu-thach.js"></script>
 </body>
 </html>
