@@ -107,27 +107,51 @@
     if(vals[0]===2)return "Một đôi";
     return "Mậu thầu";
   }
-  $("arcade-deal").addEventListener("click",()=>{
-    const deck=[];suits.forEach(s=>ranks.forEach(r=>deck.push({suit:s,rank:r})));
-    for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];}
-    const hand=deck.slice(0,5);$("arcade-cards").innerHTML="";
+  function handScore(hand){
+    const label=classify(hand),weights={"Mậu thầu":1,"Một đôi":2,"Hai đôi":3,"Sám cô":4,"Sảnh":5,"Thùng":6,"Cù lũ":7,"Tứ quý":8,"Thùng phá sảnh":9};
+    const high=hand.map(c=>ranks.indexOf(c.rank)+2).sort((a,b)=>b-a);
+    return (weights[label]||0)*100000+high.reduce((sum,v,i)=>sum+v*(5-i),0);
+  }
+  function renderHand(host,hand){
+    host.innerHTML="";
     hand.forEach(c=>{
       const el=document.createElement("div");
       el.className="arcade-card "+(["♥","♦"].includes(c.suit)?"red":"");
       el.innerHTML="<span>"+c.rank+"</span><span class='suit'>"+c.suit+"</span><span>"+c.rank+"</span>";
-      $("arcade-cards").appendChild(el);
+      host.appendChild(el);
     });
-    $("arcade-poker-result").textContent="Bộ bài: "+classify(hand);
-    $("arcade-poker-hint").textContent="Bạn nhận 10 điểm bé ngoan cho lượt này.";
-    addPoints(10);
+  }
+  $("arcade-deal").addEventListener("click",()=>{
+    const deck=[];suits.forEach(s=>ranks.forEach(r=>deck.push({suit:s,rank:r})));
+    for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];}
+    const player=deck.slice(0,5),cpu=deck.slice(5,10);
+    renderHand($("arcade-cards"),player);renderHand($("arcade-cpu-cards"),cpu);
+    const ps=handScore(player),cs=handScore(cpu),pl=classify(player),cl=classify(cpu);
+    $("arcade-poker-result").textContent="Bạn: "+pl;
+    $("arcade-cpu-result").textContent="Máy: "+cl;
+    if(ps>cs){$("arcade-poker-hint").textContent="Bạn thắng ván này! Nhận +10 điểm bé ngoan.";addPoints(10);}
+    else if(ps===cs){$("arcade-poker-hint").textContent="Hai bên hòa! Bạn nhận +5 điểm tham gia.";addPoints(5);}
+    else{$("arcade-poker-hint").textContent="Máy thắng ván này. Bạn vẫn nhận +2 điểm tham gia.";addPoints(2);}
+    $("arcade-cards").querySelectorAll(".arcade-card").forEach((el,i)=>{el.style.animationDelay=(i*70)+"ms";});
+    $("arcade-cpu-cards").querySelectorAll(".arcade-card").forEach((el,i)=>{el.style.animationDelay=(i*70)+"ms";});
   });
 
   const faces=["⚀","⚁","⚂","⚃","⚄","⚅"];
   $("arcade-roll").addEventListener("click",()=>{
-    const a=1+Math.floor(Math.random()*6),b=1+Math.floor(Math.random()*6),sum=a+b,guess=Number($("arcade-prediction").value);
-    $("arcade-die1").textContent=faces[a-1];$("arcade-die2").textContent=faces[b-1];
-    if(sum===guess){$("arcade-dice-result").textContent="Chính xác! Tổng là "+sum+". +5 điểm bé ngoan!";addPoints(5);}
-    else{$("arcade-dice-result").textContent="Tổng là "+sum+". Bạn dự đoán "+guess+"; thử lại nhé!";countGame();}
+    const button=$("arcade-roll");if(button.disabled)return;button.disabled=true;button.textContent="🎲 Đang gieo...";
+    const dice=[$("arcade-die1"),$("arcade-die2"),$("arcade-cpu-die1"),$("arcade-cpu-die2")];
+    dice.forEach(el=>el.classList.add("rolling"));
+    setTimeout(()=>{
+      const vals=Array.from({length:4},()=>1+Math.floor(Math.random()*6));
+      dice.forEach((el,i)=>{el.textContent=faces[vals[i]-1];el.classList.remove("rolling");});
+      const playerTotal=vals[0]+vals[1],cpuTotal=vals[2]+vals[3];
+      $("arcade-player-dice-total").textContent="Tổng: "+playerTotal;
+      $("arcade-cpu-dice-total").textContent="Tổng: "+cpuTotal;
+      if(playerTotal>cpuTotal){$("arcade-dice-result").textContent="🎉 Bạn thắng máy! +5 điểm bé ngoan.";addPoints(5);}
+      else if(playerTotal===cpuTotal){$("arcade-dice-result").textContent="🤝 Hai bên hòa! +3 điểm tham gia.";addPoints(3);}
+      else{$("arcade-dice-result").textContent="🤖 Máy thắng lượt này. Bạn nhận +1 điểm tham gia.";addPoints(1);}
+      button.disabled=false;button.textContent="🎲 Gieo xúc xắc đấu máy";
+    },650);
   });
 
   const chickenArena = $("farm3d-scene");
@@ -136,17 +160,17 @@
       <div class="chicken2d-sky"><span class="pixel-cloud cloud-a">☁️</span><span class="pixel-cloud cloud-b">☁️</span></div>
       <div class="chicken2d-track">
         <div class="race-lane"><span class="lane-label">GÀ CÂY KHẾ</span><span class="pixel-chicken player-chicken" id="pixel-player">🐓</span><span class="finish-flag">🏁</span></div>
-        <div class="race-lane"><span class="lane-label">GÀ BẠN</span><span class="pixel-chicken rival-chicken" id="pixel-rival">🐔</span><span class="finish-flag">🏁</span></div>
+        <div class="race-lane"><span class="lane-label">GÀ MÁY</span><span class="pixel-chicken rival-chicken" id="pixel-rival">🐔</span><span class="finish-flag">🏁</span></div>
       </div>`;
   }
-  let playerHp=3,enemyHp=3,round=0,matchOver=false;
+  let playerProgress=0,cpuProgress=0,round=0,matchOver=false;
   function renderChicken(){
-    $("arcade-player-hp").textContent="Thể lực: "+playerHp;
-    $("arcade-enemy-hp").textContent="Thể lực: "+enemyHp;
+    $("arcade-player-hp").textContent="Tiến độ: "+playerProgress+"/10";
+    $("arcade-enemy-hp").textContent="Tiến độ: "+cpuProgress+"/10";
   }
   function resetMatch(){
-    playerHp=3;enemyHp=3;round=0;matchOver=false;
-    $("arcade-chicken-log").textContent="Chọn kỹ năng để thi chạy và vượt thử thách!";
+    playerProgress=0;cpuProgress=0;round=0;matchOver=false;
+    $("arcade-chicken-log").textContent="Chọn kỹ năng để vượt từng chặng với máy!";
     $("farm3d-status").textContent="🏁 Sẵn sàng xuất phát";
     const p=$("pixel-player"),r=$("pixel-rival");
     if(p)p.style.left="5%";if(r)r.style.left="5%";
@@ -160,21 +184,21 @@
     const rivalMove=["speed","focus","guard"][Math.floor(Math.random()*3)];
     const counter={speed:"guard",guard:"focus",focus:"speed"};
     let msg="";
-    if(move===rivalMove){msg="Hai chú gà cùng vượt thử thách rất tốt!";}
-    else if(counter[move]===rivalMove){enemyHp--;msg="Gà Cây Khế vượt chướng ngại nhanh hơn!";}
-    else{playerHp--;msg="Gà bạn vượt thử thách tốt hơn lượt này. Cố lên!";}
+    if(move===rivalMove){playerProgress+=1;cpuProgress+=1;msg="Hai bên vượt chặng ngang nhau! Mỗi bên tiến 1 bước.";}
+    else if(counter[move]===rivalMove){playerProgress+=2;cpuProgress+=1;msg="Bạn chọn kỹ năng hợp lý hơn máy! Bạn tiến 2 bước.";}
+    else{playerProgress+=1;cpuProgress+=2;msg="Máy xử lý chướng ngại tốt hơn lượt này. Bạn vẫn tiến 1 bước.";}
     round++;
     const p=$("pixel-player"),r=$("pixel-rival");
-    if(p){p.style.left=Math.min(76,5+round*13+(move==="speed"?5:0))+"%";p.classList.remove("run-bounce");void p.offsetWidth;p.classList.add("run-bounce");}
-    if(r){r.style.left=Math.min(76,5+round*13+(rivalMove==="speed"?5:0))+"%";r.classList.remove("run-bounce");void r.offsetWidth;r.classList.add("run-bounce");}
-    $("farm3d-status").textContent=move==="speed"?"💨 Chạy nước rút!":move==="focus"?"🎯 Giữ thăng bằng!":"🛡️ Vượt chướng ngại vật!";
+    if(p){p.style.left=Math.min(84,5+playerProgress*8)+"%";p.classList.remove("run-bounce");void p.offsetWidth;p.classList.add("run-bounce");}
+    if(r){r.style.left=Math.min(84,5+cpuProgress*8)+"%";r.classList.remove("run-bounce");void r.offsetWidth;r.classList.add("run-bounce");}
+    $("farm3d-status").textContent=move==="speed"?"💨 Chặng chạy nước rút!":move==="focus"?"🎯 Chặng giữ thăng bằng!":"🛡️ Chặng né chướng ngại vật!";
     renderChicken();
-    if(playerHp<=0||enemyHp<=0||round>=5){
+    if(playerProgress>=10||cpuProgress>=10||round>=5){
       matchOver=true;document.querySelectorAll(".arcade-skill").forEach(b=>b.disabled=true);
-      if(enemyHp<playerHp){msg+=" Gà Cây Khế thắng hội thi! +15 điểm bé ngoan.";addPoints(15);$("farm3d-status").textContent="🏆 Gà Cây Khế vô địch!";}
-      else if(enemyHp===playerHp){msg+=" Hai chú gà hòa điểm! +5 điểm bé ngoan.";addPoints(5);$("farm3d-status").textContent="🤝 Hội thi hòa điểm!";}
-      else{msg+=" Gà bạn thắng phần thi này. Hẹn lần sau nhé!";countGame();$("farm3d-status").textContent="🏁 Hội thi kết thúc";}
-      msg+=" Nhấn ‘Hội thi mới’ để chơi tiếp.";
+      if(playerProgress>cpuProgress){msg+=" Bạn về đích trước máy! +15 điểm bé ngoan.";addPoints(15);$("farm3d-status").textContent="🏆 Bạn thắng cuộc đua!";}
+      else if(playerProgress===cpuProgress){msg+=" Hai bên hòa nhau! +7 điểm tham gia.";addPoints(7);$("farm3d-status").textContent="🤝 Cuộc đua hòa!";}
+      else{msg+=" Máy về đích trước. Bạn nhận +3 điểm tham gia.";addPoints(3);$("farm3d-status").textContent="🤖 Máy thắng cuộc đua.";}
+      msg+=" Nhấn ‘Cuộc đua mới’ để chơi tiếp.";
     }
     $("arcade-chicken-log").textContent=msg;
   }));

@@ -1222,7 +1222,6 @@ function capNhatPhieuQuiz() {
         soPhieuQuiz <= 0;
 }
 
-// Nhận phiếu từ game Halloween
 window.addEventListener("message", function(event) {
     if (event.origin !== window.location.origin) return;
 

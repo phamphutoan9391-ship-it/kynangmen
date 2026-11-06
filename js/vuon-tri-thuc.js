@@ -12,7 +12,7 @@
   const defaultState = {
     coins:30, level:1, harvests:0, totalSpent:0, researchPoints:0, labLevel:1, bonusSeeds:0,
     waterBottles:2, waterPickupAt:0, unlockedResearchSeeds:[],
-    weatherTools:{shadeNet:false,greenhouse:false,drainage:false,windbreak:false},
+    weatherTools:{shadeNet:false,greenhouse:false,drainage:false,windbreak:false}, weatherBuilds:{},
     agriculture:{
       soil:Array.from({length:6},()=>({fertility:72,organicMatter:48,moisture:62,compaction:18,lastUpdated:Date.now()})),
       plotStatus:Array.from({length:6},()=>({pestLoad:0,diseaseLoad:0,pest:"",disease:"",health:100})),
@@ -21,12 +21,11 @@
       livestock:{chicken:1,cow:0,goat:0,eggs:0,milk:0,products:{eggs:0,milk:0,manure:0},hunger:75,water:75,health:100,lastCare:Date.now()},
       lastDailyKey:"",marketKey:"",marketPrices:{}
     },
-    hybrids:{}, produce:{}, deliveryCount:0, deliveryHistory:[], collections:{crops:[],research:[],pets:[],chickens:[]}, activePet:null, activeChicken:null, pet:{name:"Mèo Mướp",icon:"🐱",hunger:70,bond:0,variant:"normal",bonus:0},
+    hybrids:{}, produce:{}, deliveryCount:0, deliveryHistory:[], collections:{crops:[],research:[],pets:[],chickens:[]}, activePet:null, activeChicken:null, petProfiles:{}, pet:{name:"Mèo Mướp",icon:"🐱",hunger:70,bond:0,variant:"normal",bonus:0},
     selectedSeed:"sunflower", seeds:{sunflower:3,carrot:1,strawberry:0,blueberry:0,moonflower:0},
     plots:Array(6).fill(null), tasks:{plant:false,water:false,play:false,harvest:false},
-    dailyMissions:{dateKey:"",progress:{plant:false,water:false,play:false,harvest:false},claimed:{}},
-    story:{chapter2MucAccepted:false,chapter2MucDone:false,chapter2ResearchDone:false,mucSaga:{chapter:1,accepted:false,questionPassed:false,progress:0,completed:[]}},
-    dailyPlant:{dateKey:"",cropId:"",claimed:false},
+    story:{chapter2MucAccepted:false,chapter2MucDone:false,chapter2ResearchDone:false},
+    dailyPlant:{dateKey:"",cropId:"",claimed:false}, dailyTaskDate:"",
     actionQuizIndex:0, actionQuizCorrect:0,
     lastCare:Date.now(), lastAction:"Chào mừng bạn đến với khu vườn!"
   };
@@ -46,36 +45,53 @@
     try{
       const saved=JSON.parse(localStorage.getItem(GAME_KEY));
       if(saved && typeof saved==="object"){
+        const savedPlotCount=Math.max(6,Array.isArray(saved.plots)?saved.plots.length:0,Array.isArray(saved.agriculture&&saved.agriculture.soil)?saved.agriculture.soil.length:0,6+Math.max(0,Number(saved.expansionLand)||0));
         return {...structuredClone(defaultState),...saved,
           pet:{...defaultState.pet,...saved.pet},
           waterBottles:Math.max(0,Number(saved.waterBottles ?? defaultState.waterBottles)||0),
           waterPickupAt:Number(saved.waterPickupAt)||0,
           unlockedResearchSeeds:Array.isArray(saved.unlockedResearchSeeds)?saved.unlockedResearchSeeds:[],
+          weatherBuilds:(saved.weatherBuilds&&typeof saved.weatherBuilds==="object")?saved.weatherBuilds:{},
           agriculture:{
             ...defaultState.agriculture,...(saved.agriculture||{}),
-            soil:Array.from({length:6},(_,i)=>({...defaultState.agriculture.soil[i],...((saved.agriculture&&saved.agriculture.soil&&saved.agriculture.soil[i])||{})})),
-            plotStatus:Array.from({length:6},(_,i)=>({...defaultState.agriculture.plotStatus[i],...((saved.agriculture&&saved.agriculture.plotStatus&&saved.agriculture.plotStatus[i])||{})})),
+            soil:Array.from({length:savedPlotCount},(_,i)=>({...defaultState.agriculture.soil[i%6],...((saved.agriculture&&saved.agriculture.soil&&saved.agriculture.soil[i])||{})})),
+            plotStatus:Array.from({length:savedPlotCount},(_,i)=>({...defaultState.agriculture.plotStatus[i%6],...((saved.agriculture&&saved.agriculture.plotStatus&&saved.agriculture.plotStatus[i])||{})})),
             inventory:{...defaultState.agriculture.inventory,...((saved.agriculture&&saved.agriculture.inventory)||{})},
             beneficial:{...defaultState.agriculture.beneficial,...((saved.agriculture&&saved.agriculture.beneficial)||{})},
             livestock:{...defaultState.agriculture.livestock,...((saved.agriculture&&saved.agriculture.livestock)||{})},
             marketPrices:(saved.agriculture&&saved.agriculture.marketPrices)||{}
           },
           collections:{...defaultState.collections,...(saved.collections||{})},
+          petProfiles:{...(saved.petProfiles||{})},
           hybrids:saved.hybrids||{}, produce:saved.produce||{}, deliveryCount:saved.deliveryCount||0, deliveryHistory:saved.deliveryHistory||[],
           seeds:{...defaultState.seeds,...saved.seeds},
           tasks:{...defaultState.tasks,...saved.tasks},
-          dailyMissions:{...defaultState.dailyMissions,...(saved.dailyMissions||{}),progress:{...defaultState.dailyMissions.progress,...((saved.dailyMissions&&saved.dailyMissions.progress)||{})},claimed:{...((saved.dailyMissions&&saved.dailyMissions.claimed)||{})}},
-          story:{...defaultState.story,...(saved.story||{}),mucSaga:{...defaultState.story.mucSaga,...((saved.story&&saved.story.mucSaga)||{}),completed:Array.isArray(saved.story&&saved.story.mucSaga&&saved.story.mucSaga.completed)?saved.story.mucSaga.completed:[]}},
+          story:{...defaultState.story,...(saved.story||{})},
           dailyPlant:{...defaultState.dailyPlant,...(saved.dailyPlant||{})},
-          plots:Array.from({length:6},(_,i)=>Array.isArray(saved.plots)&&saved.plots[i]?{...saved.plots[i],soilIndex:Number.isInteger(saved.plots[i].soilIndex)?saved.plots[i].soilIndex:i}:null)};
+          plots:Array.from({length:savedPlotCount},(_,i)=>Array.isArray(saved.plots)&&saved.plots[i]?{...saved.plots[i],soilIndex:Number.isInteger(saved.plots[i].soilIndex)?saved.plots[i].soilIndex:i}:null)};
       }
     }catch(e){}
     return structuredClone(defaultState);
   }
-  function save(){localStorage.setItem(GAME_KEY,JSON.stringify(state));}
+  function save(){
+    state.petProfiles=state.petProfiles||{};
+    const activeId=state.activePet||"starter-cat";
+    if(state.pet)state.petProfiles[activeId]={...(state.petProfiles[activeId]||{}),...state.pet,id:activeId};
+    localStorage.setItem(GAME_KEY,JSON.stringify(state));
+    window.dispatchEvent(new Event("aeCayKheStateUpdated"));
+  }
+  window.addEventListener("aeCayKheExternalUpdate",function(){
+    try{state=loadState();render();}catch(e){console.warn("Không thể đồng bộ dữ liệu nông trại:",e);}
+  });
   function quizTickets(){return Math.max(0,Number(localStorage.getItem(QUIZ_KEY))||0);}
   function setCoins(value){state.coins=Math.max(0,Math.floor(value));save();render();}
   function notify(message){const el=$("toast");el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2400);}
+  const DAILY_TASK_KEYS=["plant","water","play","harvest"];
+  function getVietnamDateKey(){const p=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Ho_Chi_Minh",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const g=k=>p.find(x=>x.type===k)?.value||"00";return g("year")+"-"+g("month")+"-"+g("day");}
+  function getVietnamMidnightRemaining(){const vn=new Date(Date.now()+7*60*60*1000);const nextUtc=Date.UTC(vn.getUTCFullYear(),vn.getUTCMonth(),vn.getUTCDate()+1);return Math.max(0,nextUtc-vn.getTime());}
+  function resetDailyTasksIfNeeded(){const today=getVietnamDateKey();if(state.dailyTaskDate===today)return;state.tasks=state.tasks||{};DAILY_TASK_KEYS.forEach(k=>{state.tasks[k]=false;delete state.tasks["claimed_"+k];});state.dailyTaskDate=today;save();renderTasks();}
+  function updateDailyTaskClock(){resetDailyTasksIfNeeded();const el=$("daily-task-countdown");if(!el)return;let t=Math.floor(getVietnamMidnightRemaining()/1000);const h=String(Math.floor(t/3600)).padStart(2,"0");t%=3600;const m=String(Math.floor(t/60)).padStart(2,"0");const sec=String(t%60).padStart(2,"0");el.textContent="Nhiệm vụ làm mới sau "+h+":"+m+":"+sec+" (00:00 giờ Việt Nam)";}
+  resetDailyTasksIfNeeded();
 
   const weatherSystem = (() => {
     const ZONE = "Asia/Ho_Chi_Minh";
@@ -92,10 +108,10 @@
       {id:"hail",weight:3,name:"Mưa đá",icon:"🌨️",multiplier:0.58,desc:"Mưa đá làm cây non phát triển chậm nhưng không phá hủy cây. Hàng cây chắn gió giúp che chắn.",effect:"Giảm tốc độ sinh trưởng 42%, không làm mất cây.",color:"hail"}
     ];
     const upgrades = [
-      {id:"shadeNet",name:"Lưới che nắng",icon:"⛱️",cost:70,research:15,desc:"Giảm ảnh hưởng của nắng nóng và hạn hán."},
-      {id:"greenhouse",name:"Nhà kính mini",icon:"🏡",cost:120,research:30,desc:"Giảm ảnh hưởng của rét đậm và sương giá."},
-      {id:"drainage",name:"Rãnh thoát nước",icon:"💧",cost:90,research:20,desc:"Giảm ảnh hưởng của mưa dông."},
-      {id:"windbreak",name:"Hàng cây chắn gió",icon:"🌳",cost:100,research:25,desc:"Giảm ảnh hưởng của gió giật và mưa đá."}
+      {id:"shadeNet",name:"Lưới che nắng",icon:"⛱️",cost:70,research:15,buildSeconds:24,stages:["Dọn mặt bằng","Đóng cọc","Dựng khung","Căng lưới"],stageIcons:["🧹","🪵","🪜","⛱️"],desc:"Giảm ảnh hưởng của nắng nóng và hạn hán."},
+      {id:"greenhouse",name:"Nhà kính mini",icon:"🏡",cost:120,research:30,buildSeconds:40,stages:["San nền","Làm móng","Dựng khung","Lắp kính"],stageIcons:["🧹","🧱","🏗️","🏡"],desc:"Giảm ảnh hưởng của rét đậm và sương giá."},
+      {id:"drainage",name:"Rãnh thoát nước",icon:"💧",cost:90,research:20,buildSeconds:30,stages:["Đo tuyến mương","Đào rãnh","Lót đá","Hoàn thiện dòng chảy"],stageIcons:["📐","⛏️","🪨","💧"],desc:"Giảm ảnh hưởng của mưa dông."},
+      {id:"windbreak",name:"Hàng cây chắn gió",icon:"🌳",cost:100,research:25,buildSeconds:36,stages:["Chuẩn bị đất","Đặt cây giống","Trồng hàng cây","Cây bén rễ"],stageIcons:["🧹","🌱","🌳","🌳🌳"],desc:"Giảm ảnh hưởng của gió giật và mưa đá."}
     ];
 
     function getDateParts(offsetDays=0){
@@ -130,13 +146,52 @@
     }
     function buyUpgrade(id){
       const item=upgrades.find(x=>x.id===id);if(!item)return;
-      state.weatherTools=state.weatherTools||{};
+      state.weatherTools=state.weatherTools||{};state.weatherBuilds=state.weatherBuilds||{};
       if(state.weatherTools[id]){notify("Bạn đã có công trình này rồi.");return;}
+      if(state.weatherBuilds[id]){notify("Công trình này đang được xây dựng.");return;}
       if(state.coins<item.cost){notify("Cần "+item.cost+" xu để xây "+item.name+".");return;}
       if((state.researchPoints||0)<item.research){notify("Cần "+item.research+" điểm bé ngoan để xây "+item.name+".");return;}
-      state.coins-=item.cost;state.researchPoints-=item.research;state.weatherTools[id]=true;
-      state.lastAction="Xây công trình bảo vệ thời tiết: "+item.name;
-      save();render();renderPanel();notify("Đã xây "+item.name+"! Công trình sẽ bảo vệ các cây gieo từ hôm nay trở đi.");
+      state.coins-=item.cost;state.researchPoints-=item.research;
+      state.weatherBuilds[id]={startedAt:Date.now(),durationMs:item.buildSeconds*1000};
+      state.lastAction="Bắt đầu xây công trình: "+item.name;
+      save();render();renderPanel();notify("🚧 Đã khởi công "+item.name+"! Công trình sẽ hoàn thành qua 4 giai đoạn.");
+    }
+    function buildProgress(build){
+      if(!build)return 0;
+      const duration=Math.max(1000,Number(build.durationMs)||1000);
+      return Math.max(0,Math.min(1,(Date.now()-(Number(build.startedAt)||Date.now()))/duration));
+    }
+    function updateConstructionProgress(){
+      const builds=state.weatherBuilds||{};let completed=[];
+      Object.keys(builds).forEach(id=>{
+        const item=upgrades.find(x=>x.id===id),build=builds[id];if(!item||!build)return;
+        const progress=buildProgress(build),percent=Math.round(progress*100),stage=Math.min(3,Math.floor(progress*4));
+        const card=document.querySelector('.weather-tool[data-weather-tool="'+id+'"]');
+        if(card){
+          const fill=card.querySelector('.weather-build-progress-fill'),label=card.querySelector('.weather-build-stage-label'),icon=card.querySelector('.weather-build-structure'),number=card.querySelector('.weather-build-percent');
+          if(fill)fill.style.width=percent+"%";
+          if(label)label.textContent=item.stages[stage];
+          if(icon)icon.textContent=item.stageIcons[stage];
+          if(number)number.textContent=percent+"%";
+          [1,2,3,4].forEach(n=>card.classList.remove("is-building-stage-"+n));
+          card.classList.add("is-building-stage-"+(stage+1));
+        }
+        if(progress>=1){state.weatherTools[id]=true;delete builds[id];completed.push(item.name);}
+      });
+      if(completed.length){save();render();renderPanel();completed.forEach(name=>notify("🏗️ Hoàn thành "+name+"! Công trình đã bắt đầu bảo vệ cây trồng."));}
+    }
+    function weatherSceneMarkup(weather){
+      const drops=Array.from({length:9},(_,i)=>'<i class="weather-drop drop-'+(i+1)+'"></i>').join("");
+      const flakes=Array.from({length:7},(_,i)=>'<i class="weather-flake flake-'+(i+1)+'">'+(weather.id==="hail"?"●":"❄")+'</i>').join("");
+      const leaves='<i class="weather-leaf leaf-1">🍃</i><i class="weather-leaf leaf-2">🍂</i><i class="weather-leaf leaf-3">🍃</i>';
+      return '<div class="weather-visual weather-visual-'+weather.id+'" aria-hidden="true"><i class="weather-sun-disc">☀</i><i class="weather-cloud cloud-1">☁</i><i class="weather-cloud cloud-2">☁</i><i class="weather-lightning">ϟ</i>'+drops+flakes+leaves+'<i class="weather-heat-haze haze-1"></i><i class="weather-heat-haze haze-2"></i></div>';
+    }
+    function weatherToolCard(item,tools,builds){
+      const owned=!!tools[item.id],build=builds[item.id],progress=build?buildProgress(build):0,percent=Math.round(progress*100),stage=Math.min(3,Math.floor(progress*4));
+      const currentIcon=build?item.stageIcons[stage]:item.icon;
+      const status=owned?'<div class="weather-build-finished">✓ Công trình đã hoàn thành</div>':build?'<div class="weather-build-progress"><div class="weather-build-progress-top"><b class="weather-build-stage-label">'+item.stages[stage]+'</b><strong class="weather-build-percent">'+percent+'%</strong></div><div class="weather-build-progress-track"><i class="weather-build-progress-fill" style="width:'+percent+'%"></i></div><small>Giai đoạn '+(stage+1)+'/4 · Đang thi công</small></div>':'<small class="weather-build-hint">Gồm 4 giai đoạn xây dựng, có hoạt ảnh công nhân.</small>';
+      const buttonText=owned?'✓ Hoàn tất':build?'🚧 Đang thi công':'Xây dựng';
+      return '<article class="weather-tool '+(owned?'is-built':build?'is-building':'')+'" data-weather-tool="'+item.id+'"><div class="weather-tool-art '+(build?'is-building':'')+'"><span class="weather-tool-icon">'+item.icon+'</span><span class="weather-build-structure">'+currentIcon+'</span>'+(build?'<span class="weather-build-worker">👷</span><span class="weather-build-hammer">🔨</span>':'')+'</div><div class="weather-tool-copy"><b>'+item.name+'</b><small>'+item.desc+'</small><small>Giá: '+item.cost+' xu · '+item.research+' điểm bé ngoan</small>'+status+'</div><button type="button" class="weather-upgrade-button" data-weather-upgrade="'+item.id+'" '+((owned||build)?'disabled':'')+'>'+buttonText+'</button></article>';
     }
     function ensurePanel(){
       let panel=document.getElementById("farm-weather-panel");if(panel)return panel;
@@ -154,11 +209,9 @@
     function renderPanel(){
       const panel=ensurePanel(),today=getToday(),tomorrow=getTomorrow(),effect=getPlantEffect(),tools=state.weatherTools||{};
       const weatherMain=panel.querySelector("#weather-main");
-      weatherMain.innerHTML='<article class="weather-current weather-'+today.color+'"><div class="weather-icon">'+today.icon+'</div><div class="weather-copy"><small>THỜI TIẾT HÔM NAY</small><h3>'+today.name+'</h3><p>'+today.desc+'</p><b>Ảnh hưởng: '+effect.note+'</b></div></article><div class="weather-forecast"><div><small>DỰ BÁO NGÀY MAI</small><strong>'+tomorrow.icon+' '+tomorrow.name+'</strong><p>'+tomorrow.effect+'</p></div><div class="weather-count"><small>ĐỔI THỜI TIẾT SAU</small><strong id="weather-countdown">--:--:--</strong></div></div><p class="weather-simulation-note">Thời tiết được mô phỏng cố định theo ngày để mọi người chơi có cùng thử thách; không phải dự báo khí tượng ngoài đời.</p>';
-      panel.querySelector("#weather-tools-grid").innerHTML=upgrades.map(item=>{
-        const owned=!!tools[item.id];
-        return '<article class="weather-tool"><div class="weather-tool-icon">'+item.icon+'</div><div class="weather-tool-copy"><b>'+item.name+'</b><small>'+item.desc+'</small><small>Giá: '+item.cost+' xu · '+item.research+' điểm bé ngoan</small></div><button type="button" class="weather-upgrade-button" data-weather-upgrade="'+item.id+'" '+(owned?'disabled':'')+'>'+(owned?'✓ Đã xây':'Xây dựng')+'</button></article>';
-      }).join("");
+      weatherMain.innerHTML='<article class="weather-current weather-'+today.color+'">'+weatherSceneMarkup(today)+'<div class="weather-icon">'+today.icon+'</div><div class="weather-copy"><small>THỜI TIẾT HÔM NAY</small><h3>'+today.name+'</h3><p>'+today.desc+'</p><b>Ảnh hưởng: '+effect.note+'</b></div></article><div class="weather-forecast"><div><small>DỰ BÁO NGÀY MAI</small><strong>'+tomorrow.icon+' '+tomorrow.name+'</strong><p>'+tomorrow.effect+'</p></div><div class="weather-count"><small>ĐỔI THỜI TIẾT SAU</small><strong id="weather-countdown">--:--:--</strong></div></div><p class="weather-simulation-note">Thời tiết được mô phỏng cố định theo ngày để mọi người chơi có cùng thử thách; không phải dự báo khí tượng ngoài đời.</p>';
+      state.weatherBuilds=state.weatherBuilds||{};
+      panel.querySelector("#weather-tools-grid").innerHTML=upgrades.map(item=>weatherToolCard(item,tools,state.weatherBuilds)).join("");
       updateCountdown();
     }
     function updateCountdown(){
@@ -169,10 +222,12 @@
     function init(){
       state.weatherTools={...{shadeNet:false,greenhouse:false,drainage:false,windbreak:false},...(state.weatherTools||{})};
       renderPanel();
+      updateConstructionProgress();
+      setInterval(updateConstructionProgress,1000);
       let currentKey=getDateParts(0).key;
       setInterval(()=>{updateCountdown();const newKey=getDateParts(0).key;if(newKey!==currentKey){currentKey=newKey;renderPanel();notify("🌦️ Thời tiết nông trại đã thay đổi! Hãy xem dự báo hôm nay.");}},1000);
-      window.addEventListener("focus",()=>{const newKey=getDateParts(0).key;if(newKey!==currentKey){currentKey=newKey;renderPanel();}else updateCountdown();});
-      document.addEventListener("visibilitychange",()=>{if(!document.hidden){const newKey=getDateParts(0).key;if(newKey!==currentKey){currentKey=newKey;renderPanel();}else updateCountdown();}});
+      window.addEventListener("focus",()=>{updateConstructionProgress();const newKey=getDateParts(0).key;if(newKey!==currentKey){currentKey=newKey;renderPanel();}else updateCountdown();});
+      document.addEventListener("visibilitychange",()=>{if(!document.hidden){updateConstructionProgress();const newKey=getDateParts(0).key;if(newKey!==currentKey){currentKey=newKey;renderPanel();}else updateCountdown();}});
       save();
     }
     return {getPlantEffect,init,renderPanel};
@@ -198,28 +253,31 @@
     {q:"Một bài học có thể áp dụng khi làm bài tập nhóm là gì?",a:["Không cần lắng nghe ai","Phân công rõ ràng, phối hợp và góp ý xây dựng","Chỉ một người làm tất cả","Không cần kiểm tra sản phẩm"],correct:1,why:"Phối hợp, phân công và trao đổi thẳng thắn giúp tập thể làm việc tốt hơn."},
     {q:"Tác phẩm hướng đến việc nâng cao điều gì ở người cán bộ cách mạng?",a:["Trình độ lý luận, phẩm chất đạo đức và tác phong công tác","Khả năng nói thật dài","Sự nổi tiếng cá nhân","Số lượng khẩu hiệu"],correct:0,why:"Mục đích tác phẩm gắn với nâng cao lý luận, tư tưởng, đạo đức và tác phong công tác."},
     {q:"Khi báo cáo kết quả, nên trình bày như thế nào?",a:["Nói chung chung, không có căn cứ","Dùng lời lẽ phức tạp","Nêu đúng việc đã làm, kết quả và vấn đề còn tồn tại","Chỉ kể thành tích"],correct:2,why:"Báo cáo cần trung thực, cụ thể, rõ kết quả và cả điểm còn hạn chế."},
-    {q:"Điều nào thể hiện tinh thần học hỏi để tiến bộ?",a:["Không tiếp nhận góp ý","Cho rằng mình luôn đúng","Thường xuyên xem lại cách làm và điều chỉnh khi cần","Lặp lại sai sót mà không rút kinh nghiệm"],correct:2,why:"Tự xem xét và điều chỉnh cách làm là biểu hiện của tinh thần học hỏi, sửa đổi."},
-    {q:"Khi tự phê bình, điều quan trọng nhất là gì?",a:["Nói cho có hình thức","Thành thật nhận ra thiếu sót và đề ra cách khắc phục","Chỉ kể thành tích","Tìm người để đổ lỗi"],correct:1,why:"Tự phê bình có ý nghĩa khi trung thực nhìn nhận hạn chế và sửa chữa bằng hành động."},
-    {q:"Phê bình người khác nên dựa trên nguyên tắc nào?",a:["Công kích cá nhân","Nói theo tin đồn","Góp ý chân thành, có căn cứ và nhằm giúp nhau tiến bộ","Chỉ trích trước đám đông"],correct:2,why:"Góp ý cần có căn cứ, thiện chí và tập trung vào việc cần sửa, không hạ thấp con người."},
-    {q:"Trong học tập, biểu hiện nào gần với bệnh chủ quan?",a:["Kiểm tra dữ kiện trước khi kết luận","Cho rằng ý kiến mình luôn đúng dù chưa tìm hiểu","Tham khảo tài liệu","Hỏi lại khi chưa rõ"],correct:1,why:"Chủ quan là đánh giá theo ý muốn cá nhân, thiếu kiểm tra thực tế và lắng nghe."},
-    {q:"Một biểu hiện của thói hẹp hòi là gì?",a:["Hợp tác với người khác","Tôn trọng ý kiến khác biệt","Chỉ muốn lợi ích của nhóm mình, không quan tâm lợi ích chung","Chia sẻ kinh nghiệm"],correct:2,why:"Hẹp hòi làm hạn chế tinh thần đoàn kết và khả năng phối hợp vì mục tiêu chung."},
-    {q:"Khi chưa hiểu rõ một vấn đề, cách làm nào phù hợp?",a:["Đoán rồi khẳng định","Hỏi người có kinh nghiệm và kiểm tra tài liệu","Chép ý kiến bất kỳ","Bỏ qua vấn đề"],correct:1,why:"Chủ động hỏi và kiểm chứng giúp tránh hiểu sai, làm sai."},
-    {q:"Một kế hoạch công việc tốt nên có yếu tố nào?",a:["Mục tiêu, việc cần làm, thời hạn và người phụ trách","Chỉ có khẩu hiệu","Không cần thời hạn","Không cần kiểm tra tiến độ"],correct:0,why:"Kế hoạch rõ giúp mọi người biết mục tiêu, trách nhiệm và cách theo dõi kết quả."},
-    {q:"Sau khi hoàn thành nhiệm vụ, vì sao cần kiểm tra kết quả?",a:["Để tìm người trách phạt","Để đối chiếu mục tiêu, phát hiện thiếu sót và rút kinh nghiệm","Để kéo dài công việc","Vì không tin ai"],correct:1,why:"Kiểm tra giúp nhận biết kết quả thực tế và điều chỉnh cách làm cho lần sau."},
-    {q:"Khi làm việc nhóm, phân công nhiệm vụ rõ ràng giúp gì?",a:["Tăng chồng chéo","Không ai chịu trách nhiệm","Mỗi người hiểu phần việc và phối hợp đúng tiến độ","Một người phải làm tất cả"],correct:2,why:"Phân công rõ ràng làm tăng trách nhiệm cá nhân và hiệu quả phối hợp."},
-    {q:"Trong trao đổi, nói ngắn gọn và đúng trọng tâm giúp gì?",a:["Người nghe dễ hiểu và dễ thực hiện","Che giấu thông tin","Làm nội dung khó hiểu","Thể hiện mình biết nhiều"],correct:0,why:"Diễn đạt rõ ràng, thiết thực giúp truyền đạt đúng nội dung và tiết kiệm thời gian."},
-    {q:"Khi báo cáo gặp khó khăn, nên làm gì?",a:["Che giấu để khỏi bị hỏi","Báo cáo trung thực, nêu nguyên nhân và đề xuất hướng xử lý","Chỉ nói phần thuận lợi","Đổ lỗi cho người khác"],correct:1,why:"Báo cáo trung thực giúp tập thể xử lý vấn đề kịp thời và đúng thực tế."},
-    {q:"Học lý luận mà không liên hệ thực tiễn dễ dẫn đến điều gì?",a:["Kiến thức được vận dụng tốt hơn","Hiểu sâu hơn nhờ thực hành","Học thuộc máy móc, khó giải quyết công việc cụ thể","Tự động làm việc hiệu quả"],correct:2,why:"Kiến thức cần gắn với thực hành để tránh hình thức và nâng cao hiệu quả."},
-    {q:"Khi nhận được góp ý trái với ý kiến của mình, nên làm gì?",a:["Bác bỏ ngay","Lắng nghe, xem xét căn cứ rồi trao đổi bình tĩnh","Ngừng hợp tác","Tranh cãi để thắng"],correct:1,why:"Biết lắng nghe và kiểm tra căn cứ thể hiện tinh thần cầu thị."},
-    {q:"Tinh thần trách nhiệm trong công việc thể hiện rõ nhất ở hành động nào?",a:["Nhận việc rồi bỏ dở","Chỉ làm khi được nhắc","Chủ động thực hiện, báo cáo tiến độ và chịu trách nhiệm về kết quả","Đẩy việc khó cho người khác"],correct:2,why:"Trách nhiệm gắn với chủ động thực hiện và chịu trách nhiệm về phần việc của mình."},
-    {q:"Vì sao cần chống bệnh hình thức?",a:["Vì hình thức quan trọng hơn kết quả","Vì công việc cần có kết quả thực chất, không chỉ đẹp trên báo cáo","Vì không cần báo cáo","Vì không cần tổ chức"],correct:1,why:"Trọng tâm là hiệu quả thực tế, tránh chỉ chú trọng biểu hiện bên ngoài."},
-    {q:"Khi lựa chọn cách giải quyết một vấn đề, nên căn cứ vào đâu?",a:["Sở thích nhất thời","Tin đồn","Tình hình thực tế, mục tiêu và bằng chứng","Lời khen"],correct:2,why:"Quyết định cần dựa trên thực tế và mục tiêu cụ thể, không chỉ dựa vào cảm tính."},
-    {q:"Một người lãnh đạo hoặc trưởng nhóm cần làm gì để hiểu tình hình?",a:["Chỉ nghe một phía","Gần gũi, lắng nghe và nắm tình hình thực tế","Chỉ xem báo cáo thành tích","Tránh trao đổi với thành viên"],correct:1,why:"Nắm thực tế và lắng nghe nhiều phía giúp đánh giá đúng tình hình."},
-    {q:"Khi phát hiện quy trình làm việc có điểm bất hợp lý, nên làm gì?",a:["Giữ nguyên vì đã quen","Tự ý bỏ mọi quy định","Nêu vấn đề, phân tích nguyên nhân và đề xuất cải tiến phù hợp","Chỉ phàn nàn"],correct:2,why:"Sửa đổi cần dựa trên phân tích và giải pháp cụ thể, có trách nhiệm."},
-    {q:"Cách nào giúp tránh thói ba hoa trong báo cáo?",a:["Dùng nhiều từ hoa mỹ","Nói đúng sự việc, có số liệu hoặc ví dụ cần thiết","Kể chuyện ngoài lề","Lặp lại khẩu hiệu"],correct:1,why:"Báo cáo thiết thực nên rõ việc, rõ kết quả và có căn cứ."},
-    {q:"Tinh thần đoàn kết trong tập thể cần đi cùng điều gì?",a:["Né tránh mọi góp ý","Bao che sai sót","Thẳng thắn góp ý, tôn trọng nhau và cùng sửa việc chưa tốt","Chỉ bảo vệ ý kiến cá nhân"],correct:2,why:"Đoàn kết bền vững cần sự chân thành, tôn trọng và cùng hướng đến công việc chung."},
-    {q:"Bài học nào phù hợp nhất khi áp dụng tác phẩm vào học tập hiện nay?",a:["Chỉ ghi nhớ nội dung","Tự đánh giá, học hỏi, lập kế hoạch và sửa cách làm qua thực hành","Không cần hợp tác","Tránh nhận nhiệm vụ khó"],correct:1,why:"Có thể vận dụng tinh thần tự sửa đổi, học hỏi và làm việc thiết thực vào học tập hằng ngày."}
+    {q:"Điều nào thể hiện tinh thần học hỏi để tiến bộ?",a:["Không tiếp nhận góp ý","Cho rằng mình luôn đúng","Thường xuyên xem lại cách làm và điều chỉnh khi cần","Lặp lại sai sót mà không rút kinh nghiệm"],correct:2,why:"Tự xem xét và điều chỉnh cách làm là biểu hiện của tinh thần học hỏi, sửa đổi."}
   ];
+  bookQuestions.push(
+    {q:"Theo tinh thần tự phê bình, khi nhận ra mình làm chưa tốt, bước phù hợp đầu tiên là gì?",a:["Bình tĩnh nhìn nhận sự việc và nguyên nhân","Che giấu để tránh bị góp ý","Đổ lỗi cho người khác","Bỏ dở công việc"],correct:0,why:"Tự phê bình bắt đầu từ thái độ trung thực, nhìn đúng thiếu sót và tìm nguyên nhân để sửa."},
+    {q:"Góp ý cho thành viên trong nhóm nên tập trung vào điều gì?",a:["Đánh giá con người","Nêu việc cụ thể và hướng khắc phục","Nhắc lại lỗi cũ để trách móc","So sánh với người khác"],correct:1,why:"Góp ý xây dựng cần cụ thể, có mục đích giúp công việc tốt hơn và tôn trọng người nhận góp ý."},
+    {q:"Khi học một kiến thức mới, cách nào giúp biến kiến thức thành năng lực?",a:["Chỉ đọc qua một lần","Chép lại mà không thực hành","Thử áp dụng vào bài tập hoặc công việc thật","Chờ người khác làm thay"],correct:2,why:"Học cần gắn với thực hành, kiểm tra kết quả và rút kinh nghiệm."},
+    {q:"Một kế hoạch làm việc rõ ràng nên có yếu tố nào?",a:["Mục tiêu, bước thực hiện và thời hạn","Chỉ có tên công việc","Nhiều khẩu hiệu","Không cần phân công"],correct:0,why:"Mục tiêu, trình tự và thời hạn giúp mọi người biết cần làm gì và kiểm tra tiến độ."},
+    {q:"Khi được giao một phần việc trong dự án, biểu hiện trách nhiệm là gì?",a:["Chờ nhắc mới làm","Hoàn thành đúng hạn và báo sớm khi gặp khó khăn","Tự ý bỏ phần việc","Để sát hạn mới kiểm tra"],correct:1,why:"Trách nhiệm thể hiện ở việc chủ động thực hiện, trao đổi khó khăn và bảo đảm kết quả."},
+    {q:"Khi nhóm có ý kiến khác nhau, cách xử lý phù hợp là gì?",a:["Ngắt lời người khác","Chọn ý kiến của người nói to nhất","Lắng nghe lý lẽ và cùng xem xét dữ kiện","Không thảo luận nữa"],correct:2,why:"Lắng nghe và đánh giá trên căn cứ giúp nhóm tìm được phương án phù hợp."},
+    {q:"Thế nào là báo cáo thiết thực?",a:["Nêu việc đã làm, kết quả và phần còn vướng","Chỉ nói thành tích","Dùng lời thật dài","Né tránh số liệu"],correct:0,why:"Báo cáo thiết thực cần rõ việc, rõ kết quả, trung thực về khó khăn và bước tiếp theo."},
+    {q:"Khi công việc không đạt mục tiêu, nên làm gì?",a:["Lặp lại đúng cách cũ","Kiểm tra nguyên nhân và điều chỉnh kế hoạch","Giấu kết quả","Đổ lỗi cho hoàn cảnh"],correct:1,why:"Kiểm tra và sửa cách làm giúp tránh lặp lại sai sót."},
+    {q:"Thái độ hẹp hòi trong làm việc nhóm dễ dẫn đến điều gì?",a:["Trao đổi cởi mở","Tiếp nhận góp ý","Khó hợp tác và khó tiếp thu ý kiến khác","Phân công rõ hơn"],correct:2,why:"Hẹp hòi làm giảm tinh thần hợp tác và cản trở việc tiếp thu ý kiến đúng."},
+    {q:"Khi có thành công, cách nhìn nhận phù hợp là gì?",a:["Nhận hết công lao về mình","Ghi nhận đóng góp của tập thể và xem còn gì cần cải thiện","Không cần kiểm tra nữa","Cho rằng không thể mắc lỗi"],correct:1,why:"Khiêm tốn giúp ghi nhận công sức chung và tiếp tục hoàn thiện công việc."},
+    {q:"Một cách chống bệnh chủ quan trong học tập là gì?",a:["Kiểm tra kết quả bằng dữ liệu và góp ý","Chỉ tin vào cảm giác","Không xem lại bài","Không hỏi khi chưa hiểu"],correct:0,why:"Đối chiếu với kết quả thực tế và lắng nghe góp ý giúp hạn chế chủ quan."},
+    {q:"Vì sao cần kiểm tra công việc sau khi hoàn thành?",a:["Để kéo dài thời gian","Để tìm người chịu lỗi","Để phát hiện phần chưa đạt và rút kinh nghiệm","Vì hình thức"],correct:2,why:"Kiểm tra giúp bảo đảm chất lượng và nhận ra điểm cần cải tiến."},
+    {q:"Trong giao tiếp, nói đúng trọng tâm có ích gì?",a:["Giúp người nghe dễ hiểu và dễ thực hiện","Làm nội dung khó hiểu hơn","Thay thế việc chuẩn bị","Không cần dẫn chứng"],correct:0,why:"Diễn đạt rõ ràng, đúng trọng tâm giúp truyền đạt công việc chính xác."},
+    {q:"Khi tiếp nhận góp ý chưa quen thuộc, nên làm gì?",a:["Bác bỏ ngay","Nghe hết, hỏi lại điều chưa rõ rồi kiểm chứng","Tranh cãi ngay","Bỏ qua mọi góp ý"],correct:1,why:"Lắng nghe, làm rõ và kiểm chứng giúp phân biệt góp ý hữu ích với điều chưa phù hợp."},
+    {q:"Trong làm việc tập thể, phân công tốt cần bảo đảm điều gì?",a:["Ai cũng làm cùng một việc","Không ai chịu trách nhiệm","Mỗi người hiểu rõ nhiệm vụ và thời hạn","Chỉ giao việc bằng lời chung chung"],correct:2,why:"Vai trò và thời hạn rõ ràng giúp phối hợp hiệu quả, tránh bỏ sót hoặc trùng việc."},
+    {q:"Điều nào giúp tránh thói ba hoa khi trình bày?",a:["Chọn thông tin cần thiết, có căn cứ và dễ hiểu","Kể thật nhiều chuyện ngoài lề","Dùng từ ngữ phức tạp","Nói dài hơn thời gian cho phép"],correct:0,why:"Trình bày nên thiết thực, ngắn gọn, đúng sự thật và phù hợp người nghe."},
+    {q:"Tự sửa đổi có ý nghĩa nhất khi nào?",a:["Chỉ hứa sẽ thay đổi","Chờ người khác làm thay","Có hành động cụ thể và theo dõi kết quả","Chỉ nói trong cuộc họp"],correct:2,why:"Sửa đổi cần được thể hiện bằng hành động và kiểm tra xem cách làm mới có hiệu quả không."},
+    {q:"Khi một thành viên làm sai, nhóm nên ứng xử thế nào?",a:["Chế giễu thành viên đó","Cùng xác định nguyên nhân và hỗ trợ sửa lỗi","Loại người đó khỏi nhóm ngay","Che giấu lỗi"],correct:1,why:"Tinh thần xây dựng là tập trung giải quyết vấn đề, hỗ trợ người mắc lỗi tiến bộ."},
+    {q:"Một dấu hiệu của tinh thần cầu thị là gì?",a:["Sẵn sàng học điều đúng từ người khác","Luôn cho mình đúng","Không cần đọc tài liệu","Không thay đổi cách làm"],correct:0,why:"Cầu thị là thái độ ham học hỏi, tôn trọng điều đúng và sẵn sàng điều chỉnh."},
+    {q:"Sau khi hoàn thành dự án nhóm, hoạt động nào nên thực hiện?",a:["Kết thúc mà không xem lại","Chỉ khen người trưởng nhóm","Đánh giá kết quả, ghi nhận điều tốt và đề ra điểm cần sửa","Xóa toàn bộ tài liệu"],correct:2,why:"Tổng kết giúp tập thể giữ lại kinh nghiệm tốt và cải thiện cho lần sau."}
+  );
+
   let pendingFarmAction = null;
   let currentBookQuestion = null;
 
@@ -231,7 +289,7 @@
       '<button type="button" class="book-quiz-close" id="farm-book-close" aria-label="Đóng">×</button>'+ 
       '<div class="book-quiz-kicker">📖 THỬ THÁCH TRI THỨC</div>'+ 
       '<h2 id="farm-book-title">Trả lời câu hỏi để tiếp tục</h2>'+ 
-      '<p class="book-quiz-desc">Ngân hàng gồm 40 câu hỏi về sách <b>Sửa đổi lối làm việc</b>. Trả lời đúng để tiếp tục thao tác và tích lũy xu.</p>'+ 
+      '<p class="book-quiz-desc">Mỗi thao tác trong nông trại cần một câu trả lời đúng về sách <b>Sửa đổi lối làm việc</b>.</p>'+ 
       '<p class="book-quiz-action" id="farm-book-action"></p>'+ 
       '<div class="book-quiz-progress" id="farm-book-progress"></div>'+ 
       '<h3 id="farm-book-question"></h3>'+ 
@@ -263,10 +321,17 @@
     $("farm-book-retry").hidden=true;
     $("farm-book-options").hidden=false;
   }
-  function askBeforeFarmAction(actionName,callback){
-    pendingFarmAction={name:actionName,callback};
+  function askBeforeFarmAction(actionName,callback,options={}){
+    const rewardCoins = options.rewardCoins === undefined ? 10 : Math.max(0, Number(options.rewardCoins)||0);
+    pendingFarmAction={name:actionName,callback,rewardCoins};
     createBookQuiz();
     $("farm-book-action").textContent="Thao tác đang chờ: "+actionName;
+    const rewardNote=document.querySelector(".book-quiz-reward");
+    if(rewardNote){
+      rewardNote.textContent=rewardCoins>0
+        ? "Trả lời đúng: +"+rewardCoins+" xu. Trả lời sai: xem giải thích rồi thử câu khác."
+        : "Thao tác này không thưởng xu; chi phí sẽ được trừ khi thực hiện thành công.";
+    }
     showNextBookQuestion();
     $("farm-book-quiz").hidden=false;
     document.body.classList.add("book-quiz-open");
@@ -288,21 +353,24 @@
     }
     const action=pendingFarmAction.callback;
     const actionName=pendingFarmAction.name;
+    const rewardCoins=Math.max(0,Number(pendingFarmAction.rewardCoins)||0);
     pendingFarmAction=null;currentBookQuestion=null;
     $("farm-book-quiz").hidden=true;
     document.body.classList.remove("book-quiz-open");
-    state.coins=(Number(state.coins)||0)+10;
+    if(rewardCoins>0)state.coins=(Number(state.coins)||0)+rewardCoins;
     state.actionQuizCorrect=(Number(state.actionQuizCorrect)||0)+1;
-    recordMucAction("bookCorrect",1);
     trackSeasonalEventAction("book",null,1);
     state.lastAction="Trả lời đúng câu hỏi sách trước khi: "+actionName;
     save();render();
-    notify("Chính xác! +10 xu. Đang thực hiện: "+actionName+".");
+    notify("Chính xác! "+(rewardCoins>0?"+"+rewardCoins+" xu. ":"")+"Đang thực hiện: "+actionName+".");
     action();
   }
   function switchTab(tab){
     document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
     document.querySelectorAll(".tab-page").forEach(p=>p.classList.toggle("active",p.id==="page-"+tab));
+    const activeButton=document.querySelector('.tab[data-tab="'+tab+'"]');
+    const activeLabel=document.getElementById("hub-active-label");
+    if(activeButton&&activeLabel)activeLabel.textContent=activeButton.textContent.trim().replace(/\s+/g," ");
   }
   document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
   function buySeed(type){
@@ -317,10 +385,13 @@
     if(!seed || (state.seeds[type]||0)<=0){notify("Bạn đã hết hạt giống này. Hãy mua thêm trong cửa hàng.");return;}
     const plantedAt=Date.now();
     const weatherEffect=weatherSystem.getPlantEffect();
+    let worldWeatherMultiplier=1;
+    try{const world=JSON.parse(localStorage.getItem("aeCayKheExpansion_v1")||"{}").weather||{};const hasTemperature=world.temperature!==null&&world.temperature!==undefined&&Number.isFinite(Number(world.temperature));if(hasTemperature){if(Number(world.temperature)>=34)worldWeatherMultiplier=0.90;else if(Number(world.temperature)<=8)worldWeatherMultiplier=0.88;else if(Number(world.rain)>0)worldWeatherMultiplier=1.05;else if(Number(world.wind)>=40)worldWeatherMultiplier=0.95;}}catch(e){}
     state.seeds[type]--;
-    state.plots[index]={type,plantedAt,watered:weatherEffect.naturalWater,wateredAt:weatherEffect.naturalWater?plantedAt:0,weatherMultiplier:weatherEffect.multiplier,weatherName:weatherEffect.weather.name,soilIndex:index};
+
+    state.plots[index]={type,plantedAt,watered:weatherEffect.naturalWater,wateredAt:weatherEffect.naturalWater?plantedAt:0,weatherMultiplier:weatherEffect.multiplier*worldWeatherMultiplier,weatherName:weatherEffect.weather.name,soilIndex:index};
     if(farmScienceSystem)farmScienceSystem.onPlant(index);
-    state.tasks.plant=true;markDailyMission("plant");recordMucAction("plant",1);trackSeasonalEventAction("plant",type,1);save();render();
+    state.tasks.plant=true;trackSeasonalEventAction("plant",type,1);save();render();
     notify("Đã gieo "+seed.name+"! Thời tiết: "+weatherEffect.weather.name+". "+(weatherEffect.naturalWater?"Mưa đã tưới miễn phí cho cây. ":weatherEffect.note));
   }
   function progress(plot){
@@ -354,9 +425,20 @@
   function harvest(index){
     const plot=state.plots[index];if(!plot)return;
     if(progress(plot)<1){notify("Cây chưa chín đâu! Hãy chờ thêm một chút.");return;}
+
+    try{
+      const ex=JSON.parse(localStorage.getItem("aeCayKheAdvanced_v1")||"{}");
+      const cap=30+(Math.max(0,Number(ex.warehouse)||0)*20);
+      const seedCount=Object.values(state.seeds||{}).reduce((a,n)=>a+(Number(n)||0),0);
+      const produceCount=Object.values(state.produce||{}).reduce((a,n)=>a+(Number(n)||0),0);
+      const materials=(Number(ex.nails)||0)+(Number(ex.screws)||0)+(Number(ex.paint)||0)+(Number(ex.gems)||0);
+      if(seedCount+produceCount+materials>=cap){notify("Nhà kho đã đầy! Hãy giao đơn hàng hoặc nâng cấp kho trước khi thu hoạch.");return;}
+    }catch(e){}
     const seed=seeds[plot.type];
     const petBonus=Number(state.pet.bonus)||0;
-    const coinBonus=5*state.labLevel+petBonus;
+    let gearBonus=0;
+    try{const ex=JSON.parse(localStorage.getItem("aeCayKheExpansion_v1")||"{}");const eq=ex.gearEquipped||{};if(eq.charm==="bell")gearBonus=2;if(eq.head==="leaf-crown")gearBonus=4;if(eq.charm==="star")gearBonus=6;}catch(e){}
+    const coinBonus=5*state.labLevel+petBonus+gearBonus;
     const seedBonus=1;
     state.coins+=seed.reward+coinBonus;
     state.seeds[plot.type]=(state.seeds[plot.type]||0)+seedBonus;
@@ -368,7 +450,7 @@
     if(waterDrop)state.waterBottles=(state.waterBottles||0)+1;
     state.harvests++;
     state.plots[index]=null;
-    state.tasks.harvest=true;markDailyMission("harvest");recordMucAction("harvest",1);
+    state.tasks.harvest=true;
     trackSeasonalEventAction("harvest",plot.type,1);
     state.level=1+Math.floor(state.harvests/5);
     const newLabLevel=Math.min(5,1+Math.floor(state.researchPoints/30));
@@ -383,7 +465,7 @@
     if((state.waterBottles||0)<growing.length){notify("Cần "+growing.length+" bình nước để tưới hết cây. Hãy nhặt hoặc mua thêm.");return;}
     state.waterBottles-=growing.length;
     growing.forEach(p=>{p.watered=true;p.wateredAt=Date.now();const soilIndex=Number.isInteger(p.soilIndex)?p.soilIndex:state.plots.indexOf(p);const soil=state.agriculture.soil[soilIndex];soil.moisture=Math.min(100,(soil.moisture||0)+38);soil.lastUpdated=Date.now();});
-    state.tasks.water=true;markDailyMission("water");recordMucAction("water",1);trackSeasonalEventAction("water",null,growing.length);save();render();notify("Đã dùng "+growing.length+" bình nước. Cây phát triển nhanh hơn 50%! 💧");
+    state.tasks.water=true;trackSeasonalEventAction("water",null,growing.length);save();render();notify("Đã dùng "+growing.length+" bình nước. Cây phát triển nhanh hơn 50%! 💧");
   }
   function findWater(){
     const cooldown=10*60*1000, now=Date.now(), left=cooldown-(now-(state.waterPickupAt||0));
@@ -396,12 +478,18 @@
     state.coins-=cost;state.totalSpent+=cost;state.waterBottles=(state.waterBottles||0)+1;state.lastAction="Đã mua 1 bình nước";save();render();notify("Đã mua 1 bình nước! 💧");
   }
   function feedPet(){
-    if(state.coins<5){notify("Bạn cần 5 xu bé ngoan để mua thức ăn cho pet.");return;}
     if(state.pet.hunger>=100){notify("Pet đã no căng rồi!");return;}
-    state.coins-=5;state.totalSpent+=5;state.pet.hunger=Math.min(100,state.pet.hunger+30);state.pet.bond=Math.min(100,state.pet.bond+3);save();render();notify("Mèo Mướp ăn ngon lành! 🍓");
+    if(state.coins<5){notify("Bạn cần 5 xu bé ngoan để mua thức ăn cho pet.");return;}
+
+    state.coins=Math.max(0,(Number(state.coins)||0)-5);
+    state.totalSpent=(Number(state.totalSpent)||0)+5;
+    state.pet.hunger=Math.min(100,state.pet.hunger+30);
+    state.pet.bond=Math.min(100,state.pet.bond+3);
+    state.lastAction="Đã mua thức ăn cho pet (-5 xu)";
+    save();render();notify("Đã cho pet ăn: -5 xu, no bụng +30, thân thiết +3. 🍓");
   }
   function playPet(){
-    state.pet.bond=Math.min(100,state.pet.bond+10);state.pet.hunger=Math.max(0,state.pet.hunger-5);state.tasks.play=true;markDailyMission("play");recordMucAction("play",1);trackSeasonalEventAction("play",null,1);save();render();notify("Pet rất vui khi được chơi cùng bạn! 💚");
+    state.pet.bond=Math.min(100,state.pet.bond+10);state.pet.hunger=Math.max(0,state.pet.hunger-5);state.tasks.play=true;trackSeasonalEventAction("play",null,1);save();render();notify("Pet rất vui khi được chơi cùng bạn! 💚");
   }
   function buyTicket(){
     const cost=25;
@@ -428,6 +516,12 @@
    
     const mainUrl=new URL("./index.html",document.baseURI);
     setTimeout(()=>{window.location.assign(mainUrl.href);},700);
+  }
+  function claimTask(task){
+    const rewards={plant:5,water:5,play:5,harvest:10};
+    if(!state.tasks[task]){notify("Bạn chưa hoàn thành nhiệm vụ này.");return;}
+    if(state.tasks["claimed_"+task]){notify("Nhiệm vụ này đã nhận thưởng rồi.");return;}
+    state.tasks["claimed_"+task]=true;state.coins+=rewards[task];save();render();notify("Hoàn thành nhiệm vụ! +"+rewards[task]+" xu.");
   }
   function renderPlots(){
     $("plots").innerHTML="";
@@ -459,7 +553,6 @@
   }
 
   const makeCatalog=(prefixes,suffixes,icons,count,kind)=>{const out=[];for(let i=0;i<count;i++){out.push({id:kind+'_'+(i+1),name:prefixes[i%prefixes.length]+' '+suffixes[Math.floor(i/prefixes.length)%suffixes.length],icon:icons[i%icons.length],rank:i%20===0?'Huyền thoại':i%5===0?'Hiếm':'Thường',power:5+(i*7)%46,bonus:1+(i*3)%12});}return out;};
-
 
   const extraCropSpecies = [
     {name:'Xoài',icon:'🥭'},{name:'Chuối',icon:'🍌'},{name:'Dứa',icon:'🍍'},{name:'Đu đủ',icon:'🍈'},
@@ -511,6 +604,8 @@
   const cropCatalog=makeCatalog(['Cà chua','Dâu','Ớt','Bí','Đậu','Khoai','Ngô','Cải','Hoa','Lúa','Táo','Lê','Nho','Cam'],['đỏ','vàng','tím','xanh','mật ong','pha lê','sao','băng','mặt trời','rừng','sa mạc'],['🍅','🍓','🌶️','🎃','🫘','🥔','🌽','🥬','🌼','🌾','🍎','🍐','🍇','🍊'],140,'crop').concat(makeExtraCropCatalog());
   const researchCatalog=makeCatalog(['Lan','Sen','Cúc','Hồng','Tulip','Phong lan','Dạ yến thảo','Mộc lan','Anh đào','Thược dược'],['biến dị','phát sáng','kháng hạn','siêu sinh trưởng','thích nghi','di truyền','ánh trăng','cầu vồng','bất tử','ngân hà'],['🌸','🪷','🌼','🌹','🌷','💠','🌺','🌻','🌸','💐'],100,'gene');
   const petCatalog=makeCatalog(['Mèo','Chó','Thỏ','Cáo','Gấu trúc','Rái cá','Sóc','Nhím'],['mây','đốm','tuyết','kẹo','lá non'],['🐱','🐶','🐰','🦊','🐼','🦦','🐿️','🦔'],40,'pet');
+  state.petProfiles=state.petProfiles||{};
+  if(!state.petProfiles["starter-cat"])state.petProfiles["starter-cat"]={id:"starter-cat",name:"Mèo Mướp",icon:"🐱",rank:"Khởi đầu",power:10,bonus:0,variant:"normal",variantName:"Thường"};
   const chickenCatalog=makeCatalog(['Gà tre','Gà ri','Gà hồ','Gà ác','Gà lông xù','Gà sao','Gà rừng','Gà vàng'],['mơ','đốm','tuyết','lửa','mây'],['🐓','🐔','🐣','🐤'],40,'chicken');
 
   (state.unlockedResearchSeeds||[]).forEach(id=>{
@@ -531,7 +626,7 @@
     state.seeds[key]=state.seeds[key]||0;
     cropIcons[key]=["🌱","🌿","🍃",item.icon];
   }
-
+ 
   function getDailyPlantDateInfo(){
     const parts=new Intl.DateTimeFormat("en-US",{
       timeZone:"Asia/Ho_Chi_Minh",year:"numeric",month:"2-digit",day:"2-digit"
@@ -650,8 +745,38 @@
     if(r<0.30)return {id:"shiny",name:"Shiny",bonus:6};
     return {id:"normal",name:"Thường",bonus:0};
   }
-  function discover(kind,cost,catalog){if((state.researchPoints||0)<cost){notify('Chưa đủ điểm bé ngoan!');return;}const owned=state.collections[kind]||[];const available=catalog.filter(x=>!owned.includes(x.id));if(!available.length){notify('Bạn đã sưu tầm đủ bộ này rồi!');return;}state.researchPoints-=cost;const item=available[Math.floor(Math.random()*available.length)];owned.push(item.id);state.collections[kind]=owned;if(kind==='crops'||kind==='research')trackSeasonalEventAction("research",item.id,1);if(kind==='crops'||kind==='research')recordMucAction("research",1);if(kind==='crops'){unlockResearchSeed(item);if(state.story&&state.story.chapter2MucDone&&!state.story.chapter2ResearchDone){state.story.chapter2ResearchDone=true;state.coins+=15;state.researchPoints+=5;state.lastAction='Hoàn thành Chương 2: +15 xu, +5 điểm bé ngoan';}}if(kind==='pets'){state.activePet=item.id;const variant=rollPetVariant();state.pet={...state.pet,name:item.name,icon:item.icon,variant:variant.id,variantName:variant.name,bonus:variant.bonus};}if(kind==='chickens'){state.activeChicken=item.id;}save();render();renderCollection();renderEvolutionLab();$('collection-result').textContent=item.icon+' '+item.name+' · '+item.rank+' · Chỉ số '+item.power+' · Thưởng '+item.bonus+(kind==='pets'?' · '+state.pet.variantName:'');notify('Đã mở khóa '+item.name+(kind==='pets'?' · '+state.pet.variantName:'')+'!');}
+  function discover(kind,cost,catalog){if((state.researchPoints||0)<cost){notify('Chưa đủ điểm bé ngoan!');return;}const owned=state.collections[kind]||[];const available=catalog.filter(x=>!owned.includes(x.id));if(!available.length){notify('Bạn đã sưu tầm đủ bộ này rồi!');return;}state.researchPoints-=cost;const item=available[Math.floor(Math.random()*available.length)];owned.push(item.id);state.collections[kind]=owned;if(kind==='crops'||kind==='research')trackSeasonalEventAction("research",item.id,1);if(kind==='crops'){unlockResearchSeed(item);if(state.story&&state.story.chapter2MucDone&&!state.story.chapter2ResearchDone){state.story.chapter2ResearchDone=true;state.coins+=15;state.researchPoints+=5;state.lastAction='Hoàn thành Chương 2: +15 xu, +5 điểm bé ngoan';}}if(kind==='pets'){const oldId=state.activePet||"starter-cat";state.petProfiles=state.petProfiles||{};if(state.pet)state.petProfiles[oldId]={...(state.petProfiles[oldId]||{}),...state.pet,id:oldId};state.activePet=item.id;const variant=rollPetVariant();state.petProfiles[item.id]={...item,variant:variant.id,variantName:variant.name,bonus:variant.bonus,hunger:70,bond:0};state.pet={...item,hunger:70,bond:0,variant:variant.id,variantName:variant.name,bonus:variant.bonus};}if(kind==='chickens'){state.activeChicken=item.id;}save();render();renderCollection();renderEvolutionLab();$('collection-result').textContent=item.icon+' '+item.name+' · '+item.rank+' · Chỉ số '+item.power+' · Thưởng '+item.bonus+(kind==='pets'?' · '+state.pet.variantName:'');notify('Đã mở khóa '+item.name+(kind==='pets'?' · '+state.pet.variantName:'')+'!');}
   function renderCollection(){const groups=[['crops',cropCatalog],['research',researchCatalog],['pets',petCatalog],['chickens',chickenCatalog]];groups.forEach(([key,list])=>{const el=$('count-'+key);if(el)el.textContent=(state.collections[key]||[]).length+'/'+list.length;});const all=[...cropCatalog.map(x=>({...x,group:'Cây trồng',key:'crops'})),...researchCatalog.map(x=>({...x,group:'Cây bé ngoan',key:'research'})),...petCatalog.map(x=>({...x,group:'Pet',key:'pets'})),...chickenCatalog.map(x=>({...x,group:'Giống gà',key:'chickens'}))];$('collection-book').innerHTML=all.filter(x=>(state.collections[x.key]||[]).includes(x.id)).map(x=>'<div class="collection-entry">'+x.icon+' <b>'+x.name+'</b><small>'+x.group+' · '+x.rank+' · Chỉ số '+x.power+' · Bonus '+x.bonus+'</small></div>').join('')||'Chưa có mục sưu tầm nào.';}
+  function renderPetInventory(){
+    const grid=$("pet-inventory-grid");if(!grid)return;
+    const owned=new Set(["starter-cat",...(state.collections.pets||[])]);
+    if(state.activePet)owned.add(state.activePet);
+    const search=($("pet-inventory-search")?.value||"").trim().toLocaleLowerCase("vi");
+    const items=[{id:"starter-cat",name:"Mèo Mướp",icon:"🐱",rank:"Khởi đầu",power:10,bonus:0},...petCatalog];
+    const shown=items.filter((item,index)=>items.findIndex(x=>x.id===item.id)===index).filter(item=>{
+      const q=(item.name+" "+item.rank+" "+item.id).toLocaleLowerCase("vi");return !search||q.includes(search);
+    });
+    const ownedCount=owned.size;
+    const count=$("pet-inventory-count");if(count)count.textContent=ownedCount+" pet sở hữu · "+(state.collections.pets||[]).length+"/"+petCatalog.length+" pet đã khám phá";
+    grid.innerHTML=shown.map(item=>{
+      const isOwned=owned.has(item.id),profile=state.petProfiles?.[item.id]||(item.id===state.activePet?state.pet:null)||item;
+      const active=(state.activePet||"starter-cat")===item.id;
+      const variant=profile.variantName||"Thường",variantClass=profile.variant||"normal";
+      const icon=isOwned?(profile.icon||item.icon):"❔";
+      const name=isOwned?(profile.name||item.name):"Chưa khám phá";
+      return '<article class="pet-inventory-card '+(isOwned?'owned ':'locked ')+(active?'equipped ':'')+'pet-tier-'+variantClass+'"><div class="pet-card-top"><span class="pet-card-rarity">'+(isOwned?variant:'🔒 Chưa sở hữu')+'</span><span class="pet-card-power">'+(isOwned?'⚡ '+(profile.power||item.power||10):'')+'</span></div><div class="pet-card-art">'+icon+'</div><b class="pet-card-name">'+name+'</b><small class="pet-card-meta">'+(isOwned?((item.rank||'Pet đồng hành')+' · Thưởng '+(profile.bonus||0)+' xu'):'Mở khóa tại phòng nghiên cứu')+'</small><button type="button" class="pet-equip-button" data-pet-equip="'+item.id+'" '+(!isOwned||active?'disabled':'')+'>'+(active?'✓ Đang đồng hành':isOwned?'Đặt làm pet đồng hành':'Chưa mở khóa')+'</button></article>';
+    }).join("")||'<p class="pet-inventory-empty">Không tìm thấy thú cưng phù hợp.</p>';
+  }
+  function equipPet(id){
+    const item=petCatalog.find(p=>p.id===id);
+    const profile=state.petProfiles?.[id]||(id==="starter-cat"?state.petProfiles["starter-cat"]:item);
+    if(!profile||!(id==="starter-cat"||(state.collections.pets||[]).includes(id))){notify("Bạn chưa sở hữu thú cưng này.");return;}
+    const previousId=state.activePet||"starter-cat";
+    if(state.pet)state.petProfiles[previousId]={...(state.petProfiles[previousId]||{}),...state.pet,id:previousId};
+    state.activePet=id;
+    state.pet={...profile,name:profile.name||item?.name||"Mèo Mướp",icon:profile.icon||item?.icon||"🐱",hunger:Number.isFinite(Number(profile.hunger))?Number(profile.hunger):70,bond:Number.isFinite(Number(profile.bond))?Number(profile.bond):0,variant:profile.variant||"normal",variantName:profile.variantName||"Thường",bonus:Number(profile.bonus)||0};
+    save();render();renderPetInventory();notify("🐾 Đã chọn "+state.pet.name+" làm bạn đồng hành!");
+  }
   $('collect-crop').addEventListener('click',()=>askBeforeFarmAction('Mở khóa giống cây',()=>discover('crops',5,cropCatalog)));
   $('research-crop').addEventListener('click',()=>askBeforeFarmAction('bé ngoan cây trồng',()=>discover('research',5,researchCatalog)));
   $('hatch-pet').addEventListener('click',()=>askBeforeFarmAction('Khám phá pet',()=>discover('pets',10,petCatalog)));
@@ -715,29 +840,46 @@
     $("delivery-total").textContent=state.deliveryCount||0;
     $("delivery-history").innerHTML=(state.deliveryHistory||[]).slice(-8).reverse().map(x=>'<div class="collection-entry">🚚 <b>'+x.crop+'</b><small>'+x.district+' · '+x.amount+' sản phẩm · +'+x.coins+' xu</small></div>').join("")||"Chưa có chuyến giao hàng.";
   }
+  let manualDeliveryBusy=false;
   function deliverProduce(){
+    if(manualDeliveryBusy)return;
     const type=$("delivery-crop").value, district=$("delivery-district").value;
     const amount=Math.max(1,Math.min(5,Math.floor(Number($("delivery-amount").value)||1)));
     if(!type||!seeds[type]){notify("Bạn chưa có nông sản để giao.");return;}
     if((state.produce[type]||0)<amount){notify("Kho không đủ số lượng để giao đơn này.");return;}
     const marketFactor=farmScienceSystem?farmScienceSystem.getMarketFactor(type):1;
     const reward=Math.floor(amount*(seeds[type].reward+8)*marketFactor);
-    state.produce[type]-=amount;state.coins+=reward;state.researchPoints=(state.researchPoints||0)+amount*2;
-    state.deliveryCount=(state.deliveryCount||0)+1;
-    state.deliveryHistory=state.deliveryHistory||[];
-    state.deliveryHistory.push({crop:seeds[type].name,district,amount,coins:reward});
-    trackSeasonalEventAction("deliver",type,amount);
-    recordMucAction("deliver",1);
-    state.labLevel=Math.min(5,Math.max(1,1+Math.floor(state.researchPoints/30)));
-    $("delivery-result").textContent="✅ Đã giao "+amount+" "+seeds[type].name+" đến "+district+". Nhận +"+reward+" xu và +"+(amount*2)+" điểm bé ngoan.";
-    save();render();renderDelivery();notify("Giao hàng thành công!");
+    const finish=()=>{
+      state.produce[type]-=amount;state.coins+=reward;state.researchPoints=(state.researchPoints||0)+amount*2;
+      state.deliveryCount=(state.deliveryCount||0)+1;
+      state.deliveryHistory=state.deliveryHistory||[];
+      state.deliveryHistory.push({crop:seeds[type].name,district,amount,coins:reward});
+      trackSeasonalEventAction("deliver",type,amount);
+      state.labLevel=Math.min(5,Math.max(1,1+Math.floor(state.researchPoints/30)));
+      $("delivery-result").textContent="✅ Đã giao "+amount+" "+seeds[type].name+" đến "+district+". Nhận +"+reward+" xu và +"+(amount*2)+" điểm bé ngoan.";
+      manualDeliveryBusy=false;
+      const btn=$("delivery-button");if(btn)btn.disabled=false;
+      const scene=$("farm-delivery-animation");if(scene){scene.classList.remove("is-moving","is-arrived");scene.hidden=true;}
+      save();render();renderDelivery();notify("🚚 Giao hàng thành công!");
+    };
+    const scene=$("farm-delivery-animation"),btn=$("delivery-button");
+    if(!scene){finish();return;}
+    manualDeliveryBusy=true;if(btn)btn.disabled=true;
+    scene.hidden=false;scene.classList.remove("is-moving","is-arrived");void scene.offsetWidth;scene.classList.add("is-moving");
+    const status=$("farm-delivery-status");if(status)status.textContent="📦 Đang chất "+amount+" "+seeds[type].name+" lên xe...";
+    setTimeout(()=>{if(status)status.textContent="🚚 Xe đang đi đến "+district+"...";},650);
+    setTimeout(()=>{scene.classList.add("is-arrived");if(status)status.textContent="✅ Đã đến nơi, đang bàn giao nông sản!";},1650);
+    setTimeout(finish,2300);
   }
 
   function renderInventory(){
     const seedItems=Object.keys(seeds).map(k=>({icon:seeds[k].icon,name:"Hạt giống: "+seeds[k].name,count:state.seeds[k]||0,kind:"seed"}));
     const produceItems=Object.keys(state.produce||{}).filter(k=>seeds[k]&&(state.produce[k]||0)>0).map(k=>({icon:seeds[k].icon,name:"Nông sản: "+seeds[k].name,count:state.produce[k],kind:"produce"}));
     const ag=state.agriculture||defaultState.agriculture,livestock=ag.livestock||{},inv=ag.inventory||{},beneficial=ag.beneficial||{},animalProducts=livestock.products||{};
+    let expansionItems={};
+    try{expansionItems=JSON.parse(localStorage.getItem("aeCayKheExpansion_v1")||"{}");}catch(e){}
     const farmItems=[
+      {icon:"🔎",name:"Bộ quan sát côn trùng",count:Math.max(0,Number(expansionItems.bugKits)||0)},
       {icon:"💧",name:"Bình nước",count:state.waterBottles||0},
       {icon:"🌿",name:"Phân ủ hữu cơ",count:inv.compost||0},
       {icon:"🧴",name:"Chế phẩm sinh học",count:inv.organicSpray||0},
@@ -752,147 +894,64 @@
     ];
     $("inventory-grid").innerHTML='<div class="inventory-group-title">🌱 HẠT GIỐNG TRONG TÚI</div>'+seedItems.map(x=>'<div class="inventory-item seed-in-bag"><span>'+x.icon+'</span><b>'+x.name+'</b><small>Số lượng: <strong>'+x.count+'</strong></small></div>').join("")+'<div class="inventory-group-title">📦 NÔNG SẢN & VẬT PHẨM</div>'+produceItems.map(x=>'<div class="inventory-item"><span>'+x.icon+'</span><b>'+x.name+'</b><small>Số lượng: <strong>'+x.count+'</strong></small></div>').join("")+'<div class="inventory-group-title">🧪 VẬT TƯ NÔNG NGHIỆP & CHĂN NUÔI</div>'+farmItems.map(x=>'<div class="inventory-item"><span>'+x.icon+'</span><b>'+x.name+'</b><small>Số lượng: <strong>'+x.count+'</strong></small></div>').join("");
   }
-  const mucStoryChapters = [
-    {title:"Nhìn nhận để sửa đổi",skill:"Tự nhận thức và tự phê bình",lesson:"Muốn tiến bộ, trước hết cần thành thật nhìn nhận điều mình làm chưa tốt.",dialogue:"Chào người chăm vườn! Một người làm việc tốt có cần nhìn nhận những khuyết điểm của mình không?",question:"Một người làm việc tốt có cần nhìn nhận những khuyết điểm của mình không?",answers:["Có, để nhận ra sai sót và sửa đổi.","Không, chỉ cần quan tâm đến kết quả.","Không cần học hỏi thêm."],correct:0,why:"Nhận ra hạn chế là bước đầu để sửa chữa và tiến bộ.",action:"plant",target:1,task:"Gieo ít nhất 1 hạt giống sau khi nhận nhiệm vụ.",reward:[20,10]},
-    {title:"Học đi đôi với hành",skill:"Vận dụng kiến thức vào thực tế",lesson:"Kiến thức chỉ phát huy giá trị khi được áp dụng vào công việc cụ thể.",dialogue:"Đọc sách là quan trọng, nhưng chỉ đọc mà không thực hành thì đã đủ chưa?",question:"Cách học nào giúp kiến thức trở nên thiết thực?",answers:["Chỉ học thuộc câu chữ.","Kết hợp tìm hiểu, thực hành và rút kinh nghiệm.","Chỉ nghe người khác kể."],correct:1,why:"Học cần gắn với thực hành để hiểu sâu và tạo kết quả thực tế.",action:"harvest",target:1,task:"Thu hoạch ít nhất 1 cây trong vườn.",reward:[25,10]},
-    {title:"Lập kế hoạch trước khi làm",skill:"Quản lý thời gian và công việc",lesson:"Việc có mục tiêu, thứ tự ưu tiên và thời hạn rõ ràng sẽ dễ thực hiện hơn.",dialogue:"Một khu vườn muốn phát triển cần có kế hoạch. Trước khi làm, ta nên chuẩn bị điều gì?",question:"Một kế hoạch công việc tốt cần có những nội dung nào?",answers:["Mục tiêu, việc cần làm, thời hạn và người phụ trách.","Chỉ cần nghĩ trong đầu.","Làm việc nào thấy thích trước."],correct:0,why:"Kế hoạch rõ ràng giúp phân công, theo dõi tiến độ và kiểm tra kết quả.",action:"plant",target:2,task:"Gieo thêm ít nhất 2 hạt giống để thực hiện kế hoạch.",reward:[30,12]},
-    {title:"Tinh thần trách nhiệm",skill:"Chủ động và chịu trách nhiệm",lesson:"Đã nhận việc thì cần cố gắng hoàn thành, báo cáo trung thực khi gặp khó khăn.",dialogue:"Nếu đã nhận chăm sóc luống cây, người làm vườn nên làm gì khi gặp khó khăn?",question:"Hành động nào thể hiện tinh thần trách nhiệm?",answers:["Bỏ qua và chờ người khác.","Che giấu vấn đề.","Chủ động xử lý, báo cáo khó khăn và theo dõi kết quả."],correct:2,why:"Trách nhiệm thể hiện ở việc chủ động thực hiện và trung thực với kết quả.",action:"water",target:1,task:"Tưới ít nhất một cây đang cần nước.",reward:[30,12]},
-    {title:"Đoàn kết và phối hợp",skill:"Làm việc nhóm",lesson:"Cùng trao đổi, phân công rõ và hỗ trợ nhau sẽ giúp hoàn thành mục tiêu chung.",dialogue:"Khu vườn có nhiều việc. Làm thế nào để mọi người cùng hoàn thành tốt?",question:"Cách phối hợp nào phù hợp trong một nhóm?",answers:["Phân công rõ ràng, lắng nghe và hỗ trợ nhau.","Một người làm tất cả.","Không chia sẻ thông tin."],correct:0,why:"Phối hợp hiệu quả cần phân công, trao đổi và tôn trọng đóng góp của nhau.",action:"play",target:1,task:"Chơi và tăng gắn kết với thú cưng một lần.",reward:[35,12]},
-    {title:"Lắng nghe và góp ý xây dựng",skill:"Giao tiếp và phản hồi",lesson:"Góp ý cần chân thành, có căn cứ, tập trung vào việc cần sửa chứ không công kích cá nhân.",dialogue:"Một người bạn góp ý rằng cách chăm cây của bạn chưa hợp lý. Bạn nên phản ứng thế nào?",question:"Khi nhận góp ý trái với ý kiến của mình, nên làm gì?",answers:["Bác bỏ ngay.","Lắng nghe, xem xét căn cứ rồi trao đổi bình tĩnh.","Ngừng hợp tác."],correct:1,why:"Lắng nghe và kiểm tra căn cứ giúp tiếp nhận điều đúng và phản hồi có trách nhiệm.",action:"bookCorrect",target:1,task:"Trả lời đúng thêm 1 câu hỏi sách trong thao tác nông trại.",reward:[35,15]},
-    {title:"Nói và viết rõ ràng",skill:"Trình bày và báo cáo",lesson:"Thông tin nên ngắn gọn, đúng trọng tâm, trung thực và phù hợp với người nghe.",dialogue:"Mực muốn bạn viết một bản báo cáo về khu vườn. Điều gì cần được ưu tiên?",question:"Cách báo cáo nào rõ ràng và thiết thực?",answers:["Kể nhiều chuyện ngoài lề.","Chỉ nêu thành tích.","Nêu đúng việc đã làm, kết quả và vấn đề còn tồn tại."],correct:2,why:"Báo cáo tốt cần phản ánh đúng thực tế, cả kết quả lẫn điểm cần cải thiện.",action:"deliver",target:1,task:"Giao ít nhất một chuyến nông sản đến khu phố.",reward:[40,15]},
-    {title:"Kiểm tra và rút kinh nghiệm",skill:"Tự đánh giá và cải tiến",lesson:"Sau mỗi công việc, cần đối chiếu kết quả với mục tiêu để biết điều gì hiệu quả và điều gì cần sửa.",dialogue:"Một luống cây đã thu hoạch. Làm sao biết cách chăm sóc vừa rồi có hiệu quả?",question:"Vì sao cần kiểm tra kết quả sau khi hoàn thành công việc?",answers:["Để kéo dài công việc.","Để đối chiếu mục tiêu, phát hiện thiếu sót và rút kinh nghiệm.","Để tìm người trách phạt."],correct:1,why:"Kiểm tra giúp đánh giá kết quả thực tế và điều chỉnh cách làm cho lần sau.",action:"harvest",target:3,task:"Thu hoạch tổng cộng ít nhất 3 cây.",reward:[45,15]},
-    {title:"Chống chủ quan và hẹp hòi",skill:"Tư duy khách quan và tôn trọng tập thể",lesson:"Cần dựa trên thực tế, lắng nghe nhiều phía và đặt mục tiêu chung lên trên lợi ích riêng.",dialogue:"Mực tìm thấy hai bản nhận xét khác nhau. Bạn cần làm gì trước khi kết luận?",question:"Cách nào giúp tránh đánh giá chủ quan?",answers:["Chỉ tin điều mình nghĩ.","Kết luận theo lời đồn.","Kiểm tra sự việc, lắng nghe nhiều phía và xem xét bằng chứng."],correct:2,why:"Đánh giá khách quan cần căn cứ thực tế, không dựa vào cảm tính hay tin đồn.",action:"research",target:1,task:"Khám phá ít nhất một giống cây trong phòng thí nghiệm.",reward:[50,18]},
-    {title:"Biến tri thức thành hành động",skill:"Tổng kết và cam kết cải thiện",lesson:"Sửa đổi không dừng ở lời hứa; cần biến điều đã học thành hành động đều đặn và có kiểm tra.",dialogue:"Đây là trang cuối của hành trình. Bạn đã học được cách nhận lỗi, lập kế hoạch và phối hợp. Bây giờ hãy chứng minh bằng hành động nhé!",question:"Điều quan trọng nhất khi vận dụng bài học sửa đổi vào cuộc sống là gì?",answers:["Chỉ ghi nhớ khẩu hiệu.","Biến điều đã học thành việc làm cụ thể, kiên trì kiểm tra và cải thiện.","Chờ người khác thay đổi trước."],correct:1,why:"Giá trị của tri thức thể hiện ở hành động cụ thể, liên tục tự xem xét và hoàn thiện.",action:"deliver",target:2,task:"Hoàn thành thêm 2 chuyến giao hàng nông sản.",reward:[100,30]}
-  ];
-
-  function getMucSaga(){
-    if(!state.story)state.story={};
-    if(!state.story.mucSaga)state.story.mucSaga={chapter:1,accepted:false,questionPassed:false,progress:0,completed:[]};
-    const saga=state.story.mucSaga;
-    saga.chapter=Math.min(10,Math.max(1,Number(saga.chapter)||1));
-    saga.progress=Math.max(0,Number(saga.progress)||0);
-    if(!Array.isArray(saga.completed))saga.completed=[];
-    return saga;
-  }
-  function currentMucChapter(){return mucStoryChapters[getMucSaga().chapter-1];}
   function startMucQuest(){
-    const saga=getMucSaga();
-    if(saga.completed.includes(saga.chapter)){notify("Chương này đã hoàn thành. Hãy nhận chương tiếp theo nhé!");return;}
-    saga.accepted=true;
-    saga.questionPassed=false;
-    saga.progress=0;
+    if(state.story.chapter2MucDone){notify("Bạn đã hoàn thành nhiệm vụ của Bình Mực rồi!");return;}
+    state.story.chapter2MucAccepted=true;
     save();renderStory();
-    notify("Mực đã giao nhiệm vụ Chương "+saga.chapter+"!");
+    notify("Đã nhận nhiệm vụ chương 2 từ  Bình Mực!");
   }
   function answerMucQuest(answer){
-    const saga=getMucSaga(),chapter=currentMucChapter();
-    if(!saga.accepted||saga.completed.includes(saga.chapter)||saga.questionPassed)return;
-    if(Number(answer)!==chapter.correct){
-      $("muc-feedback").textContent="Chưa chính xác. Mực giải thích: "+chapter.why+" Hãy đọc lại rồi thử lần nữa nhé!";
+    if(!state.story.chapter2MucAccepted||state.story.chapter2MucDone)return;
+    if(answer!=="a"){
+      $("muc-feedback").textContent="Chưa chính xác. Mực nhắc bạn: muốn tiến bộ, chúng ta cần dũng cảm nhìn nhận điều chưa tốt và tìm cách sửa đổi. Hãy thử lại nhé!";
       return;
     }
-    saga.questionPassed=true;
-    $("muc-feedback").textContent="✅ Chính xác! "+chapter.why+" Bây giờ hãy thực hiện nhiệm vụ thực tế: "+chapter.task;
-    save();checkMucChapterCompletion();renderStory();
-  }
-  function recordMucAction(action,count=1){
-    const saga=getMucSaga(),chapter=currentMucChapter();
-    if(!saga.accepted||!saga.questionPassed||saga.completed.includes(saga.chapter)||chapter.action!==action)return;
-    saga.progress=Math.min(chapter.target,saga.progress+Math.max(1,Number(count)||1));
-    checkMucChapterCompletion();
-  }
-  function checkMucChapterCompletion(){
-    const saga=getMucSaga(),chapter=currentMucChapter();
-    if(!saga.accepted||!saga.questionPassed||saga.progress<chapter.target||saga.completed.includes(saga.chapter))return;
-    saga.completed.push(saga.chapter);
-    state.coins=(Number(state.coins)||0)+chapter.reward[0];
-    state.researchPoints=(Number(state.researchPoints)||0)+chapter.reward[1];
+    state.story.chapter2MucDone=true;
+    state.coins+=20;
+    state.researchPoints=(Number(state.researchPoints)||0)+10;
     state.labLevel=Math.min(5,Math.max(1,1+Math.floor(state.researchPoints/30)));
-    state.lastAction="Hoàn thành Chương "+saga.chapter+": +"+chapter.reward[0]+" xu, +"+chapter.reward[1]+" điểm nghiên cứu";
-    save();
-    notify("Hoàn thành Chương "+saga.chapter+" – "+chapter.title+"! Nhận +"+chapter.reward[0]+" xu và +"+chapter.reward[1]+" điểm nghiên cứu.");
-    render();
-  }
-  function advanceMucChapter(){
-    const saga=getMucSaga();
-    if(!saga.completed.includes(saga.chapter)){notify("Bạn cần hoàn thành chương hiện tại trước.");return;}
-    if(saga.chapter>=10){notify("Bạn đã hoàn thành toàn bộ 10 chương của Mực!");return;}
-    saga.chapter++;
-    saga.accepted=false;saga.questionPassed=false;saga.progress=0;
-    save();renderStory();notify("Mực đã mở Chương "+saga.chapter+"!");
+    state.lastAction="Hoàn thành nhiệm vụ Mực: +20 xu bé ngoan, +10 điểm  bé ngoan";
+    save();render();renderStory();
+    notify("Chính xác! +20 xu bé ngoan và +10 điểm bé ngoan.");
   }
   function renderStory(){
-    const saga=getMucSaga(),chapter=currentMucChapter();
-    const badge=$("muc-story-badge"),progress=$("chapter2-progress"),dialogue=$("muc-dialogue"),questionBox=$("muc-story-question"),answers=$("muc-answer-area"),start=$("muc-start-area"),next=$("muc-next-chapter"),feedback=$("muc-feedback"),task=$("muc-story-task"),chapters=$("muc-chapter-list"),finale=$("muc-story-finale");
-    if(!badge||!progress||!dialogue||!questionBox||!answers||!start||!next||!feedback||!task||!chapters)return;
-    const done=saga.completed.includes(saga.chapter);
-    badge.textContent="📖 CHƯƠNG "+saga.chapter+" / 10";
-    progress.textContent=saga.completed.length+"/10 chương hoàn thành";
-    dialogue.textContent=done?(saga.chapter===10?"Bạn đã hoàn thành hành trình! Cây Tri Thức đã hồi sinh. Hãy tiếp tục vận dụng những kỹ năng đã học mỗi ngày.":"Tốt lắm! Chương này đã hoàn thành. Khi sẵn sàng, hãy nhận thử thách tiếp theo nhé."):chapter.dialogue;
-    questionBox.innerHTML='<b>Câu hỏi của Mực:</b> '+chapter.question+'<br><small>Chủ đề kỹ năng: '+chapter.skill+'</small>';
-    answers.innerHTML=chapter.answers.map((a,i)=>'<button class="story-answer" type="button" data-muc-answer="'+i+'" '+(saga.questionPassed||done?'disabled':'')+'>'+String.fromCharCode(65+i)+'. '+a+'</button>').join("");
-    answers.hidden=!saga.accepted||saga.questionPassed||done;
-    start.hidden=saga.accepted||done;
-    next.hidden=!done||saga.chapter===10;
-    if(finale)finale.hidden=!(saga.chapter===10&&done);
-    next.textContent="📖 Nhận Chương tiếp theo →";
-    task.textContent=done?"✅ Đã hoàn thành nhiệm vụ thực tế.":saga.questionPassed?"Nhiệm vụ thực tế: "+chapter.task+" · Tiến độ "+saga.progress+"/"+chapter.target: "Kỹ năng trọng tâm: "+chapter.skill+". Trả lời câu hỏi để mở nhiệm vụ thực tế.";
-    if(done)feedback.textContent="🏅 Chương "+saga.chapter+" hoàn thành! "+chapter.lesson+" Phần thưởng: +"+chapter.reward[0]+" xu, +"+chapter.reward[1]+" điểm nghiên cứu.";
-    else if(saga.questionPassed)feedback.textContent="Đúng rồi! "+chapter.why+" Hãy hoàn thành mục tiêu để nhận dấu ấn chương.";
-    else if(saga.accepted)feedback.textContent="Hãy chọn câu trả lời phù hợp. Trả lời sai không bị trừ xu hay điểm.";
-    else feedback.textContent="Nhận nhiệm vụ từ Mực, trả lời câu hỏi và áp dụng bài học vào hoạt động nông trại.";
-    chapters.innerHTML=mucStoryChapters.map((item,i)=>'<div class="muc-chapter-item '+(saga.completed.includes(i+1)?'done':i+1===saga.chapter?'current':'')+'"><b>'+(saga.completed.includes(i+1)?'✅':i+1===saga.chapter?'📖':'🔒')+' Chương '+(i+1)+': '+item.title+'</b><small>'+item.skill+'</small></div>').join("");
+    const story=state.story||defaultState.story;
+    const start=$("muc-start-area"),answers=$("muc-answer-area"),next=$("chapter2-next-step"),complete=$("chapter2-complete");
+    if(!start||!answers||!next||!complete)return;
+    start.hidden=!!story.chapter2MucAccepted||!!story.chapter2MucDone;
+    answers.hidden=!story.chapter2MucAccepted||!!story.chapter2MucDone;
+    next.hidden=!story.chapter2MucDone;
+    complete.hidden=!story.chapter2ResearchDone;
+    $("chapter2-progress").textContent=(story.chapter2MucDone?1:0)+(story.chapter2ResearchDone?1:0)+"/2 nhiệm vụ";
+    if(story.chapter2MucDone){
+      $("muc-dialogue").textContent="“Tốt lắm! Nhận ra khuyết điểm là bước đầu. Bây giờ hãy dùng kiến thức để khám phá một giống cây mới trong phòng thí nghiệm.”";
+      $("muc-feedback").textContent="✅ Đã hoàn thành: Nhìn nhận khuyết điểm và sửa đổi. Phần thưởng: 20 xu bé ngoan và 10 điểm bé ngoan.";
+      $("chapter2-next-status").textContent=story.chapter2ResearchDone?"Tiến độ: Đã hoàn thành":"Tiến độ: Chưa hoàn thành – hãy khám phá 1 giống cây trong phòng thí nghiệm.";
+    }else if(story.chapter2MucAccepted){
+      $("muc-dialogue").textContent="“Hãy suy nghĩ kỹ nhé. Người biết sửa đổi sẽ ngày càng tiến bộ.”";
+      $("muc-feedback").textContent="Nhiệm vụ đang thực hiện: Chọn đáp án đúng để giúp Mực khôi phục trang sách.";
+    }
   }
   $("muc-start-quest").addEventListener("click",startMucQuest);
-  $("muc-answer-area").addEventListener("click",event=>{const btn=event.target.closest("[data-muc-answer]");if(btn)answerMucQuest(btn.dataset.mucAnswer);});
-  $("muc-next-chapter").addEventListener("click",advanceMucChapter);
-
-  const dailyTaskDefinitions={plant:{label:"Gieo một hạt giống",reward:5},water:{label:"Chăm sóc khu vườn",reward:5},play:{label:"Kết bạn với thú cưng",reward:5},harvest:{label:"Thu hoạch thành quả",reward:10}};
-  function ensureDailyMissions(){
-    const today=getDailyPlantDateInfo().key;
-    if(!state.dailyMissions)state.dailyMissions={dateKey:"",progress:{},claimed:{}};
-    if(state.dailyMissions.dateKey!==today){
-      state.dailyMissions={dateKey:today,progress:{plant:false,water:false,play:false,harvest:false},claimed:{}};
-      save();
-    }
-    return state.dailyMissions;
-  }
-  function markDailyMission(key){
-    const daily=ensureDailyMissions();
-    if(daily.progress[key]!==true){daily.progress[key]=true;save();}
-  }
-  function claimTask(task){
-    const daily=ensureDailyMissions(),definition=dailyTaskDefinitions[task];
-    if(!definition)return;
-    if(!daily.progress[task]){notify("Bạn chưa hoàn thành nhiệm vụ này.");return;}
-    if(daily.claimed[task]){notify("Nhiệm vụ hôm nay đã nhận thưởng rồi.");return;}
-    daily.claimed[task]=true;state.coins+=definition.reward;save();render();notify("Hoàn thành nhiệm vụ! +"+definition.reward+" xu.");
-  }
+  document.querySelectorAll("[data-muc-answer]").forEach(btn=>btn.addEventListener("click",()=>answerMucQuest(btn.dataset.mucAnswer)));
 
   function renderTasks(){
-    const daily=ensureDailyMissions();
     document.querySelectorAll(".task-btn").forEach(btn=>{
-      const key=btn.dataset.task,claimed=!!daily.claimed[key],done=!!daily.progress[key],reward=dailyTaskDefinitions[key]?.reward||0;
-      btn.disabled=!done||claimed;btn.textContent=claimed?"Đã nhận":done?"Nhận "+reward+" xu":"Chưa hoàn thành";
+      const key=btn.dataset.task,claimed=!!state.tasks["claimed_"+key],done=!!state.tasks[key];
+      btn.disabled=!done||claimed;btn.textContent=claimed?"Đã nhận":done?"Nhận thưởng":"Chưa hoàn thành";
     });
-    const dateEl=$("daily-task-date");if(dateEl)dateEl.textContent="Nhiệm vụ ngày "+daily.dateKey+" · Làm mới lúc 00:00 giờ Việt Nam";
-    updateDailyTaskClock();
-  }
-  function updateDailyTaskClock(){
-    const previousKey=state.dailyMissions&&state.dailyMissions.dateKey;
-    const daily=ensureDailyMissions();
-    if(previousKey&&previousKey!==daily.dateKey){renderTasks();return;}
-    const timer=$("daily-task-countdown");if(!timer)return;
-    const remaining=Math.max(0,getDailyPlantDateInfo().nextMidnight-Date.now());
-    const hh=String(Math.floor(remaining/3600000)).padStart(2,"0");
-    const mm=String(Math.floor((remaining%3600000)/60000)).padStart(2,"0");
-    const ss=String(Math.floor((remaining%60000)/1000)).padStart(2,"0");
-    timer.textContent=hh+":"+mm+":"+ss;
   }
   function render(){
     $("coin-count").textContent=state.coins;$("level").textContent=state.level;$("harvest-total").textContent=state.harvests;
     $("pet-bond").textContent=state.pet.bond;$("hero-pet").textContent=state.pet.icon;$("big-pet").textContent=state.pet.icon;$("pet-name").textContent=state.pet.name;
     $("hunger-label").textContent=state.pet.hunger+"/100";$("bond-label").textContent=state.pet.bond+"/100";
+    const feedButton=$("feed-pet");
+    if(feedButton){
+      const petIsFull=state.pet.hunger>=100;
+      feedButton.disabled=petIsFull;
+      feedButton.textContent=petIsFull?"🍎 Pet đã no":"🍓 Cho ăn (5 xu)";
+      feedButton.title=petIsFull?"Pet đã no, chưa cần mua thức ăn.":"Mỗi lần cho ăn trừ 5 xu.";
+    }
     const petStage=$("big-pet").parentElement;petStage.classList.remove("pet-shiny","pet-golden","pet-galaxy");
     if(state.pet.variant==="shiny")petStage.classList.add("pet-shiny");
     if(state.pet.variant==="golden")petStage.classList.add("pet-golden");
@@ -901,7 +960,7 @@
     $("hunger-bar").style.width=state.pet.hunger+"%";$("bond-bar").style.width=state.pet.bond+"%";
     $("pet-mood").textContent=state.pet.hunger<30?"Mình hơi đói rồi...":state.pet.bond>=70?"Mình rất quý bạn!":"Mình đang vui vẻ!";
     $("spent-total").textContent=state.totalSpent+" xu";$("cart-description").textContent=state.lastAction||"Chưa có giao dịch nào.";
-    renderPlots();renderSeeds();renderInventory();renderTasks();renderStory();renderEvolutionLab();renderCollection();renderBreeding();renderDelivery();renderResearchSeedShop();renderDailyPlant();
+    renderPlots();renderSeeds();renderInventory();renderTasks();renderStory();renderEvolutionLab();renderCollection();renderPetInventory();renderBreeding();renderDelivery();renderResearchSeedShop();renderDailyPlant();
     if(farmScienceSystem)farmScienceSystem.render();
     if($("water-count"))$("water-count").textContent=state.waterBottles||0;
     if($("water-info")){const left=10*60*1000-(Date.now()-(state.waterPickupAt||0));$("water-info").textContent=left>0?"Có thể nhặt bình tiếp theo sau "+Math.ceil(left/60000)+" phút. Mỗi cây cần 1 bình.":"Có thể nhặt 1 bình nước. Mỗi cây cần 1 bình.";}
@@ -910,7 +969,15 @@
   $("find-water").addEventListener("click",()=>askBeforeFarmAction("Nhặt bình nước",findWater));
   $("buy-water").addEventListener("click",()=>askBeforeFarmAction("Mua bình nước",buyWater));
   $("breed-button").addEventListener("click",()=>askBeforeFarmAction("Lai tạo cây trồng",breedPlants));
-  $("delivery-button").addEventListener("click",()=>askBeforeFarmAction("Giao hàng đến khu phố",deliverProduce));$("feed-pet").addEventListener("click",()=>askBeforeFarmAction("Cho pet ăn",feedPet));$("play-pet").addEventListener("click",()=>askBeforeFarmAction("Chơi cùng pet",playPet));$("buy-ticket").addEventListener("click",()=>askBeforeFarmAction("Đổi phiếu Quiz",buyTicket));
+  $("delivery-button").addEventListener("click",()=>askBeforeFarmAction("Giao hàng đến khu phố",deliverProduce));
+  $("feed-pet").addEventListener("click",()=>{
+    if(state.pet.hunger>=100){notify("Pet đã no căng rồi!");return;}
+    if(state.coins<5){notify("Bạn cần 5 xu bé ngoan để mua thức ăn cho pet.");return;}
+    askBeforeFarmAction("Cho pet ăn",feedPet,{rewardCoins:0});
+  });
+  $("play-pet").addEventListener("click",()=>askBeforeFarmAction("Chơi cùng pet",playPet));$("buy-ticket").addEventListener("click",()=>askBeforeFarmAction("Đổi phiếu Quiz",buyTicket));
+  $("pet-inventory-grid")?.addEventListener("click",event=>{const button=event.target.closest("[data-pet-equip]");if(button&&!button.disabled)equipPet(button.dataset.petEquip);});
+  $("pet-inventory-search")?.addEventListener("input",renderPetInventory);
   document.querySelectorAll(".buy-seed").forEach(b=>b.addEventListener("click",()=>askBeforeFarmAction("Mua hạt giống",()=>buySeed(b.dataset.seed))));
   document.querySelectorAll(".task-btn").forEach(b=>b.addEventListener("click",()=>askBeforeFarmAction("Nhận thưởng nhiệm vụ",()=>claimTask(b.dataset.task))));
  
@@ -930,10 +997,10 @@
   setInterval(()=>{if(state.plots.some(Boolean))renderPlots();},1000);
 
   setInterval(updateDailyPlantClock,1000);
+  updateDailyTaskClock();
   setInterval(updateDailyTaskClock,1000);
  
-  window.addEventListener("storage",e=>{if(e.key===QUIZ_KEY)renderInventory();if(e.key===GAME_KEY){state=loadState();render();}});
-  window.addEventListener("focus",()=>{ensureDailyMissions();renderTasks();renderStory();});
+  window.addEventListener("storage",e=>{if(e.key===QUIZ_KEY)renderInventory();});
 
   (function initSeasonalEvents(){
     const EVENT_TZ = "Asia/Ho_Chi_Minh";
@@ -1207,7 +1274,7 @@
     function trackActions(action,detail,amount){
       const today=getVNDate(),todayNo=dayNumber(today),events=getEventList(today),active=events.find(e=>e.startNo<=todayNo&&e.endNo>=todayNo);
       const count=Math.max(1,Number(amount)||1),data=readEventStore();let messages=[],shouldRender=false;
-    
+     
       if(active){
         const questState=data.quests[active.id]||(data.quests[active.id]={counts:{},completed:[],finalRewardClaimed:false});
         active.content.quests.forEach(q=>{
@@ -1236,6 +1303,7 @@
           }
         }
       }
+
 
       const bundle=ensureWeekly(data,today),weekly=bundle.weekly;
       bundle.info.plan.tasks.forEach(task=>{
@@ -1359,14 +1427,14 @@
       panel.querySelector("#science-plot-select").addEventListener("change",render);
       return panel;
     }
-    function selectedPlotIndex(){const el=document.getElementById("science-plot-select");return clamp(Number(el&&el.value)||0,0,5);}
+    function selectedPlotIndex(){const el=document.getElementById("science-plot-select");return clamp(Number(el&&el.value)||0,0,Math.max(0,state.plots.length-1));}
     function soilFor(index){return ag().soil[index]||(ag().soil[index]={fertility:70,organicMatter:45,moisture:60,compaction:20,lastUpdated:Date.now()});}
     function statusFor(index){return ag().plotStatus[index]||(ag().plotStatus[index]={pestLoad:0,diseaseLoad:0,pest:"",disease:"",health:100});}
     function onPlant(index){const soil=soilFor(index);const st=statusFor(index);st.pestLoad=0;st.diseaseLoad=0;st.pest="";st.disease="";soil.moisture=Math.max(soil.moisture,48);soil.lastUpdated=Date.now();}
     function onHarvest(index){const soil=soilFor(index);soil.fertility=clamp(soil.fertility-7,0,100);soil.organicMatter=clamp(soil.organicMatter-3,0,100);const st=statusFor(index);st.pestLoad=0;st.diseaseLoad=0;st.pest="";st.disease="";st.health=100;}
     function getStageLabel(p){if(p<.08)return"Hạt giống";if(p<.20)return"Nảy mầm";if(p<.40)return"Cây con";if(p<.65)return"Sinh trưởng thân lá";if(p<.82)return"Ra hoa";if(p<.97)return"Kết trái";return"Sắp thu hoạch";}
     function getGrowthFactor(plot){
-      const index=clamp(Number(plot.soilIndex)||0,0,5),soil=soilFor(index),st=statusFor(index),climate=currentClimate();
+      const index=clamp(Number(plot.soilIndex)||0,0,Math.max(0,state.plots.length-1)),soil=soilFor(index),st=statusFor(index),climate=currentClimate();
       const fertility=0.78+(soil.fertility/100)*0.25;
       const organic=0.92+(soil.organicMatter/100)*0.10;
       const moisture=soil.moisture<20?0.68:soil.moisture<40?0.84:soil.moisture>96?0.94:1;
@@ -1413,13 +1481,16 @@
     function sellAtMarket(){const id=document.getElementById("science-market-item").value,amount=clamp(Math.floor(Number(document.getElementById("science-market-amount").value)||1),1,99),goods=allMarketGoods(),item=goods.find(x=>x.id===id);if(!item){notify("Bạn chưa có sản phẩm này trong kho.");return;}if(item.count<amount){notify("Kho không đủ số lượng để bán.");return;}const factor=marketFactor(id),price=Math.max(1,Math.floor(item.base*factor)),total=price*amount;if(id==="eggs"||id==="milk"){ag().livestock.products[id]-=amount;}else state.produce[id]-=amount;state.coins+=total;state.lastAction="Bán "+amount+" "+item.name+" theo giá thị trường";save();render();notify("Đã bán "+amount+" "+item.name+" với giá "+price+" xu/món. Nhận +"+total+" xu.");}
     function render(){
       const panel=ensurePanel(),climate=currentClimate(),soilSelect=panel.querySelector("#science-plot-select"),selected=selectedPlotIndex(),soil=soilFor(selected);
-      soilSelect.innerHTML=Array.from({length:6},(_,i)=>'<option value="'+i+'">Ô đất '+(i+1)+(state.plots[i]?' · Có cây':' · Đất trống')+'</option>').join("");soilSelect.value=String(selected);
+      soilSelect.innerHTML=Array.from({length:Math.max(state.plots.length,ag().soil.length,6)},(_,i)=>'<option value="'+i+'">Ô đất '+(i+1)+(state.plots[i]?' · Có cây':' · Đất trống')+'</option>').join("");soilSelect.value=String(selected);
       panel.querySelector("#science-soil-detail").innerHTML='<div class="science-stat"><b>'+soilNames(soil)+'</b><small>Độ màu mỡ: '+Math.round(soil.fertility)+'% · Hữu cơ: '+Math.round(soil.organicMatter)+'%</small><div class="science-meter"><i style="width:'+soil.fertility+'%"></i></div><small>Độ ẩm: '+Math.round(soil.moisture)+'% · Độ nén: '+Math.round(soil.compaction)+'%</small><div class="science-meter"><i style="width:'+soil.moisture+'%"></i></div>'+(state.plots[selected]?'<small>Đang trồng: '+(seeds[state.plots[selected].type]?.name||"Cây trồng")+'</small>':'<small>Ô đất đang trống.</small>')+'</div>';
       panel.querySelector("#science-soil-stock").textContent="Phân ủ: "+ag().inventory.compost+" · Phân chuồng đã thu: "+((ag().livestock.products||{}).manure||0);
       panel.querySelector("#science-life-cycle").innerHTML=state.plots.map((plot,i)=>{if(!plot)return '<div class="science-life-row"><b>Ô '+(i+1)+'</b><span>Chưa gieo hạt</span></div>';const p=progress(plot);return '<div class="science-life-row"><b>Ô '+(i+1)+' · '+(seeds[plot.type]?.name||"Cây")+'</b><span>'+getStageLabel(p)+' · '+Math.round(p*100)+'%</span></div>';}).join("");
       panel.querySelector("#science-pest-status").innerHTML=state.plots.map((plot,i)=>{if(!plot)return '';const st=statusFor(i),risk=st.pestLoad||st.diseaseLoad;return '<div class="science-life-row"><b>Ô '+(i+1)+'</b><span>'+(risk?((st.pest||st.disease||"Có dấu hiệu bất thường")+" · "+Math.max(st.pestLoad,st.diseaseLoad)+"%"):'✅ Chưa phát hiện sâu bệnh')+'</span></div>';}).join("")||'<p class="science-hint">Chưa có cây trồng cần theo dõi.</p>';
       panel.querySelector("#science-pest-stock").textContent="Bọ rùa: "+ag().beneficial.ladybugs+" · Ong có ích: "+ag().beneficial.bees+" · Chế phẩm sinh học: "+ag().inventory.organicSpray;
-      const live=ag().livestock,products=live.products||{};panel.querySelector("#science-livestock-status").innerHTML='<div class="science-livestock-grid"><span>🐔 Gà: <b>'+live.chicken+'</b></span><span>🐄 Bò: <b>'+live.cow+'</b></span><span>🐐 Dê: <b>'+live.goat+'</b></span><span>🍽️ Độ no: <b>'+live.hunger+'%</b></span><span>💧 Nước: <b>'+live.water+'%</b></span><span>💚 Sức khỏe: <b>'+live.health+'%</b></span></div><p class="science-hint">Sản phẩm chờ thu: '+live.eggs+' trứng · '+live.milk+' sữa · '+ag().inventory.manure+' phân chuồng. Trong kho: '+(products.eggs||0)+' trứng · '+(products.milk||0)+' sữa · '+(products.manure||0)+' phân.</p>';
+      const live=ag().livestock,products=live.products||{};
+      const animalSprites=(kind,count,icon)=>Array.from({length:Math.min(5,Math.max(0,Number(count)||0))},(_,i)=>'<span class="livestock-animal animal-'+kind+'" style="--animal-index:'+i+'">'+icon+'</span>').join('')+(Number(count)>5?'<b class="livestock-extra">+'+(Number(count)-5)+'</b>':'');
+      const totalAnimals=(live.chicken||0)+(live.cow||0)+(live.goat||0);
+      panel.querySelector("#science-livestock-status").innerHTML='<div class="livestock-yard"><div class="livestock-yard-sky"><span>☀️</span><i>☁️</i></div><div class="livestock-barn">🏡</div><div class="livestock-fence"><div class="livestock-animal-pack">'+animalSprites('chicken',live.chicken,'🐔')+animalSprites('cow',live.cow,'🐄')+animalSprites('goat',live.goat,'🐐')+(totalAnimals?'':'<span class="livestock-empty">🌾 Chuồng đang chờ vật nuôi</span>')+'</div><span class="livestock-water-trough">💧</span><span class="livestock-hay">🌾</span></div><div class="livestock-yard-ground"></div><div class="livestock-yard-caption">'+(totalAnimals?'Vật nuôi đang đi lại trong chuồng':'Mua gà, bò hoặc dê để bắt đầu chăn nuôi')+'</div></div><div class="science-livestock-grid"><span>🐔 Gà: <b>'+live.chicken+'</b></span><span>🐄 Bò: <b>'+live.cow+'</b></span><span>🐐 Dê: <b>'+live.goat+'</b></span><span>🍽️ Độ no: <b>'+live.hunger+'%</b></span><span>💧 Nước: <b>'+live.water+'%</b></span><span>💚 Sức khỏe: <b>'+live.health+'%</b></span></div><p class="science-hint">Sản phẩm chờ thu: '+live.eggs+' trứng · '+live.milk+' sữa · '+ag().inventory.manure+' phân chuồng. Trong kho: '+(products.eggs||0)+' trứng · '+(products.milk||0)+' sữa · '+(products.manure||0)+' phân.</p>';
       panel.querySelector("#science-livestock-stock").textContent="Thức ăn còn: "+ag().inventory.feed+" phần · Mỗi ngày vật nuôi khỏe tạo ra sản phẩm.";
       const goods=allMarketGoods();panel.querySelector("#science-market-item").innerHTML=goods.map(x=>'<option value="'+x.id+'">'+x.icon+' '+x.name+' · '+x.count+' món</option>').join("")||'<option value="">Chưa có nông sản hoặc sản phẩm chăn nuôi</option>';
       const marketShowcase=goods.length?goods.slice(0,6):["sunflower","carrot","strawberry","blueberry","moonflower"].filter(id=>seeds[id]).map(id=>({id,name:seeds[id].name,icon:seeds[id].icon,count:0,base:seeds[id].reward}));
@@ -1439,6 +1510,7 @@
   }
 
   farmScienceSystem=createFarmScienceSystem();
+
   weatherSystem.init();
   farmScienceSystem.init();
 
