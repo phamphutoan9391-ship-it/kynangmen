@@ -24,7 +24,8 @@
     hybrids:{}, produce:{}, deliveryCount:0, deliveryHistory:[], collections:{crops:[],research:[],pets:[],chickens:[]}, activePet:null, activeChicken:null, pet:{name:"Mèo Mướp",icon:"🐱",hunger:70,bond:0,variant:"normal",bonus:0},
     selectedSeed:"sunflower", seeds:{sunflower:3,carrot:1,strawberry:0,blueberry:0,moonflower:0},
     plots:Array(6).fill(null), tasks:{plant:false,water:false,play:false,harvest:false},
-    story:{chapter2MucAccepted:false,chapter2MucDone:false,chapter2ResearchDone:false},
+    dailyMissions:{dateKey:"",progress:{plant:false,water:false,play:false,harvest:false},claimed:{}},
+    story:{chapter2MucAccepted:false,chapter2MucDone:false,chapter2ResearchDone:false,mucSaga:{chapter:1,accepted:false,questionPassed:false,progress:0,completed:[]}},
     dailyPlant:{dateKey:"",cropId:"",claimed:false},
     actionQuizIndex:0, actionQuizCorrect:0,
     lastCare:Date.now(), lastAction:"Chào mừng bạn đến với khu vườn!"
@@ -63,7 +64,8 @@
           hybrids:saved.hybrids||{}, produce:saved.produce||{}, deliveryCount:saved.deliveryCount||0, deliveryHistory:saved.deliveryHistory||[],
           seeds:{...defaultState.seeds,...saved.seeds},
           tasks:{...defaultState.tasks,...saved.tasks},
-          story:{...defaultState.story,...(saved.story||{})},
+          dailyMissions:{...defaultState.dailyMissions,...(saved.dailyMissions||{}),progress:{...defaultState.dailyMissions.progress,...((saved.dailyMissions&&saved.dailyMissions.progress)||{})},claimed:{...((saved.dailyMissions&&saved.dailyMissions.claimed)||{})}},
+          story:{...defaultState.story,...(saved.story||{}),mucSaga:{...defaultState.story.mucSaga,...((saved.story&&saved.story.mucSaga)||{}),completed:Array.isArray(saved.story&&saved.story.mucSaga&&saved.story.mucSaga.completed)?saved.story.mucSaga.completed:[]}},
           dailyPlant:{...defaultState.dailyPlant,...(saved.dailyPlant||{})},
           plots:Array.from({length:6},(_,i)=>Array.isArray(saved.plots)&&saved.plots[i]?{...saved.plots[i],soilIndex:Number.isInteger(saved.plots[i].soilIndex)?saved.plots[i].soilIndex:i}:null)};
       }
@@ -75,7 +77,6 @@
   function setCoins(value){state.coins=Math.max(0,Math.floor(value));save();render();}
   function notify(message){const el=$("toast");el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2400);}
 
-  // HE THONG THOI TIET CUC DOAN - mo phong trong game, khong lam mat cay.
   const weatherSystem = (() => {
     const ZONE = "Asia/Ho_Chi_Minh";
     const weatherList = [
@@ -177,7 +178,6 @@
     return {getPlantEffect,init,renderPanel};
   })();
 
-  // Bo cau hoi dung chung: moi thao tac lam thay doi tien trinh deu phai qua cau hoi sach.
   const bookQuestions = [
     {q:"Tác phẩm Sửa đổi lối làm việc được viết vào thời gian nào?",a:["Tháng 10 năm 1947","Tháng 8 năm 1945","Tháng 5 năm 1954","Tháng 9 năm 1969"],correct:0,why:"Tác phẩm được viết vào tháng 10-1947 tại Việt Bắc."},
     {q:"Bút danh được dùng khi viết tác phẩm là gì?",a:["Nguyễn Ái Quốc","T.Lan","X.Y.Z","Trần Dân Tiên"],correct:2,why:"Tác phẩm Sửa đổi lối làm việc được ký bút danh X.Y.Z."},
@@ -198,7 +198,27 @@
     {q:"Một bài học có thể áp dụng khi làm bài tập nhóm là gì?",a:["Không cần lắng nghe ai","Phân công rõ ràng, phối hợp và góp ý xây dựng","Chỉ một người làm tất cả","Không cần kiểm tra sản phẩm"],correct:1,why:"Phối hợp, phân công và trao đổi thẳng thắn giúp tập thể làm việc tốt hơn."},
     {q:"Tác phẩm hướng đến việc nâng cao điều gì ở người cán bộ cách mạng?",a:["Trình độ lý luận, phẩm chất đạo đức và tác phong công tác","Khả năng nói thật dài","Sự nổi tiếng cá nhân","Số lượng khẩu hiệu"],correct:0,why:"Mục đích tác phẩm gắn với nâng cao lý luận, tư tưởng, đạo đức và tác phong công tác."},
     {q:"Khi báo cáo kết quả, nên trình bày như thế nào?",a:["Nói chung chung, không có căn cứ","Dùng lời lẽ phức tạp","Nêu đúng việc đã làm, kết quả và vấn đề còn tồn tại","Chỉ kể thành tích"],correct:2,why:"Báo cáo cần trung thực, cụ thể, rõ kết quả và cả điểm còn hạn chế."},
-    {q:"Điều nào thể hiện tinh thần học hỏi để tiến bộ?",a:["Không tiếp nhận góp ý","Cho rằng mình luôn đúng","Thường xuyên xem lại cách làm và điều chỉnh khi cần","Lặp lại sai sót mà không rút kinh nghiệm"],correct:2,why:"Tự xem xét và điều chỉnh cách làm là biểu hiện của tinh thần học hỏi, sửa đổi."}
+    {q:"Điều nào thể hiện tinh thần học hỏi để tiến bộ?",a:["Không tiếp nhận góp ý","Cho rằng mình luôn đúng","Thường xuyên xem lại cách làm và điều chỉnh khi cần","Lặp lại sai sót mà không rút kinh nghiệm"],correct:2,why:"Tự xem xét và điều chỉnh cách làm là biểu hiện của tinh thần học hỏi, sửa đổi."},
+    {q:"Khi tự phê bình, điều quan trọng nhất là gì?",a:["Nói cho có hình thức","Thành thật nhận ra thiếu sót và đề ra cách khắc phục","Chỉ kể thành tích","Tìm người để đổ lỗi"],correct:1,why:"Tự phê bình có ý nghĩa khi trung thực nhìn nhận hạn chế và sửa chữa bằng hành động."},
+    {q:"Phê bình người khác nên dựa trên nguyên tắc nào?",a:["Công kích cá nhân","Nói theo tin đồn","Góp ý chân thành, có căn cứ và nhằm giúp nhau tiến bộ","Chỉ trích trước đám đông"],correct:2,why:"Góp ý cần có căn cứ, thiện chí và tập trung vào việc cần sửa, không hạ thấp con người."},
+    {q:"Trong học tập, biểu hiện nào gần với bệnh chủ quan?",a:["Kiểm tra dữ kiện trước khi kết luận","Cho rằng ý kiến mình luôn đúng dù chưa tìm hiểu","Tham khảo tài liệu","Hỏi lại khi chưa rõ"],correct:1,why:"Chủ quan là đánh giá theo ý muốn cá nhân, thiếu kiểm tra thực tế và lắng nghe."},
+    {q:"Một biểu hiện của thói hẹp hòi là gì?",a:["Hợp tác với người khác","Tôn trọng ý kiến khác biệt","Chỉ muốn lợi ích của nhóm mình, không quan tâm lợi ích chung","Chia sẻ kinh nghiệm"],correct:2,why:"Hẹp hòi làm hạn chế tinh thần đoàn kết và khả năng phối hợp vì mục tiêu chung."},
+    {q:"Khi chưa hiểu rõ một vấn đề, cách làm nào phù hợp?",a:["Đoán rồi khẳng định","Hỏi người có kinh nghiệm và kiểm tra tài liệu","Chép ý kiến bất kỳ","Bỏ qua vấn đề"],correct:1,why:"Chủ động hỏi và kiểm chứng giúp tránh hiểu sai, làm sai."},
+    {q:"Một kế hoạch công việc tốt nên có yếu tố nào?",a:["Mục tiêu, việc cần làm, thời hạn và người phụ trách","Chỉ có khẩu hiệu","Không cần thời hạn","Không cần kiểm tra tiến độ"],correct:0,why:"Kế hoạch rõ giúp mọi người biết mục tiêu, trách nhiệm và cách theo dõi kết quả."},
+    {q:"Sau khi hoàn thành nhiệm vụ, vì sao cần kiểm tra kết quả?",a:["Để tìm người trách phạt","Để đối chiếu mục tiêu, phát hiện thiếu sót và rút kinh nghiệm","Để kéo dài công việc","Vì không tin ai"],correct:1,why:"Kiểm tra giúp nhận biết kết quả thực tế và điều chỉnh cách làm cho lần sau."},
+    {q:"Khi làm việc nhóm, phân công nhiệm vụ rõ ràng giúp gì?",a:["Tăng chồng chéo","Không ai chịu trách nhiệm","Mỗi người hiểu phần việc và phối hợp đúng tiến độ","Một người phải làm tất cả"],correct:2,why:"Phân công rõ ràng làm tăng trách nhiệm cá nhân và hiệu quả phối hợp."},
+    {q:"Trong trao đổi, nói ngắn gọn và đúng trọng tâm giúp gì?",a:["Người nghe dễ hiểu và dễ thực hiện","Che giấu thông tin","Làm nội dung khó hiểu","Thể hiện mình biết nhiều"],correct:0,why:"Diễn đạt rõ ràng, thiết thực giúp truyền đạt đúng nội dung và tiết kiệm thời gian."},
+    {q:"Khi báo cáo gặp khó khăn, nên làm gì?",a:["Che giấu để khỏi bị hỏi","Báo cáo trung thực, nêu nguyên nhân và đề xuất hướng xử lý","Chỉ nói phần thuận lợi","Đổ lỗi cho người khác"],correct:1,why:"Báo cáo trung thực giúp tập thể xử lý vấn đề kịp thời và đúng thực tế."},
+    {q:"Học lý luận mà không liên hệ thực tiễn dễ dẫn đến điều gì?",a:["Kiến thức được vận dụng tốt hơn","Hiểu sâu hơn nhờ thực hành","Học thuộc máy móc, khó giải quyết công việc cụ thể","Tự động làm việc hiệu quả"],correct:2,why:"Kiến thức cần gắn với thực hành để tránh hình thức và nâng cao hiệu quả."},
+    {q:"Khi nhận được góp ý trái với ý kiến của mình, nên làm gì?",a:["Bác bỏ ngay","Lắng nghe, xem xét căn cứ rồi trao đổi bình tĩnh","Ngừng hợp tác","Tranh cãi để thắng"],correct:1,why:"Biết lắng nghe và kiểm tra căn cứ thể hiện tinh thần cầu thị."},
+    {q:"Tinh thần trách nhiệm trong công việc thể hiện rõ nhất ở hành động nào?",a:["Nhận việc rồi bỏ dở","Chỉ làm khi được nhắc","Chủ động thực hiện, báo cáo tiến độ và chịu trách nhiệm về kết quả","Đẩy việc khó cho người khác"],correct:2,why:"Trách nhiệm gắn với chủ động thực hiện và chịu trách nhiệm về phần việc của mình."},
+    {q:"Vì sao cần chống bệnh hình thức?",a:["Vì hình thức quan trọng hơn kết quả","Vì công việc cần có kết quả thực chất, không chỉ đẹp trên báo cáo","Vì không cần báo cáo","Vì không cần tổ chức"],correct:1,why:"Trọng tâm là hiệu quả thực tế, tránh chỉ chú trọng biểu hiện bên ngoài."},
+    {q:"Khi lựa chọn cách giải quyết một vấn đề, nên căn cứ vào đâu?",a:["Sở thích nhất thời","Tin đồn","Tình hình thực tế, mục tiêu và bằng chứng","Lời khen"],correct:2,why:"Quyết định cần dựa trên thực tế và mục tiêu cụ thể, không chỉ dựa vào cảm tính."},
+    {q:"Một người lãnh đạo hoặc trưởng nhóm cần làm gì để hiểu tình hình?",a:["Chỉ nghe một phía","Gần gũi, lắng nghe và nắm tình hình thực tế","Chỉ xem báo cáo thành tích","Tránh trao đổi với thành viên"],correct:1,why:"Nắm thực tế và lắng nghe nhiều phía giúp đánh giá đúng tình hình."},
+    {q:"Khi phát hiện quy trình làm việc có điểm bất hợp lý, nên làm gì?",a:["Giữ nguyên vì đã quen","Tự ý bỏ mọi quy định","Nêu vấn đề, phân tích nguyên nhân và đề xuất cải tiến phù hợp","Chỉ phàn nàn"],correct:2,why:"Sửa đổi cần dựa trên phân tích và giải pháp cụ thể, có trách nhiệm."},
+    {q:"Cách nào giúp tránh thói ba hoa trong báo cáo?",a:["Dùng nhiều từ hoa mỹ","Nói đúng sự việc, có số liệu hoặc ví dụ cần thiết","Kể chuyện ngoài lề","Lặp lại khẩu hiệu"],correct:1,why:"Báo cáo thiết thực nên rõ việc, rõ kết quả và có căn cứ."},
+    {q:"Tinh thần đoàn kết trong tập thể cần đi cùng điều gì?",a:["Né tránh mọi góp ý","Bao che sai sót","Thẳng thắn góp ý, tôn trọng nhau và cùng sửa việc chưa tốt","Chỉ bảo vệ ý kiến cá nhân"],correct:2,why:"Đoàn kết bền vững cần sự chân thành, tôn trọng và cùng hướng đến công việc chung."},
+    {q:"Bài học nào phù hợp nhất khi áp dụng tác phẩm vào học tập hiện nay?",a:["Chỉ ghi nhớ nội dung","Tự đánh giá, học hỏi, lập kế hoạch và sửa cách làm qua thực hành","Không cần hợp tác","Tránh nhận nhiệm vụ khó"],correct:1,why:"Có thể vận dụng tinh thần tự sửa đổi, học hỏi và làm việc thiết thực vào học tập hằng ngày."}
   ];
   let pendingFarmAction = null;
   let currentBookQuestion = null;
@@ -211,7 +231,7 @@
       '<button type="button" class="book-quiz-close" id="farm-book-close" aria-label="Đóng">×</button>'+ 
       '<div class="book-quiz-kicker">📖 THỬ THÁCH TRI THỨC</div>'+ 
       '<h2 id="farm-book-title">Trả lời câu hỏi để tiếp tục</h2>'+ 
-      '<p class="book-quiz-desc">Mỗi thao tác trong nông trại cần một câu trả lời đúng về sách <b>Sửa đổi lối làm việc</b>.</p>'+ 
+      '<p class="book-quiz-desc">Ngân hàng gồm 40 câu hỏi về sách <b>Sửa đổi lối làm việc</b>. Trả lời đúng để tiếp tục thao tác và tích lũy xu.</p>'+ 
       '<p class="book-quiz-action" id="farm-book-action"></p>'+ 
       '<div class="book-quiz-progress" id="farm-book-progress"></div>'+ 
       '<h3 id="farm-book-question"></h3>'+ 
@@ -273,6 +293,7 @@
     document.body.classList.remove("book-quiz-open");
     state.coins=(Number(state.coins)||0)+10;
     state.actionQuizCorrect=(Number(state.actionQuizCorrect)||0)+1;
+    recordMucAction("bookCorrect",1);
     trackSeasonalEventAction("book",null,1);
     state.lastAction="Trả lời đúng câu hỏi sách trước khi: "+actionName;
     save();render();
@@ -299,7 +320,7 @@
     state.seeds[type]--;
     state.plots[index]={type,plantedAt,watered:weatherEffect.naturalWater,wateredAt:weatherEffect.naturalWater?plantedAt:0,weatherMultiplier:weatherEffect.multiplier,weatherName:weatherEffect.weather.name,soilIndex:index};
     if(farmScienceSystem)farmScienceSystem.onPlant(index);
-    state.tasks.plant=true;trackSeasonalEventAction("plant",type,1);save();render();
+    state.tasks.plant=true;markDailyMission("plant");recordMucAction("plant",1);trackSeasonalEventAction("plant",type,1);save();render();
     notify("Đã gieo "+seed.name+"! Thời tiết: "+weatherEffect.weather.name+". "+(weatherEffect.naturalWater?"Mưa đã tưới miễn phí cho cây. ":weatherEffect.note));
   }
   function progress(plot){
@@ -347,7 +368,7 @@
     if(waterDrop)state.waterBottles=(state.waterBottles||0)+1;
     state.harvests++;
     state.plots[index]=null;
-    state.tasks.harvest=true;
+    state.tasks.harvest=true;markDailyMission("harvest");recordMucAction("harvest",1);
     trackSeasonalEventAction("harvest",plot.type,1);
     state.level=1+Math.floor(state.harvests/5);
     const newLabLevel=Math.min(5,1+Math.floor(state.researchPoints/30));
@@ -362,7 +383,7 @@
     if((state.waterBottles||0)<growing.length){notify("Cần "+growing.length+" bình nước để tưới hết cây. Hãy nhặt hoặc mua thêm.");return;}
     state.waterBottles-=growing.length;
     growing.forEach(p=>{p.watered=true;p.wateredAt=Date.now();const soilIndex=Number.isInteger(p.soilIndex)?p.soilIndex:state.plots.indexOf(p);const soil=state.agriculture.soil[soilIndex];soil.moisture=Math.min(100,(soil.moisture||0)+38);soil.lastUpdated=Date.now();});
-    state.tasks.water=true;trackSeasonalEventAction("water",null,growing.length);save();render();notify("Đã dùng "+growing.length+" bình nước. Cây phát triển nhanh hơn 50%! 💧");
+    state.tasks.water=true;markDailyMission("water");recordMucAction("water",1);trackSeasonalEventAction("water",null,growing.length);save();render();notify("Đã dùng "+growing.length+" bình nước. Cây phát triển nhanh hơn 50%! 💧");
   }
   function findWater(){
     const cooldown=10*60*1000, now=Date.now(), left=cooldown-(now-(state.waterPickupAt||0));
@@ -380,7 +401,7 @@
     state.coins-=5;state.totalSpent+=5;state.pet.hunger=Math.min(100,state.pet.hunger+30);state.pet.bond=Math.min(100,state.pet.bond+3);save();render();notify("Mèo Mướp ăn ngon lành! 🍓");
   }
   function playPet(){
-    state.pet.bond=Math.min(100,state.pet.bond+10);state.pet.hunger=Math.max(0,state.pet.hunger-5);state.tasks.play=true;trackSeasonalEventAction("play",null,1);save();render();notify("Pet rất vui khi được chơi cùng bạn! 💚");
+    state.pet.bond=Math.min(100,state.pet.bond+10);state.pet.hunger=Math.max(0,state.pet.hunger-5);state.tasks.play=true;markDailyMission("play");recordMucAction("play",1);trackSeasonalEventAction("play",null,1);save();render();notify("Pet rất vui khi được chơi cùng bạn! 💚");
   }
   function buyTicket(){
     const cost=25;
@@ -407,12 +428,6 @@
    
     const mainUrl=new URL("./index.html",document.baseURI);
     setTimeout(()=>{window.location.assign(mainUrl.href);},700);
-  }
-  function claimTask(task){
-    const rewards={plant:5,water:5,play:5,harvest:10};
-    if(!state.tasks[task]){notify("Bạn chưa hoàn thành nhiệm vụ này.");return;}
-    if(state.tasks["claimed_"+task]){notify("Nhiệm vụ này đã nhận thưởng rồi.");return;}
-    state.tasks["claimed_"+task]=true;state.coins+=rewards[task];save();render();notify("Hoàn thành nhiệm vụ! +"+rewards[task]+" xu.");
   }
   function renderPlots(){
     $("plots").innerHTML="";
@@ -445,8 +460,7 @@
 
   const makeCatalog=(prefixes,suffixes,icons,count,kind)=>{const out=[];for(let i=0;i<count;i++){out.push({id:kind+'_'+(i+1),name:prefixes[i%prefixes.length]+' '+suffixes[Math.floor(i/prefixes.length)%suffixes.length],icon:icons[i%icons.length],rank:i%20===0?'Huyền thoại':i%5===0?'Hiếm':'Thường',power:5+(i*7)%46,bonus:1+(i*3)%12});}return out;};
 
-  // 1.000 GIỐNG CÂY BỔ SUNG: 100 loài cây x 10 biến thể trong game.
-  // Các biến thể đặc biệt giúp người chơi có thêm mục tiêu sưu tầm/bé ngoan.
+
   const extraCropSpecies = [
     {name:'Xoài',icon:'🥭'},{name:'Chuối',icon:'🍌'},{name:'Dứa',icon:'🍍'},{name:'Đu đủ',icon:'🍈'},
     {name:'Thanh long',icon:'🐉'},{name:'Dưa hấu',icon:'🍉'},{name:'Dưa lưới',icon:'🍈'},{name:'Dưa gang',icon:'🍈'},
@@ -517,11 +531,7 @@
     state.seeds[key]=state.seeds[key]||0;
     cropIcons[key]=["🌱","🌿","🍃",item.icon];
   }
-  // =============================================
-  // CAY MOI MOI NGAY - CAP NHAT THEO GIO VIET NAM
-  // Moi ngay gioi thieu 1 giong trong bo suu tap 1.140 giong cay.
-  // Mo khoa vinh vien bang 5 diem nghien cuu + 1 cau hoi sach.
-  // =============================================
+
   function getDailyPlantDateInfo(){
     const parts=new Intl.DateTimeFormat("en-US",{
       timeZone:"Asia/Ho_Chi_Minh",year:"numeric",month:"2-digit",day:"2-digit"
@@ -530,7 +540,7 @@
     const y=Number(part("year")),m=Number(part("month")),d=Number(part("day"));
     const key=y+"-"+String(m).padStart(2,"0")+"-"+String(d).padStart(2,"0");
     const dayNumber=Math.floor(Date.UTC(y,m-1,d)/86400000);
-    // Viet Nam dung UTC+7 va khong ap dung gio mua he.
+
     const nextMidnight=Date.UTC(y,m-1,d+1)-7*60*60*1000;
     return {y,m,d,key,dayNumber,nextMidnight};
   }
@@ -640,7 +650,7 @@
     if(r<0.30)return {id:"shiny",name:"Shiny",bonus:6};
     return {id:"normal",name:"Thường",bonus:0};
   }
-  function discover(kind,cost,catalog){if((state.researchPoints||0)<cost){notify('Chưa đủ điểm bé ngoan!');return;}const owned=state.collections[kind]||[];const available=catalog.filter(x=>!owned.includes(x.id));if(!available.length){notify('Bạn đã sưu tầm đủ bộ này rồi!');return;}state.researchPoints-=cost;const item=available[Math.floor(Math.random()*available.length)];owned.push(item.id);state.collections[kind]=owned;if(kind==='crops'||kind==='research')trackSeasonalEventAction("research",item.id,1);if(kind==='crops'){unlockResearchSeed(item);if(state.story&&state.story.chapter2MucDone&&!state.story.chapter2ResearchDone){state.story.chapter2ResearchDone=true;state.coins+=15;state.researchPoints+=5;state.lastAction='Hoàn thành Chương 2: +15 xu, +5 điểm bé ngoan';}}if(kind==='pets'){state.activePet=item.id;const variant=rollPetVariant();state.pet={...state.pet,name:item.name,icon:item.icon,variant:variant.id,variantName:variant.name,bonus:variant.bonus};}if(kind==='chickens'){state.activeChicken=item.id;}save();render();renderCollection();renderEvolutionLab();$('collection-result').textContent=item.icon+' '+item.name+' · '+item.rank+' · Chỉ số '+item.power+' · Thưởng '+item.bonus+(kind==='pets'?' · '+state.pet.variantName:'');notify('Đã mở khóa '+item.name+(kind==='pets'?' · '+state.pet.variantName:'')+'!');}
+  function discover(kind,cost,catalog){if((state.researchPoints||0)<cost){notify('Chưa đủ điểm bé ngoan!');return;}const owned=state.collections[kind]||[];const available=catalog.filter(x=>!owned.includes(x.id));if(!available.length){notify('Bạn đã sưu tầm đủ bộ này rồi!');return;}state.researchPoints-=cost;const item=available[Math.floor(Math.random()*available.length)];owned.push(item.id);state.collections[kind]=owned;if(kind==='crops'||kind==='research')trackSeasonalEventAction("research",item.id,1);if(kind==='crops'||kind==='research')recordMucAction("research",1);if(kind==='crops'){unlockResearchSeed(item);if(state.story&&state.story.chapter2MucDone&&!state.story.chapter2ResearchDone){state.story.chapter2ResearchDone=true;state.coins+=15;state.researchPoints+=5;state.lastAction='Hoàn thành Chương 2: +15 xu, +5 điểm bé ngoan';}}if(kind==='pets'){state.activePet=item.id;const variant=rollPetVariant();state.pet={...state.pet,name:item.name,icon:item.icon,variant:variant.id,variantName:variant.name,bonus:variant.bonus};}if(kind==='chickens'){state.activeChicken=item.id;}save();render();renderCollection();renderEvolutionLab();$('collection-result').textContent=item.icon+' '+item.name+' · '+item.rank+' · Chỉ số '+item.power+' · Thưởng '+item.bonus+(kind==='pets'?' · '+state.pet.variantName:'');notify('Đã mở khóa '+item.name+(kind==='pets'?' · '+state.pet.variantName:'')+'!');}
   function renderCollection(){const groups=[['crops',cropCatalog],['research',researchCatalog],['pets',petCatalog],['chickens',chickenCatalog]];groups.forEach(([key,list])=>{const el=$('count-'+key);if(el)el.textContent=(state.collections[key]||[]).length+'/'+list.length;});const all=[...cropCatalog.map(x=>({...x,group:'Cây trồng',key:'crops'})),...researchCatalog.map(x=>({...x,group:'Cây bé ngoan',key:'research'})),...petCatalog.map(x=>({...x,group:'Pet',key:'pets'})),...chickenCatalog.map(x=>({...x,group:'Giống gà',key:'chickens'}))];$('collection-book').innerHTML=all.filter(x=>(state.collections[x.key]||[]).includes(x.id)).map(x=>'<div class="collection-entry">'+x.icon+' <b>'+x.name+'</b><small>'+x.group+' · '+x.rank+' · Chỉ số '+x.power+' · Bonus '+x.bonus+'</small></div>').join('')||'Chưa có mục sưu tầm nào.';}
   $('collect-crop').addEventListener('click',()=>askBeforeFarmAction('Mở khóa giống cây',()=>discover('crops',5,cropCatalog)));
   $('research-crop').addEventListener('click',()=>askBeforeFarmAction('bé ngoan cây trồng',()=>discover('research',5,researchCatalog)));
@@ -717,6 +727,7 @@
     state.deliveryHistory=state.deliveryHistory||[];
     state.deliveryHistory.push({crop:seeds[type].name,district,amount,coins:reward});
     trackSeasonalEventAction("deliver",type,amount);
+    recordMucAction("deliver",1);
     state.labLevel=Math.min(5,Math.max(1,1+Math.floor(state.researchPoints/30)));
     $("delivery-result").textContent="✅ Đã giao "+amount+" "+seeds[type].name+" đến "+district+". Nhận +"+reward+" xu và +"+(amount*2)+" điểm bé ngoan.";
     save();render();renderDelivery();notify("Giao hàng thành công!");
@@ -741,52 +752,142 @@
     ];
     $("inventory-grid").innerHTML='<div class="inventory-group-title">🌱 HẠT GIỐNG TRONG TÚI</div>'+seedItems.map(x=>'<div class="inventory-item seed-in-bag"><span>'+x.icon+'</span><b>'+x.name+'</b><small>Số lượng: <strong>'+x.count+'</strong></small></div>').join("")+'<div class="inventory-group-title">📦 NÔNG SẢN & VẬT PHẨM</div>'+produceItems.map(x=>'<div class="inventory-item"><span>'+x.icon+'</span><b>'+x.name+'</b><small>Số lượng: <strong>'+x.count+'</strong></small></div>').join("")+'<div class="inventory-group-title">🧪 VẬT TƯ NÔNG NGHIỆP & CHĂN NUÔI</div>'+farmItems.map(x=>'<div class="inventory-item"><span>'+x.icon+'</span><b>'+x.name+'</b><small>Số lượng: <strong>'+x.count+'</strong></small></div>').join("");
   }
+  const mucStoryChapters = [
+    {title:"Nhìn nhận để sửa đổi",skill:"Tự nhận thức và tự phê bình",lesson:"Muốn tiến bộ, trước hết cần thành thật nhìn nhận điều mình làm chưa tốt.",dialogue:"Chào người chăm vườn! Một người làm việc tốt có cần nhìn nhận những khuyết điểm của mình không?",question:"Một người làm việc tốt có cần nhìn nhận những khuyết điểm của mình không?",answers:["Có, để nhận ra sai sót và sửa đổi.","Không, chỉ cần quan tâm đến kết quả.","Không cần học hỏi thêm."],correct:0,why:"Nhận ra hạn chế là bước đầu để sửa chữa và tiến bộ.",action:"plant",target:1,task:"Gieo ít nhất 1 hạt giống sau khi nhận nhiệm vụ.",reward:[20,10]},
+    {title:"Học đi đôi với hành",skill:"Vận dụng kiến thức vào thực tế",lesson:"Kiến thức chỉ phát huy giá trị khi được áp dụng vào công việc cụ thể.",dialogue:"Đọc sách là quan trọng, nhưng chỉ đọc mà không thực hành thì đã đủ chưa?",question:"Cách học nào giúp kiến thức trở nên thiết thực?",answers:["Chỉ học thuộc câu chữ.","Kết hợp tìm hiểu, thực hành và rút kinh nghiệm.","Chỉ nghe người khác kể."],correct:1,why:"Học cần gắn với thực hành để hiểu sâu và tạo kết quả thực tế.",action:"harvest",target:1,task:"Thu hoạch ít nhất 1 cây trong vườn.",reward:[25,10]},
+    {title:"Lập kế hoạch trước khi làm",skill:"Quản lý thời gian và công việc",lesson:"Việc có mục tiêu, thứ tự ưu tiên và thời hạn rõ ràng sẽ dễ thực hiện hơn.",dialogue:"Một khu vườn muốn phát triển cần có kế hoạch. Trước khi làm, ta nên chuẩn bị điều gì?",question:"Một kế hoạch công việc tốt cần có những nội dung nào?",answers:["Mục tiêu, việc cần làm, thời hạn và người phụ trách.","Chỉ cần nghĩ trong đầu.","Làm việc nào thấy thích trước."],correct:0,why:"Kế hoạch rõ ràng giúp phân công, theo dõi tiến độ và kiểm tra kết quả.",action:"plant",target:2,task:"Gieo thêm ít nhất 2 hạt giống để thực hiện kế hoạch.",reward:[30,12]},
+    {title:"Tinh thần trách nhiệm",skill:"Chủ động và chịu trách nhiệm",lesson:"Đã nhận việc thì cần cố gắng hoàn thành, báo cáo trung thực khi gặp khó khăn.",dialogue:"Nếu đã nhận chăm sóc luống cây, người làm vườn nên làm gì khi gặp khó khăn?",question:"Hành động nào thể hiện tinh thần trách nhiệm?",answers:["Bỏ qua và chờ người khác.","Che giấu vấn đề.","Chủ động xử lý, báo cáo khó khăn và theo dõi kết quả."],correct:2,why:"Trách nhiệm thể hiện ở việc chủ động thực hiện và trung thực với kết quả.",action:"water",target:1,task:"Tưới ít nhất một cây đang cần nước.",reward:[30,12]},
+    {title:"Đoàn kết và phối hợp",skill:"Làm việc nhóm",lesson:"Cùng trao đổi, phân công rõ và hỗ trợ nhau sẽ giúp hoàn thành mục tiêu chung.",dialogue:"Khu vườn có nhiều việc. Làm thế nào để mọi người cùng hoàn thành tốt?",question:"Cách phối hợp nào phù hợp trong một nhóm?",answers:["Phân công rõ ràng, lắng nghe và hỗ trợ nhau.","Một người làm tất cả.","Không chia sẻ thông tin."],correct:0,why:"Phối hợp hiệu quả cần phân công, trao đổi và tôn trọng đóng góp của nhau.",action:"play",target:1,task:"Chơi và tăng gắn kết với thú cưng một lần.",reward:[35,12]},
+    {title:"Lắng nghe và góp ý xây dựng",skill:"Giao tiếp và phản hồi",lesson:"Góp ý cần chân thành, có căn cứ, tập trung vào việc cần sửa chứ không công kích cá nhân.",dialogue:"Một người bạn góp ý rằng cách chăm cây của bạn chưa hợp lý. Bạn nên phản ứng thế nào?",question:"Khi nhận góp ý trái với ý kiến của mình, nên làm gì?",answers:["Bác bỏ ngay.","Lắng nghe, xem xét căn cứ rồi trao đổi bình tĩnh.","Ngừng hợp tác."],correct:1,why:"Lắng nghe và kiểm tra căn cứ giúp tiếp nhận điều đúng và phản hồi có trách nhiệm.",action:"bookCorrect",target:1,task:"Trả lời đúng thêm 1 câu hỏi sách trong thao tác nông trại.",reward:[35,15]},
+    {title:"Nói và viết rõ ràng",skill:"Trình bày và báo cáo",lesson:"Thông tin nên ngắn gọn, đúng trọng tâm, trung thực và phù hợp với người nghe.",dialogue:"Mực muốn bạn viết một bản báo cáo về khu vườn. Điều gì cần được ưu tiên?",question:"Cách báo cáo nào rõ ràng và thiết thực?",answers:["Kể nhiều chuyện ngoài lề.","Chỉ nêu thành tích.","Nêu đúng việc đã làm, kết quả và vấn đề còn tồn tại."],correct:2,why:"Báo cáo tốt cần phản ánh đúng thực tế, cả kết quả lẫn điểm cần cải thiện.",action:"deliver",target:1,task:"Giao ít nhất một chuyến nông sản đến khu phố.",reward:[40,15]},
+    {title:"Kiểm tra và rút kinh nghiệm",skill:"Tự đánh giá và cải tiến",lesson:"Sau mỗi công việc, cần đối chiếu kết quả với mục tiêu để biết điều gì hiệu quả và điều gì cần sửa.",dialogue:"Một luống cây đã thu hoạch. Làm sao biết cách chăm sóc vừa rồi có hiệu quả?",question:"Vì sao cần kiểm tra kết quả sau khi hoàn thành công việc?",answers:["Để kéo dài công việc.","Để đối chiếu mục tiêu, phát hiện thiếu sót và rút kinh nghiệm.","Để tìm người trách phạt."],correct:1,why:"Kiểm tra giúp đánh giá kết quả thực tế và điều chỉnh cách làm cho lần sau.",action:"harvest",target:3,task:"Thu hoạch tổng cộng ít nhất 3 cây.",reward:[45,15]},
+    {title:"Chống chủ quan và hẹp hòi",skill:"Tư duy khách quan và tôn trọng tập thể",lesson:"Cần dựa trên thực tế, lắng nghe nhiều phía và đặt mục tiêu chung lên trên lợi ích riêng.",dialogue:"Mực tìm thấy hai bản nhận xét khác nhau. Bạn cần làm gì trước khi kết luận?",question:"Cách nào giúp tránh đánh giá chủ quan?",answers:["Chỉ tin điều mình nghĩ.","Kết luận theo lời đồn.","Kiểm tra sự việc, lắng nghe nhiều phía và xem xét bằng chứng."],correct:2,why:"Đánh giá khách quan cần căn cứ thực tế, không dựa vào cảm tính hay tin đồn.",action:"research",target:1,task:"Khám phá ít nhất một giống cây trong phòng thí nghiệm.",reward:[50,18]},
+    {title:"Biến tri thức thành hành động",skill:"Tổng kết và cam kết cải thiện",lesson:"Sửa đổi không dừng ở lời hứa; cần biến điều đã học thành hành động đều đặn và có kiểm tra.",dialogue:"Đây là trang cuối của hành trình. Bạn đã học được cách nhận lỗi, lập kế hoạch và phối hợp. Bây giờ hãy chứng minh bằng hành động nhé!",question:"Điều quan trọng nhất khi vận dụng bài học sửa đổi vào cuộc sống là gì?",answers:["Chỉ ghi nhớ khẩu hiệu.","Biến điều đã học thành việc làm cụ thể, kiên trì kiểm tra và cải thiện.","Chờ người khác thay đổi trước."],correct:1,why:"Giá trị của tri thức thể hiện ở hành động cụ thể, liên tục tự xem xét và hoàn thiện.",action:"deliver",target:2,task:"Hoàn thành thêm 2 chuyến giao hàng nông sản.",reward:[100,30]}
+  ];
+
+  function getMucSaga(){
+    if(!state.story)state.story={};
+    if(!state.story.mucSaga)state.story.mucSaga={chapter:1,accepted:false,questionPassed:false,progress:0,completed:[]};
+    const saga=state.story.mucSaga;
+    saga.chapter=Math.min(10,Math.max(1,Number(saga.chapter)||1));
+    saga.progress=Math.max(0,Number(saga.progress)||0);
+    if(!Array.isArray(saga.completed))saga.completed=[];
+    return saga;
+  }
+  function currentMucChapter(){return mucStoryChapters[getMucSaga().chapter-1];}
   function startMucQuest(){
-    if(state.story.chapter2MucDone){notify("Bạn đã hoàn thành nhiệm vụ của Bình Mực rồi!");return;}
-    state.story.chapter2MucAccepted=true;
+    const saga=getMucSaga();
+    if(saga.completed.includes(saga.chapter)){notify("Chương này đã hoàn thành. Hãy nhận chương tiếp theo nhé!");return;}
+    saga.accepted=true;
+    saga.questionPassed=false;
+    saga.progress=0;
     save();renderStory();
-    notify("Đã nhận nhiệm vụ chương 2 từ  Bình Mực!");
+    notify("Mực đã giao nhiệm vụ Chương "+saga.chapter+"!");
   }
   function answerMucQuest(answer){
-    if(!state.story.chapter2MucAccepted||state.story.chapter2MucDone)return;
-    if(answer!=="a"){
-      $("muc-feedback").textContent="Chưa chính xác. Mực nhắc bạn: muốn tiến bộ, chúng ta cần dũng cảm nhìn nhận điều chưa tốt và tìm cách sửa đổi. Hãy thử lại nhé!";
+    const saga=getMucSaga(),chapter=currentMucChapter();
+    if(!saga.accepted||saga.completed.includes(saga.chapter)||saga.questionPassed)return;
+    if(Number(answer)!==chapter.correct){
+      $("muc-feedback").textContent="Chưa chính xác. Mực giải thích: "+chapter.why+" Hãy đọc lại rồi thử lần nữa nhé!";
       return;
     }
-    state.story.chapter2MucDone=true;
-    state.coins+=20;
-    state.researchPoints=(Number(state.researchPoints)||0)+10;
+    saga.questionPassed=true;
+    $("muc-feedback").textContent="✅ Chính xác! "+chapter.why+" Bây giờ hãy thực hiện nhiệm vụ thực tế: "+chapter.task;
+    save();checkMucChapterCompletion();renderStory();
+  }
+  function recordMucAction(action,count=1){
+    const saga=getMucSaga(),chapter=currentMucChapter();
+    if(!saga.accepted||!saga.questionPassed||saga.completed.includes(saga.chapter)||chapter.action!==action)return;
+    saga.progress=Math.min(chapter.target,saga.progress+Math.max(1,Number(count)||1));
+    checkMucChapterCompletion();
+  }
+  function checkMucChapterCompletion(){
+    const saga=getMucSaga(),chapter=currentMucChapter();
+    if(!saga.accepted||!saga.questionPassed||saga.progress<chapter.target||saga.completed.includes(saga.chapter))return;
+    saga.completed.push(saga.chapter);
+    state.coins=(Number(state.coins)||0)+chapter.reward[0];
+    state.researchPoints=(Number(state.researchPoints)||0)+chapter.reward[1];
     state.labLevel=Math.min(5,Math.max(1,1+Math.floor(state.researchPoints/30)));
-    state.lastAction="Hoàn thành nhiệm vụ Mực: +20 xu bé ngoan, +10 điểm  bé ngoan";
-    save();render();renderStory();
-    notify("Chính xác! +20 xu bé ngoan và +10 điểm bé ngoan.");
+    state.lastAction="Hoàn thành Chương "+saga.chapter+": +"+chapter.reward[0]+" xu, +"+chapter.reward[1]+" điểm nghiên cứu";
+    save();
+    notify("Hoàn thành Chương "+saga.chapter+" – "+chapter.title+"! Nhận +"+chapter.reward[0]+" xu và +"+chapter.reward[1]+" điểm nghiên cứu.");
+    render();
+  }
+  function advanceMucChapter(){
+    const saga=getMucSaga();
+    if(!saga.completed.includes(saga.chapter)){notify("Bạn cần hoàn thành chương hiện tại trước.");return;}
+    if(saga.chapter>=10){notify("Bạn đã hoàn thành toàn bộ 10 chương của Mực!");return;}
+    saga.chapter++;
+    saga.accepted=false;saga.questionPassed=false;saga.progress=0;
+    save();renderStory();notify("Mực đã mở Chương "+saga.chapter+"!");
   }
   function renderStory(){
-    const story=state.story||defaultState.story;
-    const start=$("muc-start-area"),answers=$("muc-answer-area"),next=$("chapter2-next-step"),complete=$("chapter2-complete");
-    if(!start||!answers||!next||!complete)return;
-    start.hidden=!!story.chapter2MucAccepted||!!story.chapter2MucDone;
-    answers.hidden=!story.chapter2MucAccepted||!!story.chapter2MucDone;
-    next.hidden=!story.chapter2MucDone;
-    complete.hidden=!story.chapter2ResearchDone;
-    $("chapter2-progress").textContent=(story.chapter2MucDone?1:0)+(story.chapter2ResearchDone?1:0)+"/2 nhiệm vụ";
-    if(story.chapter2MucDone){
-      $("muc-dialogue").textContent="“Tốt lắm! Nhận ra khuyết điểm là bước đầu. Bây giờ hãy dùng kiến thức để khám phá một giống cây mới trong phòng thí nghiệm.”";
-      $("muc-feedback").textContent="✅ Đã hoàn thành: Nhìn nhận khuyết điểm và sửa đổi. Phần thưởng: 20 xu bé ngoan và 10 điểm bé ngoan.";
-      $("chapter2-next-status").textContent=story.chapter2ResearchDone?"Tiến độ: Đã hoàn thành":"Tiến độ: Chưa hoàn thành – hãy khám phá 1 giống cây trong phòng thí nghiệm.";
-    }else if(story.chapter2MucAccepted){
-      $("muc-dialogue").textContent="“Hãy suy nghĩ kỹ nhé. Người biết sửa đổi sẽ ngày càng tiến bộ.”";
-      $("muc-feedback").textContent="Nhiệm vụ đang thực hiện: Chọn đáp án đúng để giúp Mực khôi phục trang sách.";
-    }
+    const saga=getMucSaga(),chapter=currentMucChapter();
+    const badge=$("muc-story-badge"),progress=$("chapter2-progress"),dialogue=$("muc-dialogue"),questionBox=$("muc-story-question"),answers=$("muc-answer-area"),start=$("muc-start-area"),next=$("muc-next-chapter"),feedback=$("muc-feedback"),task=$("muc-story-task"),chapters=$("muc-chapter-list"),finale=$("muc-story-finale");
+    if(!badge||!progress||!dialogue||!questionBox||!answers||!start||!next||!feedback||!task||!chapters)return;
+    const done=saga.completed.includes(saga.chapter);
+    badge.textContent="📖 CHƯƠNG "+saga.chapter+" / 10";
+    progress.textContent=saga.completed.length+"/10 chương hoàn thành";
+    dialogue.textContent=done?(saga.chapter===10?"Bạn đã hoàn thành hành trình! Cây Tri Thức đã hồi sinh. Hãy tiếp tục vận dụng những kỹ năng đã học mỗi ngày.":"Tốt lắm! Chương này đã hoàn thành. Khi sẵn sàng, hãy nhận thử thách tiếp theo nhé."):chapter.dialogue;
+    questionBox.innerHTML='<b>Câu hỏi của Mực:</b> '+chapter.question+'<br><small>Chủ đề kỹ năng: '+chapter.skill+'</small>';
+    answers.innerHTML=chapter.answers.map((a,i)=>'<button class="story-answer" type="button" data-muc-answer="'+i+'" '+(saga.questionPassed||done?'disabled':'')+'>'+String.fromCharCode(65+i)+'. '+a+'</button>').join("");
+    answers.hidden=!saga.accepted||saga.questionPassed||done;
+    start.hidden=saga.accepted||done;
+    next.hidden=!done||saga.chapter===10;
+    if(finale)finale.hidden=!(saga.chapter===10&&done);
+    next.textContent="📖 Nhận Chương tiếp theo →";
+    task.textContent=done?"✅ Đã hoàn thành nhiệm vụ thực tế.":saga.questionPassed?"Nhiệm vụ thực tế: "+chapter.task+" · Tiến độ "+saga.progress+"/"+chapter.target: "Kỹ năng trọng tâm: "+chapter.skill+". Trả lời câu hỏi để mở nhiệm vụ thực tế.";
+    if(done)feedback.textContent="🏅 Chương "+saga.chapter+" hoàn thành! "+chapter.lesson+" Phần thưởng: +"+chapter.reward[0]+" xu, +"+chapter.reward[1]+" điểm nghiên cứu.";
+    else if(saga.questionPassed)feedback.textContent="Đúng rồi! "+chapter.why+" Hãy hoàn thành mục tiêu để nhận dấu ấn chương.";
+    else if(saga.accepted)feedback.textContent="Hãy chọn câu trả lời phù hợp. Trả lời sai không bị trừ xu hay điểm.";
+    else feedback.textContent="Nhận nhiệm vụ từ Mực, trả lời câu hỏi và áp dụng bài học vào hoạt động nông trại.";
+    chapters.innerHTML=mucStoryChapters.map((item,i)=>'<div class="muc-chapter-item '+(saga.completed.includes(i+1)?'done':i+1===saga.chapter?'current':'')+'"><b>'+(saga.completed.includes(i+1)?'✅':i+1===saga.chapter?'📖':'🔒')+' Chương '+(i+1)+': '+item.title+'</b><small>'+item.skill+'</small></div>').join("");
   }
   $("muc-start-quest").addEventListener("click",startMucQuest);
-  document.querySelectorAll("[data-muc-answer]").forEach(btn=>btn.addEventListener("click",()=>answerMucQuest(btn.dataset.mucAnswer)));
+  $("muc-answer-area").addEventListener("click",event=>{const btn=event.target.closest("[data-muc-answer]");if(btn)answerMucQuest(btn.dataset.mucAnswer);});
+  $("muc-next-chapter").addEventListener("click",advanceMucChapter);
+
+  const dailyTaskDefinitions={plant:{label:"Gieo một hạt giống",reward:5},water:{label:"Chăm sóc khu vườn",reward:5},play:{label:"Kết bạn với thú cưng",reward:5},harvest:{label:"Thu hoạch thành quả",reward:10}};
+  function ensureDailyMissions(){
+    const today=getDailyPlantDateInfo().key;
+    if(!state.dailyMissions)state.dailyMissions={dateKey:"",progress:{},claimed:{}};
+    if(state.dailyMissions.dateKey!==today){
+      state.dailyMissions={dateKey:today,progress:{plant:false,water:false,play:false,harvest:false},claimed:{}};
+      save();
+    }
+    return state.dailyMissions;
+  }
+  function markDailyMission(key){
+    const daily=ensureDailyMissions();
+    if(daily.progress[key]!==true){daily.progress[key]=true;save();}
+  }
+  function claimTask(task){
+    const daily=ensureDailyMissions(),definition=dailyTaskDefinitions[task];
+    if(!definition)return;
+    if(!daily.progress[task]){notify("Bạn chưa hoàn thành nhiệm vụ này.");return;}
+    if(daily.claimed[task]){notify("Nhiệm vụ hôm nay đã nhận thưởng rồi.");return;}
+    daily.claimed[task]=true;state.coins+=definition.reward;save();render();notify("Hoàn thành nhiệm vụ! +"+definition.reward+" xu.");
+  }
 
   function renderTasks(){
+    const daily=ensureDailyMissions();
     document.querySelectorAll(".task-btn").forEach(btn=>{
-      const key=btn.dataset.task,claimed=!!state.tasks["claimed_"+key],done=!!state.tasks[key];
-      btn.disabled=!done||claimed;btn.textContent=claimed?"Đã nhận":done?"Nhận thưởng":"Chưa hoàn thành";
+      const key=btn.dataset.task,claimed=!!daily.claimed[key],done=!!daily.progress[key],reward=dailyTaskDefinitions[key]?.reward||0;
+      btn.disabled=!done||claimed;btn.textContent=claimed?"Đã nhận":done?"Nhận "+reward+" xu":"Chưa hoàn thành";
     });
+    const dateEl=$("daily-task-date");if(dateEl)dateEl.textContent="Nhiệm vụ ngày "+daily.dateKey+" · Làm mới lúc 00:00 giờ Việt Nam";
+    updateDailyTaskClock();
+  }
+  function updateDailyTaskClock(){
+    const previousKey=state.dailyMissions&&state.dailyMissions.dateKey;
+    const daily=ensureDailyMissions();
+    if(previousKey&&previousKey!==daily.dateKey){renderTasks();return;}
+    const timer=$("daily-task-countdown");if(!timer)return;
+    const remaining=Math.max(0,getDailyPlantDateInfo().nextMidnight-Date.now());
+    const hh=String(Math.floor(remaining/3600000)).padStart(2,"0");
+    const mm=String(Math.floor((remaining%3600000)/60000)).padStart(2,"0");
+    const ss=String(Math.floor((remaining%60000)/1000)).padStart(2,"0");
+    timer.textContent=hh+":"+mm+":"+ss;
   }
   function render(){
     $("coin-count").textContent=state.coins;$("level").textContent=state.level;$("harvest-total").textContent=state.harvests;
@@ -827,13 +928,13 @@
   });
  
   setInterval(()=>{if(state.plots.some(Boolean))renderPlots();},1000);
-  // Cap nhat dong ho va tu chuyen cay moi khi sang ngay moi (gio Viet Nam).
+
   setInterval(updateDailyPlantClock,1000);
+  setInterval(updateDailyTaskClock,1000);
  
-  window.addEventListener("storage",e=>{if(e.key===QUIZ_KEY)renderInventory();});
-  // =============================================
-  // SỰ KIỆN THEO MÙA + PHẦN THƯỞNG VĨNH VIỄN + UPDATE TUẦN
-  // =============================================
+  window.addEventListener("storage",e=>{if(e.key===QUIZ_KEY)renderInventory();if(e.key===GAME_KEY){state=loadState();render();}});
+  window.addEventListener("focus",()=>{ensureDailyMissions();renderTasks();renderStory();});
+
   (function initSeasonalEvents(){
     const EVENT_TZ = "Asia/Ho_Chi_Minh";
     const EVENT_STORE_KEY = "aeCayKheSeasonalEvents_v1";
@@ -1106,7 +1207,7 @@
     function trackActions(action,detail,amount){
       const today=getVNDate(),todayNo=dayNumber(today),events=getEventList(today),active=events.find(e=>e.startNo<=todayNo&&e.endNo>=todayNo);
       const count=Math.max(1,Number(amount)||1),data=readEventStore();let messages=[],shouldRender=false;
-      // Nhiệm vụ sự kiện: chỉ ghi nhận hành động trong đúng thời gian lễ hội.
+    
       if(active){
         const questState=data.quests[active.id]||(data.quests[active.id]={counts:{},completed:[],finalRewardClaimed:false});
         active.content.quests.forEach(q=>{
@@ -1136,7 +1237,6 @@
         }
       }
 
-      // Nhiệm vụ tuần: ba mục tiêu thay đổi theo tuần, reset vào thứ Hai 00:00 giờ Việt Nam.
       const bundle=ensureWeekly(data,today),weekly=bundle.weekly;
       bundle.info.plan.tasks.forEach(task=>{
         if(task.action!==action||(weekly.completed||[]).includes(task.id))return;
@@ -1202,10 +1302,7 @@
     document.addEventListener("visibilitychange",function(){if(!document.hidden)updateAllEventUI();});
   })();
 
-  // ==========================================================
-  // HE THONG NONG NGHIEP MO PHONG: DAT, VONG DOI, THIEN DICH,
-  // DICH BENH, CHAN NUOI, THI TRUONG, ANH SANG VA NHIET DO.
-  // ==========================================================
+
   function createFarmScienceSystem(){
     const root=document.getElementById("page-farm");
     const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
@@ -1342,7 +1439,6 @@
   }
 
   farmScienceSystem=createFarmScienceSystem();
-  // Khoi dong tram thoi tiet sau khi cac bang su kien da duoc tao.
   weatherSystem.init();
   farmScienceSystem.init();
 
