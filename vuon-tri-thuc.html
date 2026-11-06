@@ -131,40 +131,29 @@
     </section>
 
     <section class="tab-page" id="page-tasks">
-      <div class="section-heading"><div><p class="eyebrow">MỖI NGÀY MỘT VIỆC TỐT</p><h2>Nhiệm vụ</h2></div></div>
+      <div class="section-heading"><div><p class="eyebrow">MỖI NGÀY MỘT VIỆC TỐT</p><h2>Nhiệm vụ</h2></div><div class="daily-task-clock"><small id="daily-task-date">Nhiệm vụ hôm nay</small><b>⏳ Làm mới sau <span id="daily-task-countdown">--:--:--</span></b></div></div>
       <div class="tasks panel">
         <div class="task"><span>🌱</span><div><b>Gieo một hạt giống</b><small>Trồng ít nhất một cây trong vườn.</small></div><button class="secondary task-btn" data-task="plant">Nhận 5 xu</button></div>
         <div class="task"><span>💧</span><div><b>Chăm sóc khu vườn</b><small>Tưới cây ít nhất một lần.</small></div><button class="secondary task-btn" data-task="water">Nhận 5 xu</button></div>
         <div class="task"><span>🐾</span><div><b>Kết bạn với thú cưng</b><small>Chơi cùng pet một lần.</small></div><button class="secondary task-btn" data-task="play">Nhận 5 xu</button></div>
         <div class="task"><span>🍃</span><div><b>Thu hoạch thành quả</b><small>Thu hoạch ít nhất một cây.</small></div><button class="secondary task-btn" data-task="harvest">Nhận 10 xu</button></div>
       </div>
-      <section class="story-chapter panel" id="chapter2-story">
-        <div class="story-topline"><span class="story-badge">📖 CHƯƠNG 2</span><span class="story-progress" id="chapter2-progress">0/2 nhiệm vụ</span></div>
-        <h2>Thư viện của người ham học</h2>
-        <p class="story-intro">Thư viện cũ đã mở cửa, nhưng những trang sách quan trọng vẫn đang bị thất lạc. Hãy trò chuyện với Mực để bắt đầu hành trình tìm lại tri thức.</p>
+      <section class="story-chapter panel" id="muc-ten-chuong-story">
+        <div class="story-topline"><span class="story-badge" id="muc-story-badge">📖 CHƯƠNG 1 / 10</span><span class="story-progress" id="chapter2-progress">0/10 chương hoàn thành</span></div>
+        <h2>📚 Hành trình 10 chương cùng Mực</h2>
+        <p class="story-intro">Cùng Mực khám phá những bài học từ cuốn <b>Sửa đổi lối làm việc</b> và rèn luyện kỹ năng tự nhận thức, học tập, lập kế hoạch, trách nhiệm, giao tiếp, phối hợp và cải tiến công việc.</p>
         <div class="story-npc">
           <div class="story-npc-avatar" aria-hidden="true">🐈‍⬛</div>
-          <div class="story-npc-dialogue">
-            <b>Mực – Thủ thư</b>
-            <p id="muc-dialogue">“Chào người chăm vườn! Một người làm việc tốt có cần nhìn nhận những khuyết điểm của mình không?”</p>
-          </div>
+          <div class="story-npc-dialogue"><b>Mực – Thủ thư</b><p id="muc-dialogue">Chào người chăm vườn! Ta sẽ cùng nhau tìm lại mười trang sách và biến từng bài học thành hành động.</p></div>
         </div>
-        <div class="story-actions" id="muc-start-area">
-          <button class="primary" id="muc-start-quest">💬 Nhận nhiệm vụ từ Mực</button>
+        <div class="story-actions" id="muc-start-area"><button class="primary" id="muc-start-quest" type="button">💬 Nhận nhiệm vụ từ Mực</button></div>
+        <div id="muc-answer-area" class="story-answers" hidden>
+          <p class="story-question" id="muc-story-question"></p>
         </div>
-        <div class="story-answers" id="muc-answer-area" hidden>
-          <p class="story-question"><b>Câu hỏi của Mực:</b> Một người làm việc tốt có cần nhìn nhận những khuyết điểm của mình không?</p>
-          <button class="story-answer" data-muc-answer="a">A. Có, để nhận ra sai sót và sửa đổi.</button>
-          <button class="story-answer" data-muc-answer="b">B. Không, chỉ cần quan tâm đến kết quả.</button>
-          <button class="story-answer" data-muc-answer="c">C. Không cần học hỏi thêm.</button>
-        </div>
-        <p class="story-feedback" id="muc-feedback" aria-live="polite">Nhiệm vụ chính: Trò chuyện với Mực và trả lời câu hỏi trong sách.</p>
-        <div class="story-next-step" id="chapter2-next-step" hidden>
-          <b>🔎 Nhiệm vụ tiếp theo: Khám phá tri thức mới</b>
-          <p>Dùng ít nhất 5 điểm bé ngoan để mở khóa một giống cây trong phòng thí nghiệm.</p>
-          <span id="chapter2-next-status">Tiến độ: Chưa hoàn thành</span>
-        </div>
-        <div class="story-complete" id="chapter2-complete" hidden>🏅 Chương 2 hoàn thành! Bạn đã chứng minh rằng học hỏi và sửa đổi phải đi cùng hành động.</div>
+        <p class="story-feedback" id="muc-feedback" aria-live="polite">Nhận nhiệm vụ, trả lời câu hỏi và thực hiện thử thách thực tế để hoàn thành từng chương.</p>
+        <div class="story-next-step"><b>🎯 Thử thách thực tế</b><p id="muc-story-task">Trả lời câu hỏi để mở nhiệm vụ đầu tiên.</p><button class="primary" id="muc-next-chapter" type="button" hidden>📖 Nhận Chương tiếp theo →</button></div>
+        <div class="muc-chapter-list" id="muc-chapter-list" aria-label="Tiến độ 10 chương"></div>
+        <div class="story-complete" id="muc-story-finale" hidden>🏆 Hoàn thành 10 chương! Bạn đã khôi phục Cây Tri Thức bằng những kỹ năng được rèn luyện qua từng nhiệm vụ.</div>
       </section>
     </section>
 
